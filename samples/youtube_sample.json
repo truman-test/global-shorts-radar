@@ -1,0 +1,2009 @@
+{
+ "_note": "SYNTHETIC fixture for offline pipeline validation. Not real YouTube data.",
+ "fixture_now": "2026-10-03T00:00:00Z",
+ "search": [
+  {
+   "match": {
+    "q": "AI scam",
+    "regionCode": "US"
+   },
+   "response": {
+    "kind": "youtube#searchListResponse",
+    "items": [
+     {
+      "kind": "youtube#searchResult",
+      "id": {
+       "kind": "youtube#video",
+       "videoId": "smpl_A1"
+      }
+     },
+     {
+      "kind": "youtube#searchResult",
+      "id": {
+       "kind": "youtube#video",
+       "videoId": "smpl_E1"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "match": {
+    "q": "phone hack",
+    "regionCode": "US"
+   },
+   "response": {
+    "kind": "youtube#searchListResponse",
+    "items": [
+     {
+      "kind": "youtube#searchResult",
+      "id": {
+       "kind": "youtube#video",
+       "videoId": "smpl_B1"
+      }
+     },
+     {
+      "kind": "youtube#searchResult",
+      "id": {
+       "kind": "youtube#video",
+       "videoId": "smpl_D1"
+      }
+     },
+     {
+      "kind": "youtube#searchResult",
+      "id": {
+       "kind": "youtube#video",
+       "videoId": "smpl_H1"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "match": {
+    "q": "cybercrime",
+    "regionCode": "US"
+   },
+   "response": {
+    "kind": "youtube#searchListResponse",
+    "items": [
+     {
+      "kind": "youtube#searchResult",
+      "id": {
+       "kind": "youtube#video",
+       "videoId": "smpl_G1"
+      }
+     },
+     {
+      "kind": "youtube#searchResult",
+      "id": {
+       "kind": "youtube#video",
+       "videoId": "smpl_E1"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "match": {
+    "q": "deepfake",
+    "regionCode": "US"
+   },
+   "response": {
+    "kind": "youtube#searchListResponse",
+    "items": [
+     {
+      "kind": "youtube#searchResult",
+      "id": {
+       "kind": "youtube#video",
+       "videoId": "smpl_A1"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "match": {
+    "q": "weird technology",
+    "regionCode": "US"
+   },
+   "response": {
+    "kind": "youtube#searchListResponse",
+    "items": [
+     {
+      "kind": "youtube#searchResult",
+      "id": {
+       "kind": "youtube#video",
+       "videoId": "smpl_F1"
+      }
+     },
+     {
+      "kind": "youtube#searchResult",
+      "id": {
+       "kind": "youtube#video",
+       "videoId": "smpl_C1"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "match": {
+    "q": "internet mystery",
+    "regionCode": "US"
+   },
+   "response": {
+    "kind": "youtube#searchListResponse",
+    "items": [
+     {
+      "kind": "youtube#searchResult",
+      "id": {
+       "kind": "youtube#video",
+       "videoId": "smpl_C1"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "match": {
+    "q": "목소리 복제 사기 AI",
+    "regionCode": "KR"
+   },
+   "response": {
+    "kind": "youtube#searchListResponse",
+    "items": [
+     {
+      "kind": "youtube#searchResult",
+      "id": {
+       "kind": "youtube#video",
+       "videoId": "kr_A1_0"
+      }
+     },
+     {
+      "kind": "youtube#searchResult",
+      "id": {
+       "kind": "youtube#video",
+       "videoId": "kr_A1_1"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "match": {
+    "q": "배터리 휴대폰",
+    "regionCode": "KR"
+   },
+   "response": {
+    "kind": "youtube#searchListResponse",
+    "items": [
+     {
+      "kind": "youtube#searchResult",
+      "id": {
+       "kind": "youtube#video",
+       "videoId": "kr_D1_0"
+      }
+     },
+     {
+      "kind": "youtube#searchResult",
+      "id": {
+       "kind": "youtube#video",
+       "videoId": "kr_D1_1"
+      }
+     },
+     {
+      "kind": "youtube#searchResult",
+      "id": {
+       "kind": "youtube#video",
+       "videoId": "kr_D1_2"
+      }
+     },
+     {
+      "kind": "youtube#searchResult",
+      "id": {
+       "kind": "youtube#video",
+       "videoId": "kr_D1_3"
+      }
+     },
+     {
+      "kind": "youtube#searchResult",
+      "id": {
+       "kind": "youtube#video",
+       "videoId": "kr_D1_4"
+      }
+     },
+     {
+      "kind": "youtube#searchResult",
+      "id": {
+       "kind": "youtube#video",
+       "videoId": "kr_D1_5"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "match": {
+    "q": "해커",
+    "regionCode": "KR"
+   },
+   "response": {
+    "kind": "youtube#searchListResponse",
+    "items": [
+     {
+      "kind": "youtube#searchResult",
+      "id": {
+       "kind": "youtube#video",
+       "videoId": "kr_H1_0"
+      }
+     },
+     {
+      "kind": "youtube#searchResult",
+      "id": {
+       "kind": "youtube#video",
+       "videoId": "kr_H1_1"
+      }
+     },
+     {
+      "kind": "youtube#searchResult",
+      "id": {
+       "kind": "youtube#video",
+       "videoId": "kr_H1_2"
+      }
+     }
+    ]
+   }
+  },
+  {
+   "match": {
+    "q": "사기꾼",
+    "regionCode": "KR"
+   },
+   "response": {
+    "kind": "youtube#searchListResponse",
+    "items": [
+     {
+      "kind": "youtube#searchResult",
+      "id": {
+       "kind": "youtube#video",
+       "videoId": "kr_E1_0"
+      }
+     },
+     {
+      "kind": "youtube#searchResult",
+      "id": {
+       "kind": "youtube#video",
+       "videoId": "kr_E1_1"
+      }
+     },
+     {
+      "kind": "youtube#searchResult",
+      "id": {
+       "kind": "youtube#video",
+       "videoId": "kr_E1_2"
+      }
+     },
+     {
+      "kind": "youtube#searchResult",
+      "id": {
+       "kind": "youtube#video",
+       "videoId": "kr_E1_3"
+      }
+     }
+    ]
+   }
+  }
+ ],
+ "videos": {
+  "smpl_A1": {
+   "kind": "youtube#video",
+   "id": "smpl_A1",
+   "snippet": {
+    "publishedAt": "2026-10-02T04:00:00Z",
+    "channelId": "UCbytesized",
+    "title": "My mom got a call from 'me' — but it was an AI voice clone scam",
+    "description": "How a 3-second clip of my voice was enough. What we learned and how to protect your family.",
+    "channelTitle": "ByteSized Mysteries",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT45S"
+   },
+   "statistics": {
+    "viewCount": "1000000",
+    "commentCount": "2000",
+    "likeCount": "40000"
+   }
+  },
+  "smpl_A_new": {
+   "kind": "youtube#video",
+   "id": "smpl_A_new",
+   "snippet": {
+    "publishedAt": "2026-10-02T14:00:00Z",
+    "channelId": "UCbytesized",
+    "title": "Quick update short",
+    "description": "",
+    "channelTitle": "ByteSized Mysteries",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT45S"
+   },
+   "statistics": {
+    "viewCount": "2000",
+    "commentCount": "4",
+    "likeCount": "80"
+   }
+  },
+  "A_b00": {
+   "kind": "youtube#video",
+   "id": "A_b00",
+   "snippet": {
+    "publishedAt": "2026-09-30T00:00:00Z",
+    "channelId": "UCbytesized",
+    "title": "ByteSized Mysteries short #0",
+    "description": "",
+    "channelTitle": "ByteSized Mysteries",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "38000",
+    "commentCount": "76",
+    "likeCount": "1520"
+   }
+  },
+  "A_b01": {
+   "kind": "youtube#video",
+   "id": "A_b01",
+   "snippet": {
+    "publishedAt": "2026-09-28T18:00:00Z",
+    "channelId": "UCbytesized",
+    "title": "ByteSized Mysteries short #1",
+    "description": "",
+    "channelTitle": "ByteSized Mysteries",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "42000",
+    "commentCount": "84",
+    "likeCount": "1680"
+   }
+  },
+  "A_b02": {
+   "kind": "youtube#video",
+   "id": "A_b02",
+   "snippet": {
+    "publishedAt": "2026-09-27T12:00:00Z",
+    "channelId": "UCbytesized",
+    "title": "ByteSized Mysteries short #2",
+    "description": "",
+    "channelTitle": "ByteSized Mysteries",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "45000",
+    "commentCount": "90",
+    "likeCount": "1800"
+   }
+  },
+  "A_b03": {
+   "kind": "youtube#video",
+   "id": "A_b03",
+   "snippet": {
+    "publishedAt": "2026-09-26T06:00:00Z",
+    "channelId": "UCbytesized",
+    "title": "ByteSized Mysteries short #3",
+    "description": "",
+    "channelTitle": "ByteSized Mysteries",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "47000",
+    "commentCount": "94",
+    "likeCount": "1880"
+   }
+  },
+  "A_b04": {
+   "kind": "youtube#video",
+   "id": "A_b04",
+   "snippet": {
+    "publishedAt": "2026-09-25T00:00:00Z",
+    "channelId": "UCbytesized",
+    "title": "ByteSized Mysteries short #4",
+    "description": "",
+    "channelTitle": "ByteSized Mysteries",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "50000",
+    "commentCount": "100",
+    "likeCount": "2000"
+   }
+  },
+  "A_b05": {
+   "kind": "youtube#video",
+   "id": "A_b05",
+   "snippet": {
+    "publishedAt": "2026-09-23T18:00:00Z",
+    "channelId": "UCbytesized",
+    "title": "ByteSized Mysteries short #5",
+    "description": "",
+    "channelTitle": "ByteSized Mysteries",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "50000",
+    "commentCount": "100",
+    "likeCount": "2000"
+   }
+  },
+  "A_b06": {
+   "kind": "youtube#video",
+   "id": "A_b06",
+   "snippet": {
+    "publishedAt": "2026-09-22T12:00:00Z",
+    "channelId": "UCbytesized",
+    "title": "ByteSized Mysteries short #6",
+    "description": "",
+    "channelTitle": "ByteSized Mysteries",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "53000",
+    "commentCount": "106",
+    "likeCount": "2120"
+   }
+  },
+  "A_b07": {
+   "kind": "youtube#video",
+   "id": "A_b07",
+   "snippet": {
+    "publishedAt": "2026-09-21T06:00:00Z",
+    "channelId": "UCbytesized",
+    "title": "ByteSized Mysteries short #7",
+    "description": "",
+    "channelTitle": "ByteSized Mysteries",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "55000",
+    "commentCount": "110",
+    "likeCount": "2200"
+   }
+  },
+  "A_b08": {
+   "kind": "youtube#video",
+   "id": "A_b08",
+   "snippet": {
+    "publishedAt": "2026-09-20T00:00:00Z",
+    "channelId": "UCbytesized",
+    "title": "ByteSized Mysteries short #8",
+    "description": "",
+    "channelTitle": "ByteSized Mysteries",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "61000",
+    "commentCount": "122",
+    "likeCount": "2440"
+   }
+  },
+  "A_b09": {
+   "kind": "youtube#video",
+   "id": "A_b09",
+   "snippet": {
+    "publishedAt": "2026-09-18T18:00:00Z",
+    "channelId": "UCbytesized",
+    "title": "ByteSized Mysteries short #9",
+    "description": "",
+    "channelTitle": "ByteSized Mysteries",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "70000",
+    "commentCount": "140",
+    "likeCount": "2800"
+   }
+  },
+  "A_long0": {
+   "kind": "youtube#video",
+   "id": "A_long0",
+   "snippet": {
+    "publishedAt": "2026-09-24T16:00:00Z",
+    "channelId": "UCbytesized",
+    "title": "Deep dive episode 0",
+    "description": "",
+    "channelTitle": "ByteSized Mysteries",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT12M30S"
+   },
+   "statistics": {
+    "viewCount": "300000",
+    "commentCount": "600",
+    "likeCount": "12000"
+   }
+  },
+  "A_long1": {
+   "kind": "youtube#video",
+   "id": "A_long1",
+   "snippet": {
+    "publishedAt": "2026-09-22T14:00:00Z",
+    "channelId": "UCbytesized",
+    "title": "Deep dive episode 1",
+    "description": "",
+    "channelTitle": "ByteSized Mysteries",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT12M30S"
+   },
+   "statistics": {
+    "viewCount": "300000",
+    "commentCount": "600",
+    "likeCount": "12000"
+   }
+  },
+  "A_long2": {
+   "kind": "youtube#video",
+   "id": "A_long2",
+   "snippet": {
+    "publishedAt": "2026-09-20T12:00:00Z",
+    "channelId": "UCbytesized",
+    "title": "Deep dive episode 2",
+    "description": "",
+    "channelTitle": "ByteSized Mysteries",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT12M30S"
+   },
+   "statistics": {
+    "viewCount": "300000",
+    "commentCount": "600",
+    "likeCount": "12000"
+   }
+  },
+  "smpl_B1": {
+   "kind": "youtube#video",
+   "id": "smpl_B1",
+   "snippet": {
+    "publishedAt": "2026-10-01T18:00:00Z",
+    "channelId": "UCtechgiant",
+    "title": "iPhone 18 unboxing in 60 seconds",
+    "description": "",
+    "channelTitle": "TechGiant Daily",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT45S"
+   },
+   "statistics": {
+    "viewCount": "2500000",
+    "commentCount": "5000",
+    "likeCount": "100000"
+   }
+  },
+  "B_b00": {
+   "kind": "youtube#video",
+   "id": "B_b00",
+   "snippet": {
+    "publishedAt": "2026-09-30T00:00:00Z",
+    "channelId": "UCtechgiant",
+    "title": "TechGiant Daily short #0",
+    "description": "",
+    "channelTitle": "TechGiant Daily",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "1600000",
+    "commentCount": "3200",
+    "likeCount": "64000"
+   }
+  },
+  "B_b01": {
+   "kind": "youtube#video",
+   "id": "B_b01",
+   "snippet": {
+    "publishedAt": "2026-09-28T18:00:00Z",
+    "channelId": "UCtechgiant",
+    "title": "TechGiant Daily short #1",
+    "description": "",
+    "channelTitle": "TechGiant Daily",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "1800000",
+    "commentCount": "3600",
+    "likeCount": "72000"
+   }
+  },
+  "B_b02": {
+   "kind": "youtube#video",
+   "id": "B_b02",
+   "snippet": {
+    "publishedAt": "2026-09-27T12:00:00Z",
+    "channelId": "UCtechgiant",
+    "title": "TechGiant Daily short #2",
+    "description": "",
+    "channelTitle": "TechGiant Daily",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "2000000",
+    "commentCount": "4000",
+    "likeCount": "80000"
+   }
+  },
+  "B_b03": {
+   "kind": "youtube#video",
+   "id": "B_b03",
+   "snippet": {
+    "publishedAt": "2026-09-26T06:00:00Z",
+    "channelId": "UCtechgiant",
+    "title": "TechGiant Daily short #3",
+    "description": "",
+    "channelTitle": "TechGiant Daily",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "2000000",
+    "commentCount": "4000",
+    "likeCount": "80000"
+   }
+  },
+  "B_b04": {
+   "kind": "youtube#video",
+   "id": "B_b04",
+   "snippet": {
+    "publishedAt": "2026-09-25T00:00:00Z",
+    "channelId": "UCtechgiant",
+    "title": "TechGiant Daily short #4",
+    "description": "",
+    "channelTitle": "TechGiant Daily",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "2200000",
+    "commentCount": "4400",
+    "likeCount": "88000"
+   }
+  },
+  "B_b05": {
+   "kind": "youtube#video",
+   "id": "B_b05",
+   "snippet": {
+    "publishedAt": "2026-09-23T18:00:00Z",
+    "channelId": "UCtechgiant",
+    "title": "TechGiant Daily short #5",
+    "description": "",
+    "channelTitle": "TechGiant Daily",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "2400000",
+    "commentCount": "4800",
+    "likeCount": "96000"
+   }
+  },
+  "smpl_C1": {
+   "kind": "youtube#video",
+   "id": "smpl_C1",
+   "snippet": {
+    "publishedAt": "2026-10-01T08:00:00Z",
+    "channelId": "UCnewlab",
+    "title": "This app tracked my location for 3 years and I never noticed",
+    "description": "",
+    "channelTitle": "NewChannel Lab",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT45S"
+   },
+   "statistics": {
+    "viewCount": "300000",
+    "commentCount": "600",
+    "likeCount": "12000"
+   }
+  },
+  "C_b00": {
+   "kind": "youtube#video",
+   "id": "C_b00",
+   "snippet": {
+    "publishedAt": "2026-09-30T00:00:00Z",
+    "channelId": "UCnewlab",
+    "title": "NewChannel Lab short #0",
+    "description": "",
+    "channelTitle": "NewChannel Lab",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "900",
+    "commentCount": "1",
+    "likeCount": "36"
+   }
+  },
+  "C_b01": {
+   "kind": "youtube#video",
+   "id": "C_b01",
+   "snippet": {
+    "publishedAt": "2026-09-28T18:00:00Z",
+    "channelId": "UCnewlab",
+    "title": "NewChannel Lab short #1",
+    "description": "",
+    "channelTitle": "NewChannel Lab",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "1400",
+    "commentCount": "2",
+    "likeCount": "56"
+   }
+  },
+  "smpl_D1": {
+   "kind": "youtube#video",
+   "id": "smpl_D1",
+   "snippet": {
+    "publishedAt": "2026-09-30T02:00:00Z",
+    "channelId": "UCphonefix",
+    "title": "Why your phone battery dies at 20% (it's not what you think)",
+    "description": "",
+    "channelTitle": "PhoneFixLab",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT45S"
+   },
+   "statistics": {
+    "viewCount": "400000",
+    "commentCount": "800",
+    "likeCount": "16000"
+   }
+  },
+  "D_b00": {
+   "kind": "youtube#video",
+   "id": "D_b00",
+   "snippet": {
+    "publishedAt": "2026-09-30T00:00:00Z",
+    "channelId": "UCphonefix",
+    "title": "PhoneFixLab short #0",
+    "description": "",
+    "channelTitle": "PhoneFixLab",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "30000",
+    "commentCount": "60",
+    "likeCount": "1200"
+   }
+  },
+  "D_b01": {
+   "kind": "youtube#video",
+   "id": "D_b01",
+   "snippet": {
+    "publishedAt": "2026-09-28T18:00:00Z",
+    "channelId": "UCphonefix",
+    "title": "PhoneFixLab short #1",
+    "description": "",
+    "channelTitle": "PhoneFixLab",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "35000",
+    "commentCount": "70",
+    "likeCount": "1400"
+   }
+  },
+  "D_b02": {
+   "kind": "youtube#video",
+   "id": "D_b02",
+   "snippet": {
+    "publishedAt": "2026-09-27T12:00:00Z",
+    "channelId": "UCphonefix",
+    "title": "PhoneFixLab short #2",
+    "description": "",
+    "channelTitle": "PhoneFixLab",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "38000",
+    "commentCount": "76",
+    "likeCount": "1520"
+   }
+  },
+  "D_b03": {
+   "kind": "youtube#video",
+   "id": "D_b03",
+   "snippet": {
+    "publishedAt": "2026-09-26T06:00:00Z",
+    "channelId": "UCphonefix",
+    "title": "PhoneFixLab short #3",
+    "description": "",
+    "channelTitle": "PhoneFixLab",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "40000",
+    "commentCount": "80",
+    "likeCount": "1600"
+   }
+  },
+  "D_b04": {
+   "kind": "youtube#video",
+   "id": "D_b04",
+   "snippet": {
+    "publishedAt": "2026-09-25T00:00:00Z",
+    "channelId": "UCphonefix",
+    "title": "PhoneFixLab short #4",
+    "description": "",
+    "channelTitle": "PhoneFixLab",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "40000",
+    "commentCount": "80",
+    "likeCount": "1600"
+   }
+  },
+  "D_b05": {
+   "kind": "youtube#video",
+   "id": "D_b05",
+   "snippet": {
+    "publishedAt": "2026-09-23T18:00:00Z",
+    "channelId": "UCphonefix",
+    "title": "PhoneFixLab short #5",
+    "description": "",
+    "channelTitle": "PhoneFixLab",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "44000",
+    "commentCount": "88",
+    "likeCount": "1760"
+   }
+  },
+  "D_b06": {
+   "kind": "youtube#video",
+   "id": "D_b06",
+   "snippet": {
+    "publishedAt": "2026-09-22T12:00:00Z",
+    "channelId": "UCphonefix",
+    "title": "PhoneFixLab short #6",
+    "description": "",
+    "channelTitle": "PhoneFixLab",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "52000",
+    "commentCount": "104",
+    "likeCount": "2080"
+   }
+  },
+  "smpl_E1": {
+   "kind": "youtube#video",
+   "id": "smpl_E1",
+   "snippet": {
+    "publishedAt": "2026-09-30T22:00:00Z",
+    "channelId": "UCmoneysafe",
+    "title": "Zelle scammers stole $2,000 from my grandma — here's how",
+    "description": "",
+    "channelTitle": "MoneySafe USA",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT45S"
+   },
+   "statistics": {
+    "viewCount": "600000",
+    "commentCount": "1200",
+    "likeCount": "24000"
+   }
+  },
+  "E_b00": {
+   "kind": "youtube#video",
+   "id": "E_b00",
+   "snippet": {
+    "publishedAt": "2026-09-30T00:00:00Z",
+    "channelId": "UCmoneysafe",
+    "title": "MoneySafe USA short #0",
+    "description": "",
+    "channelTitle": "MoneySafe USA",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "60000",
+    "commentCount": "120",
+    "likeCount": "2400"
+   }
+  },
+  "E_b01": {
+   "kind": "youtube#video",
+   "id": "E_b01",
+   "snippet": {
+    "publishedAt": "2026-09-28T18:00:00Z",
+    "channelId": "UCmoneysafe",
+    "title": "MoneySafe USA short #1",
+    "description": "",
+    "channelTitle": "MoneySafe USA",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "70000",
+    "commentCount": "140",
+    "likeCount": "2800"
+   }
+  },
+  "E_b02": {
+   "kind": "youtube#video",
+   "id": "E_b02",
+   "snippet": {
+    "publishedAt": "2026-09-27T12:00:00Z",
+    "channelId": "UCmoneysafe",
+    "title": "MoneySafe USA short #2",
+    "description": "",
+    "channelTitle": "MoneySafe USA",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "75000",
+    "commentCount": "150",
+    "likeCount": "3000"
+   }
+  },
+  "E_b03": {
+   "kind": "youtube#video",
+   "id": "E_b03",
+   "snippet": {
+    "publishedAt": "2026-09-26T06:00:00Z",
+    "channelId": "UCmoneysafe",
+    "title": "MoneySafe USA short #3",
+    "description": "",
+    "channelTitle": "MoneySafe USA",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "75000",
+    "commentCount": "150",
+    "likeCount": "3000"
+   }
+  },
+  "E_b04": {
+   "kind": "youtube#video",
+   "id": "E_b04",
+   "snippet": {
+    "publishedAt": "2026-09-25T00:00:00Z",
+    "channelId": "UCmoneysafe",
+    "title": "MoneySafe USA short #4",
+    "description": "",
+    "channelTitle": "MoneySafe USA",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "80000",
+    "commentCount": "160",
+    "likeCount": "3200"
+   }
+  },
+  "E_b05": {
+   "kind": "youtube#video",
+   "id": "E_b05",
+   "snippet": {
+    "publishedAt": "2026-09-23T18:00:00Z",
+    "channelId": "UCmoneysafe",
+    "title": "MoneySafe USA short #5",
+    "description": "",
+    "channelTitle": "MoneySafe USA",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "90000",
+    "commentCount": "180",
+    "likeCount": "3600"
+   }
+  },
+  "smpl_F1": {
+   "kind": "youtube#video",
+   "id": "smpl_F1",
+   "snippet": {
+    "publishedAt": "2026-10-01T18:00:00Z",
+    "channelId": "UCkitchen",
+    "title": "15-second garlic peeling trick",
+    "description": "",
+    "channelTitle": "Kitchen Speedruns",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT45S"
+   },
+   "statistics": {
+    "viewCount": "3000000",
+    "commentCount": "6000"
+   }
+  },
+  "F_b00": {
+   "kind": "youtube#video",
+   "id": "F_b00",
+   "snippet": {
+    "publishedAt": "2026-09-30T00:00:00Z",
+    "channelId": "UCkitchen",
+    "title": "Kitchen Speedruns short #0",
+    "description": "",
+    "channelTitle": "Kitchen Speedruns",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "150000",
+    "commentCount": "300",
+    "likeCount": "6000"
+   }
+  },
+  "F_b01": {
+   "kind": "youtube#video",
+   "id": "F_b01",
+   "snippet": {
+    "publishedAt": "2026-09-28T18:00:00Z",
+    "channelId": "UCkitchen",
+    "title": "Kitchen Speedruns short #1",
+    "description": "",
+    "channelTitle": "Kitchen Speedruns",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "180000",
+    "commentCount": "360",
+    "likeCount": "7200"
+   }
+  },
+  "F_b02": {
+   "kind": "youtube#video",
+   "id": "F_b02",
+   "snippet": {
+    "publishedAt": "2026-09-27T12:00:00Z",
+    "channelId": "UCkitchen",
+    "title": "Kitchen Speedruns short #2",
+    "description": "",
+    "channelTitle": "Kitchen Speedruns",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "200000",
+    "commentCount": "400",
+    "likeCount": "8000"
+   }
+  },
+  "F_b03": {
+   "kind": "youtube#video",
+   "id": "F_b03",
+   "snippet": {
+    "publishedAt": "2026-09-26T06:00:00Z",
+    "channelId": "UCkitchen",
+    "title": "Kitchen Speedruns short #3",
+    "description": "",
+    "channelTitle": "Kitchen Speedruns",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "200000",
+    "commentCount": "400",
+    "likeCount": "8000"
+   }
+  },
+  "F_b04": {
+   "kind": "youtube#video",
+   "id": "F_b04",
+   "snippet": {
+    "publishedAt": "2026-09-25T00:00:00Z",
+    "channelId": "UCkitchen",
+    "title": "Kitchen Speedruns short #4",
+    "description": "",
+    "channelTitle": "Kitchen Speedruns",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "220000",
+    "commentCount": "440",
+    "likeCount": "8800"
+   }
+  },
+  "F_b05": {
+   "kind": "youtube#video",
+   "id": "F_b05",
+   "snippet": {
+    "publishedAt": "2026-09-23T18:00:00Z",
+    "channelId": "UCkitchen",
+    "title": "Kitchen Speedruns short #5",
+    "description": "",
+    "channelTitle": "Kitchen Speedruns",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "260000",
+    "commentCount": "520",
+    "likeCount": "10400"
+   }
+  },
+  "smpl_G1": {
+   "kind": "youtube#video",
+   "id": "smpl_G1",
+   "snippet": {
+    "publishedAt": "2026-09-30T12:00:00Z",
+    "channelId": "UCdeepdoc",
+    "title": "The full story of the biggest crypto exchange hack",
+    "description": "",
+    "channelTitle": "Deep Doc",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT3M40S"
+   },
+   "statistics": {
+    "viewCount": "800000",
+    "commentCount": "1600",
+    "likeCount": "32000"
+   }
+  },
+  "G_b00": {
+   "kind": "youtube#video",
+   "id": "G_b00",
+   "snippet": {
+    "publishedAt": "2026-09-30T00:00:00Z",
+    "channelId": "UCdeepdoc",
+    "title": "Deep Doc short #0",
+    "description": "",
+    "channelTitle": "Deep Doc",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT3M50S"
+   },
+   "statistics": {
+    "viewCount": "100000",
+    "commentCount": "200",
+    "likeCount": "4000"
+   }
+  },
+  "G_b01": {
+   "kind": "youtube#video",
+   "id": "G_b01",
+   "snippet": {
+    "publishedAt": "2026-09-28T18:00:00Z",
+    "channelId": "UCdeepdoc",
+    "title": "Deep Doc short #1",
+    "description": "",
+    "channelTitle": "Deep Doc",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT3M50S"
+   },
+   "statistics": {
+    "viewCount": "120000",
+    "commentCount": "240",
+    "likeCount": "4800"
+   }
+  },
+  "G_b02": {
+   "kind": "youtube#video",
+   "id": "G_b02",
+   "snippet": {
+    "publishedAt": "2026-09-27T12:00:00Z",
+    "channelId": "UCdeepdoc",
+    "title": "Deep Doc short #2",
+    "description": "",
+    "channelTitle": "Deep Doc",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT3M50S"
+   },
+   "statistics": {
+    "viewCount": "150000",
+    "commentCount": "300",
+    "likeCount": "6000"
+   }
+  },
+  "smpl_H1": {
+   "kind": "youtube#video",
+   "id": "smpl_H1",
+   "snippet": {
+    "publishedAt": "2026-10-02T18:00:00Z",
+    "channelId": "UCsignal",
+    "title": "Hackers can open your car with a $30 gadget?",
+    "description": "",
+    "channelTitle": "Signal Noise",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT45S"
+   },
+   "statistics": {
+    "viewCount": "250000",
+    "commentCount": "500",
+    "likeCount": "10000"
+   }
+  },
+  "H_b00": {
+   "kind": "youtube#video",
+   "id": "H_b00",
+   "snippet": {
+    "publishedAt": "2026-09-30T00:00:00Z",
+    "channelId": "UCsignal",
+    "title": "Signal Noise short #0",
+    "description": "",
+    "channelTitle": "Signal Noise",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "25000",
+    "commentCount": "50",
+    "likeCount": "1000"
+   }
+  },
+  "H_b01": {
+   "kind": "youtube#video",
+   "id": "H_b01",
+   "snippet": {
+    "publishedAt": "2026-09-28T18:00:00Z",
+    "channelId": "UCsignal",
+    "title": "Signal Noise short #1",
+    "description": "",
+    "channelTitle": "Signal Noise",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "28000",
+    "commentCount": "56",
+    "likeCount": "1120"
+   }
+  },
+  "H_b02": {
+   "kind": "youtube#video",
+   "id": "H_b02",
+   "snippet": {
+    "publishedAt": "2026-09-27T12:00:00Z",
+    "channelId": "UCsignal",
+    "title": "Signal Noise short #2",
+    "description": "",
+    "channelTitle": "Signal Noise",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "30000",
+    "commentCount": "60",
+    "likeCount": "1200"
+   }
+  },
+  "H_b03": {
+   "kind": "youtube#video",
+   "id": "H_b03",
+   "snippet": {
+    "publishedAt": "2026-09-26T06:00:00Z",
+    "channelId": "UCsignal",
+    "title": "Signal Noise short #3",
+    "description": "",
+    "channelTitle": "Signal Noise",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "30000",
+    "commentCount": "60",
+    "likeCount": "1200"
+   }
+  },
+  "H_b04": {
+   "kind": "youtube#video",
+   "id": "H_b04",
+   "snippet": {
+    "publishedAt": "2026-09-25T00:00:00Z",
+    "channelId": "UCsignal",
+    "title": "Signal Noise short #4",
+    "description": "",
+    "channelTitle": "Signal Noise",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "33000",
+    "commentCount": "66",
+    "likeCount": "1320"
+   }
+  },
+  "H_b05": {
+   "kind": "youtube#video",
+   "id": "H_b05",
+   "snippet": {
+    "publishedAt": "2026-09-23T18:00:00Z",
+    "channelId": "UCsignal",
+    "title": "Signal Noise short #5",
+    "description": "",
+    "channelTitle": "Signal Noise",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT40S"
+   },
+   "statistics": {
+    "viewCount": "41000",
+    "commentCount": "82",
+    "likeCount": "1640"
+   }
+  },
+  "kr_A1_0": {
+   "kind": "youtube#video",
+   "id": "kr_A1_0",
+   "snippet": {
+    "publishedAt": "2026-09-28T20:00:00Z",
+    "channelId": "UCkrsample",
+    "title": "[KR] 목소리 복제 사기 AI #0",
+    "description": "",
+    "channelTitle": "KR Sample Channel",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT45S"
+   },
+   "statistics": {
+    "viewCount": "12000",
+    "commentCount": "24",
+    "likeCount": "480"
+   }
+  },
+  "kr_A1_1": {
+   "kind": "youtube#video",
+   "id": "kr_A1_1",
+   "snippet": {
+    "publishedAt": "2026-09-27T20:00:00Z",
+    "channelId": "UCkrsample",
+    "title": "[KR] 목소리 복제 사기 AI #1",
+    "description": "",
+    "channelTitle": "KR Sample Channel",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT45S"
+   },
+   "statistics": {
+    "viewCount": "8000",
+    "commentCount": "16",
+    "likeCount": "320"
+   }
+  },
+  "kr_D1_0": {
+   "kind": "youtube#video",
+   "id": "kr_D1_0",
+   "snippet": {
+    "publishedAt": "2026-09-28T20:00:00Z",
+    "channelId": "UCkrsample",
+    "title": "[KR] 배터리 휴대폰 #0",
+    "description": "",
+    "channelTitle": "KR Sample Channel",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT45S"
+   },
+   "statistics": {
+    "viewCount": "900000",
+    "commentCount": "1800",
+    "likeCount": "36000"
+   }
+  },
+  "kr_D1_1": {
+   "kind": "youtube#video",
+   "id": "kr_D1_1",
+   "snippet": {
+    "publishedAt": "2026-09-27T20:00:00Z",
+    "channelId": "UCkrsample",
+    "title": "[KR] 배터리 휴대폰 #1",
+    "description": "",
+    "channelTitle": "KR Sample Channel",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT45S"
+   },
+   "statistics": {
+    "viewCount": "1200000",
+    "commentCount": "2400",
+    "likeCount": "48000"
+   }
+  },
+  "kr_D1_2": {
+   "kind": "youtube#video",
+   "id": "kr_D1_2",
+   "snippet": {
+    "publishedAt": "2026-09-26T20:00:00Z",
+    "channelId": "UCkrsample",
+    "title": "[KR] 배터리 휴대폰 #2",
+    "description": "",
+    "channelTitle": "KR Sample Channel",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT45S"
+   },
+   "statistics": {
+    "viewCount": "700000",
+    "commentCount": "1400",
+    "likeCount": "28000"
+   }
+  },
+  "kr_D1_3": {
+   "kind": "youtube#video",
+   "id": "kr_D1_3",
+   "snippet": {
+    "publishedAt": "2026-09-25T20:00:00Z",
+    "channelId": "UCkrsample",
+    "title": "[KR] 배터리 휴대폰 #3",
+    "description": "",
+    "channelTitle": "KR Sample Channel",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT45S"
+   },
+   "statistics": {
+    "viewCount": "2000000",
+    "commentCount": "4000",
+    "likeCount": "80000"
+   }
+  },
+  "kr_D1_4": {
+   "kind": "youtube#video",
+   "id": "kr_D1_4",
+   "snippet": {
+    "publishedAt": "2026-09-24T20:00:00Z",
+    "channelId": "UCkrsample",
+    "title": "[KR] 배터리 휴대폰 #4",
+    "description": "",
+    "channelTitle": "KR Sample Channel",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT45S"
+   },
+   "statistics": {
+    "viewCount": "1500000",
+    "commentCount": "3000",
+    "likeCount": "60000"
+   }
+  },
+  "kr_D1_5": {
+   "kind": "youtube#video",
+   "id": "kr_D1_5",
+   "snippet": {
+    "publishedAt": "2026-09-23T20:00:00Z",
+    "channelId": "UCkrsample",
+    "title": "[KR] 배터리 휴대폰 #5",
+    "description": "",
+    "channelTitle": "KR Sample Channel",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT45S"
+   },
+   "statistics": {
+    "viewCount": "800000",
+    "commentCount": "1600",
+    "likeCount": "32000"
+   }
+  },
+  "kr_H1_0": {
+   "kind": "youtube#video",
+   "id": "kr_H1_0",
+   "snippet": {
+    "publishedAt": "2026-09-28T20:00:00Z",
+    "channelId": "UCkrsample",
+    "title": "[KR] 해커 #0",
+    "description": "",
+    "channelTitle": "KR Sample Channel",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT45S"
+   },
+   "statistics": {
+    "viewCount": "150000",
+    "commentCount": "300",
+    "likeCount": "6000"
+   }
+  },
+  "kr_H1_1": {
+   "kind": "youtube#video",
+   "id": "kr_H1_1",
+   "snippet": {
+    "publishedAt": "2026-09-27T20:00:00Z",
+    "channelId": "UCkrsample",
+    "title": "[KR] 해커 #1",
+    "description": "",
+    "channelTitle": "KR Sample Channel",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT45S"
+   },
+   "statistics": {
+    "viewCount": "90000",
+    "commentCount": "180",
+    "likeCount": "3600"
+   }
+  },
+  "kr_H1_2": {
+   "kind": "youtube#video",
+   "id": "kr_H1_2",
+   "snippet": {
+    "publishedAt": "2026-09-26T20:00:00Z",
+    "channelId": "UCkrsample",
+    "title": "[KR] 해커 #2",
+    "description": "",
+    "channelTitle": "KR Sample Channel",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT45S"
+   },
+   "statistics": {
+    "viewCount": "60000",
+    "commentCount": "120",
+    "likeCount": "2400"
+   }
+  },
+  "kr_E1_0": {
+   "kind": "youtube#video",
+   "id": "kr_E1_0",
+   "snippet": {
+    "publishedAt": "2026-09-28T20:00:00Z",
+    "channelId": "UCkrsample",
+    "title": "[KR] 사기꾼 #0",
+    "description": "",
+    "channelTitle": "KR Sample Channel",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT45S"
+   },
+   "statistics": {
+    "viewCount": "400000",
+    "commentCount": "800",
+    "likeCount": "16000"
+   }
+  },
+  "kr_E1_1": {
+   "kind": "youtube#video",
+   "id": "kr_E1_1",
+   "snippet": {
+    "publishedAt": "2026-09-27T20:00:00Z",
+    "channelId": "UCkrsample",
+    "title": "[KR] 사기꾼 #1",
+    "description": "",
+    "channelTitle": "KR Sample Channel",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT45S"
+   },
+   "statistics": {
+    "viewCount": "650000",
+    "commentCount": "1300",
+    "likeCount": "26000"
+   }
+  },
+  "kr_E1_2": {
+   "kind": "youtube#video",
+   "id": "kr_E1_2",
+   "snippet": {
+    "publishedAt": "2026-09-26T20:00:00Z",
+    "channelId": "UCkrsample",
+    "title": "[KR] 사기꾼 #2",
+    "description": "",
+    "channelTitle": "KR Sample Channel",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT45S"
+   },
+   "statistics": {
+    "viewCount": "300000",
+    "commentCount": "600",
+    "likeCount": "12000"
+   }
+  },
+  "kr_E1_3": {
+   "kind": "youtube#video",
+   "id": "kr_E1_3",
+   "snippet": {
+    "publishedAt": "2026-09-25T20:00:00Z",
+    "channelId": "UCkrsample",
+    "title": "[KR] 사기꾼 #3",
+    "description": "",
+    "channelTitle": "KR Sample Channel",
+    "tags": []
+   },
+   "contentDetails": {
+    "duration": "PT45S"
+   },
+   "statistics": {
+    "viewCount": "900000",
+    "commentCount": "1800",
+    "likeCount": "36000"
+   }
+  }
+ },
+ "channels": {
+  "UCbytesized": {
+   "kind": "youtube#channel",
+   "id": "UCbytesized",
+   "snippet": {
+    "title": "ByteSized Mysteries",
+    "country": "US"
+   },
+   "statistics": {
+    "subscriberCount": "82000",
+    "videoCount": "120",
+    "viewCount": "3280000",
+    "hiddenSubscriberCount": false
+   },
+   "contentDetails": {
+    "relatedPlaylists": {
+     "uploads": "UUbytesized"
+    }
+   }
+  },
+  "UCtechgiant": {
+   "kind": "youtube#channel",
+   "id": "UCtechgiant",
+   "snippet": {
+    "title": "TechGiant Daily",
+    "country": "US"
+   },
+   "statistics": {
+    "subscriberCount": "5200000",
+    "videoCount": "120",
+    "viewCount": "208000000",
+    "hiddenSubscriberCount": false
+   },
+   "contentDetails": {
+    "relatedPlaylists": {
+     "uploads": "UUtechgiant"
+    }
+   }
+  },
+  "UCnewlab": {
+   "kind": "youtube#channel",
+   "id": "UCnewlab",
+   "snippet": {
+    "title": "NewChannel Lab",
+    "country": "US"
+   },
+   "statistics": {
+    "subscriberCount": "1200",
+    "videoCount": "120",
+    "viewCount": "48000",
+    "hiddenSubscriberCount": false
+   },
+   "contentDetails": {
+    "relatedPlaylists": {
+     "uploads": "UUnewlab"
+    }
+   }
+  },
+  "UCphonefix": {
+   "kind": "youtube#channel",
+   "id": "UCphonefix",
+   "snippet": {
+    "title": "PhoneFixLab",
+    "country": "US"
+   },
+   "statistics": {
+    "subscriberCount": "410000",
+    "videoCount": "120",
+    "viewCount": "16400000",
+    "hiddenSubscriberCount": false
+   },
+   "contentDetails": {
+    "relatedPlaylists": {
+     "uploads": "UUphonefix"
+    }
+   }
+  },
+  "UCmoneysafe": {
+   "kind": "youtube#channel",
+   "id": "UCmoneysafe",
+   "snippet": {
+    "title": "MoneySafe USA",
+    "country": "US"
+   },
+   "statistics": {
+    "subscriberCount": "150000",
+    "videoCount": "120",
+    "viewCount": "6000000",
+    "hiddenSubscriberCount": false
+   },
+   "contentDetails": {
+    "relatedPlaylists": {
+     "uploads": "UUmoneysafe"
+    }
+   }
+  },
+  "UCkitchen": {
+   "kind": "youtube#channel",
+   "id": "UCkitchen",
+   "snippet": {
+    "title": "Kitchen Speedruns",
+    "country": "US"
+   },
+   "statistics": {
+    "subscriberCount": "900000",
+    "videoCount": "120",
+    "viewCount": "36000000",
+    "hiddenSubscriberCount": false
+   },
+   "contentDetails": {
+    "relatedPlaylists": {
+     "uploads": "UUkitchen"
+    }
+   }
+  },
+  "UCdeepdoc": {
+   "kind": "youtube#channel",
+   "id": "UCdeepdoc",
+   "snippet": {
+    "title": "Deep Doc",
+    "country": "US"
+   },
+   "statistics": {
+    "subscriberCount": "640000",
+    "videoCount": "120",
+    "viewCount": "25600000",
+    "hiddenSubscriberCount": false
+   },
+   "contentDetails": {
+    "relatedPlaylists": {
+     "uploads": "UUdeepdoc"
+    }
+   }
+  },
+  "UCsignal": {
+   "kind": "youtube#channel",
+   "id": "UCsignal",
+   "snippet": {
+    "title": "Signal Noise",
+    "country": "US"
+   },
+   "statistics": {
+    "subscriberCount": "60000",
+    "videoCount": "120",
+    "viewCount": "2400000",
+    "hiddenSubscriberCount": false
+   },
+   "contentDetails": {
+    "relatedPlaylists": {
+     "uploads": "UUsignal"
+    }
+   }
+  },
+  "UCkrsample": {
+   "kind": "youtube#channel",
+   "id": "UCkrsample",
+   "snippet": {
+    "title": "KR Sample Channel",
+    "country": "KR"
+   },
+   "statistics": {
+    "subscriberCount": "300000",
+    "videoCount": "120",
+    "viewCount": "12000000",
+    "hiddenSubscriberCount": false
+   },
+   "contentDetails": {
+    "relatedPlaylists": {
+     "uploads": "UUkrsample"
+    }
+   }
+  }
+ },
+ "playlists": {
+  "UUbytesized": [
+   "smpl_A_new",
+   "smpl_A1",
+   "A_b00",
+   "A_b01",
+   "A_b02",
+   "A_b03",
+   "A_b04",
+   "A_long0",
+   "A_b05",
+   "A_long1",
+   "A_b06",
+   "A_b07",
+   "A_long2",
+   "A_b08",
+   "A_b09"
+  ],
+  "UUtechgiant": [
+   "smpl_B1",
+   "B_b00",
+   "B_b01",
+   "B_b02",
+   "B_b03",
+   "B_b04",
+   "B_b05"
+  ],
+  "UUnewlab": [
+   "smpl_C1",
+   "C_b00",
+   "C_b01"
+  ],
+  "UUphonefix": [
+   "smpl_D1",
+   "D_b00",
+   "D_b01",
+   "D_b02",
+   "D_b03",
+   "D_b04",
+   "D_b05",
+   "D_b06"
+  ],
+  "UUmoneysafe": [
+   "smpl_E1",
+   "E_b00",
+   "E_b01",
+   "E_b02",
+   "E_b03",
+   "E_b04",
+   "E_b05"
+  ],
+  "UUkitchen": [
+   "smpl_F1",
+   "F_b00",
+   "F_b01",
+   "F_b02",
+   "F_b03",
+   "F_b04",
+   "F_b05"
+  ],
+  "UUdeepdoc": [
+   "smpl_G1",
+   "G_b00",
+   "G_b01",
+   "G_b02"
+  ],
+  "UUsignal": [
+   "smpl_H1",
+   "H_b00",
+   "H_b01",
+   "H_b02",
+   "H_b03",
+   "H_b04",
+   "H_b05"
+  ],
+  "UUkrsample": []
+ }
+}

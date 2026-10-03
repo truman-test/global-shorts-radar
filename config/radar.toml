@@ -1,0 +1,88 @@
+# Global Shorts Radar configuration.
+# Weights are a starting hypothesis, not truth. Change them as real performance data arrives
+# and bump `weights_version` so stored scores remain traceable.
+
+[collect]
+# Each keyword x region costs one search.list call = 100 quota units (free tier: 10,000/day).
+keywords = [
+  "AI scam",
+  "phone hack",
+  "cybercrime",
+  "deepfake",
+  "weird technology",
+  "internet mystery",
+]
+regions = ["US"]
+max_results_per_query = 25
+published_within_hours = 168        # only discover videos from the last 7 days
+recent_uploads_per_channel = 15     # size of channel baseline sample
+quota_budget = 2000                 # hard stop for estimated units per run
+
+[metrics]
+max_short_seconds = 180             # Shorts may be up to 3 minutes
+min_baseline_videos = 3             # fewer -> outlier ratio is not computed
+baseline_min_age_hours = 48         # very new uploads are excluded from the channel median
+freshness_half_life_hours = 48
+
+[scoring]
+weights_version = "v0-spec"
+outlier_cap = 50.0                  # outlier ratio at/above this normalizes to 1.0 (log scale)
+velocity_cap = 100000.0             # views/hour at/above this normalizes to 1.0 (log scale)
+
+[scoring.weights]
+outlier_ratio = 25
+view_velocity = 20
+freshness = 10
+story_strength = 15
+korea_localization_gap = 15
+localization_potential = 10
+channel_fit = 5
+
+[report]
+top_n = 20
+
+# Topic lexicon used by the heuristic_v0 channel-fit judgment. Categories are a lens, not a fence.
+[lexicon.topics]
+ai = ["ai", "artificial intelligence", "chatgpt", "gpt", "deepfake", "voice clone", "voice cloning", "robot", "algorithm", "llm"]
+scam = ["scam", "scammer", "scammers", "fraud", "phishing", "fake", "con", "stole", "stolen", "smishing"]
+cybercrime = ["hacker", "hackers", "hacked", "hack", "malware", "ransomware", "breach", "leak", "leaked", "cybercrime"]
+smartphone = ["phone", "iphone", "android", "smartphone", "battery", "sim", "charger", "airtag"]
+apps_social = ["app", "apps", "tiktok", "instagram", "youtube", "whatsapp", "telegram", "social media", "account"]
+privacy = ["privacy", "tracking", "tracked", "password", "passwords", "camera", "microphone", "location", "data"]
+strange_tech = ["weird", "strange", "mystery", "creepy", "glitch", "bug", "failure", "future", "invention"]
+internet = ["internet", "online", "website", "viral", "wifi", "email", "browser"]
+
+# Terms that make a story hard to localize to Korea (US-specific systems/brands).
+[lexicon.region_specific]
+terms = ["irs", "social security", "zelle", "venmo", "cash app", "cashapp", "medicare", "dmv", "401k", "credit score", "walmart", "usps", "ssn"]
+
+# Topics that travel well to Korean audiences.
+[lexicon.universal]
+terms = ["phone", "iphone", "android", "ai", "scam", "password", "hacker", "hacked", "camera", "deepfake", "voice", "battery", "app", "privacy", "wifi", "message", "text"]
+
+# Minimal EN->KO term map for the opt-in Korea gap check (search in Korean on KR region).
+[lexicon.korean_terms]
+"ai" = "AI"
+"voice" = "목소리"
+"voice clone" = "목소리 복제"
+"voice cloning" = "목소리 복제"
+"deepfake" = "딥페이크"
+"scam" = "사기"
+"scammer" = "사기꾼"
+"phishing" = "피싱"
+"hacker" = "해커"
+"hackers" = "해커"
+"hacked" = "해킹"
+"hack" = "해킹"
+"iphone" = "아이폰"
+"android" = "안드로이드"
+"phone" = "휴대폰"
+"battery" = "배터리"
+"password" = "비밀번호"
+"camera" = "카메라"
+"privacy" = "개인정보"
+"wifi" = "와이파이"
+"app" = "앱"
+"airtag" = "에어태그"
+"malware" = "악성코드"
+"ransomware" = "랜섬웨어"
