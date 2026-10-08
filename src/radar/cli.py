@@ -14,6 +14,7 @@ from radar.collectors.youtube import QuotaTracker, YouTubeAPIError, YouTubeClien
 from radar.config import ConfigError, load_settings
 from radar.metrics.compute import parse_ts, to_iso
 from radar.reports.build import build_rows, render_markdown, write_csv
+from radar.reports.worksheet import render_worksheet_markdown, worksheet_rows, write_worksheet_csv
 from radar.storage.db import Database
 
 
@@ -80,6 +81,11 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--now")
     r.add_argument("--since", help="only candidates discovered at/after this ISO time (e.g. after a keyword change); "
                                    "default: the candidate window")
+    ws = sub.add_parser("worksheet", help="analyst worksheet for the top stories + CSV template for `judge --import`")
+    ws.add_argument("--top", type=int, default=10)
+    ws.add_argument("--out", default="reports")
+    ws.add_argument("--now")
+    ws.add_argument("--since", help="only candidates discovered at/after this ISO time")
     v = sub.add_parser("verify", help="record fact-check status for a candidate")
     v.add_argument("video_id")
     v.add_argument("--status", required=True, choices=["unverified", "in_progress", "verified", "false"])
@@ -151,6 +157,18 @@ def _dispatch(args, settings, db) -> int:
         since = to_iso(parse_ts(args.since)) if args.since else None
         md, csv_path, n = _report(db, settings, _now(args), Path(args.out), since=since)
         print(f"{n} candidates -> {md} , {csv_path}")
+        return 0
+    if cmd == "worksheet":
+        now = _now(args)
+        since = to_iso(parse_ts(args.since)) if args.since else None
+        rows = worksheet_rows(build_rows(db, settings, since), args.top)
+        out_dir = Path(args.out)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        stamp = f"{now:%Y%m%d_%H%M}"
+        csv_path = write_worksheet_csv(rows, out_dir / f"judgments_{stamp}.csv")
+        md = out_dir / f"worksheet_{stamp}.md"
+        md.write_text(render_worksheet_markdown(rows, generated_at=now, csv_name=csv_path.as_posix()), encoding="utf-8")
+        print(f"{len(rows)} stories -> {md} , {csv_path}")
         return 0
     if cmd == "verify":
         db.set_verification(args.video_id, args.status, to_iso(datetime.now(timezone.utc)), args.source, args.note)

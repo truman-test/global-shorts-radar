@@ -121,7 +121,8 @@ radar track                    # window 내 후보만 재관측 (검색 없음, 
 radar collect
 radar compute
 radar judge                                  # heuristic_v0
-radar judge --import my_judgments.csv        # 사람 판단 (heuristic보다 우선)
+radar worksheet --top 10                     # 상위 10개 사건의 판단 워크시트(md) + 판단 CSV 템플릿
+radar judge --import reports/judgments_YYYYMMDD_HHMM.csv   # 사람 판단 (heuristic보다 우선, 빈칸은 건너뜀)
 radar score
 radar report --out reports
 radar report --since 2026-10-08T06:00:00Z   # 그 시각 이후 발견된 후보만 (키워드 변경 직후 깨끗한 비교용)
@@ -129,6 +130,24 @@ radar report --since 2026-10-08T06:00:00Z   # 그 시각 이후 발견된 후보
 # 팩트체크 상태 기록
 radar verify <video_id> --status verified --source https://police.example/notice --note "경찰청 보도자료"
 ```
+
+### 사람 판단 넣기 (워크시트)
+
+점수 가중치와 키워드는 전부 가설입니다. 이를 검증할 정답 데이터는 **사람의 판단**뿐이며, `manual` 판단은 heuristic보다 우선합니다.
+
+1. `radar worksheet --top 10` → `reports/worksheet_*.md`(읽고 판단할 자료, 한국어 판단 기준 포함)와 `reports/judgments_*.csv`(영상×차원 한 줄씩, `value` 빈칸)
+2. CSV의 `value`에 0~1 값을 적습니다. 모르는 칸은 비워 둡니다 (import 때 건너뜀). `rationale`, `author`는 선택.
+3. `radar judge --import reports/judgments_*.csv` 후 `radar score` · `radar report`
+
+### 정기 실행 예시 (Windows 작업 스케줄러)
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\register_windows_tasks.ps1 -DryRun   # 등록될 명령만 출력
+powershell -ExecutionPolicy Bypass -File scripts\register_windows_tasks.ps1           # 매일 09:10 run, 6시간마다 track
+powershell -ExecutionPolicy Bypass -File scripts\register_windows_tasks.ps1 -Unregister
+```
+
+작업은 `scripts\radar_task.cmd`를 호출하며 로그는 `data\cron.log`에 쌓입니다. 하루 비용은 run 약 520 units + Korea gap 3건 약 300 units + track 4회 약 16 units입니다.
 
 ### 정기 실행 예시 (cron)
 

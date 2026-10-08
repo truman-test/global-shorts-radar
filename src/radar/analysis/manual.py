@@ -23,6 +23,8 @@ def import_manual_csv(db, path: str | Path, now: str) -> tuple[int, list[str]]:
         for lineno, row in enumerate(reader, start=2):
             video_id = (row.get("video_id") or "").strip()
             dimension = (row.get("dimension") or "").strip()
+            if not (row.get("value") or "").strip():
+                continue  # blank = not judged yet (worksheet rows are pre-filled per dimension)
             try:
                 value = float(row.get("value", ""))
             except ValueError:
