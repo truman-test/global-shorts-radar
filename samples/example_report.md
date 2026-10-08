@@ -12,17 +12,19 @@ Score legend: metric dimensions are computed from observed API data; judgment di
 
 Trend = views/hour between the last two observations ÷ the video's average views/hour before that (↑ ≥1.2x accelerating · → steady · ↓ ≤0.8x cooling · — needs `radar track`). Derived data shown for context; it is **not** part of the Radar Score.
 
+Story = candidates whose titles describe the same event (`derived:title_cluster_v0`, derived from title overlap, not part of the score). The ranking shows one row per story (its best-scoring video); `×N` = N videos cover it. Every video is listed in the CSV.
+
 ## Ranking
 
-| # | Score | Outlier | Views/h | Trend | Age (h) | Views | Topic fit | Title | Channel | Verified |
-|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | 85.6 | 29.0x | 55,769 | ↑1.5x/6h | 26 | 1,450,000 | core | [My mom got a call from 'me' — but it was an AI voice clone scam](https://www.youtube.com/shorts/smpl_A1) | ByteSized Mysteries | UNVERIFIED |
-| 2 | 76.1 | 21.7x | 54,167 | ↑1.6x/6h | 12 | 650,000 | partial | [Hackers can open your car with a $30 gadget?](https://www.youtube.com/shorts/smpl_H1) | Signal Noise | UNVERIFIED |
-| 3 | 55.3 | 9.0x | 12,000 | →1.0x/6h | 56 | 672,000 | partial | [Zelle scammers stole $2,000 from my grandma — here's how](https://www.youtube.com/shorts/smpl_E1) | MoneySafe USA | UNVERIFIED |
-| 4 | 54.0 | 10.2x | 5,395 | ↓0.3x/6h | 76 | 410,000 | partial | [Why your phone battery dies at 20% (it's not what you think)](https://www.youtube.com/shorts/smpl_D1) | PhoneFixLab | UNVERIFIED |
-| 5 | 53.7* | 16.5x | 91,667 | ↓0.5x/6h | 36 | 3,300,000 | off-topic? | [15-second garlic peeling trick](https://www.youtube.com/shorts/smpl_F1) | Kitchen Speedruns | UNVERIFIED |
-| 6 | 44.9* | n/a | 7,500 | →1.0x/6h | 46 | 345,000 | core | [This app tracked my location for 3 years and I never noticed](https://www.youtube.com/shorts/smpl_C1) | NewChannel Lab | UNVERIFIED |
-| 7 | 43.0* | 1.3x | 72,778 | ↓0.2x/6h | 36 | 2,620,000 | partial | [iPhone 18 unboxing in 60 seconds](https://www.youtube.com/shorts/smpl_B1) | TechGiant Daily | UNVERIFIED |
+| # | Score | Story | Outlier | Views/h | Trend | Age (h) | Views | Topic fit | Title | Channel | Verified |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | 85.6 |  | 29.0x | 55,769 | ↑1.5x/6h | 26 | 1,450,000 | core | [My mom got a call from 'me' — but it was an AI voice clone scam](https://www.youtube.com/shorts/smpl_A1) | ByteSized Mysteries | UNVERIFIED |
+| 2 | 76.1 |  | 21.7x | 54,167 | ↑1.6x/6h | 12 | 650,000 | partial | [Hackers can open your car with a $30 gadget?](https://www.youtube.com/shorts/smpl_H1) | Signal Noise | UNVERIFIED |
+| 3 | 55.3 |  | 9.0x | 12,000 | →1.0x/6h | 56 | 672,000 | partial | [Zelle scammers stole $2,000 from my grandma — here's how](https://www.youtube.com/shorts/smpl_E1) | MoneySafe USA | UNVERIFIED |
+| 4 | 54.0 |  | 10.2x | 5,395 | ↓0.3x/6h | 76 | 410,000 | partial | [Why your phone battery dies at 20% (it's not what you think)](https://www.youtube.com/shorts/smpl_D1) | PhoneFixLab | UNVERIFIED |
+| 5 | 53.7* |  | 16.5x | 91,667 | ↓0.5x/6h | 36 | 3,300,000 | off-topic? | [15-second garlic peeling trick](https://www.youtube.com/shorts/smpl_F1) | Kitchen Speedruns | UNVERIFIED |
+| 6 | 44.9* |  | n/a | 7,500 | →1.0x/6h | 46 | 345,000 | core | [This app tracked my location for 3 years and I never noticed](https://www.youtube.com/shorts/smpl_C1) | NewChannel Lab | UNVERIFIED |
+| 7 | 43.0* |  | 1.3x | 72,778 | ↓0.2x/6h | 36 | 2,620,000 | partial | [iPhone 18 unboxing in 60 seconds](https://www.youtube.com/shorts/smpl_B1) | TechGiant Daily | UNVERIFIED |
 
 `*` = provisional (some dimensions missing).
 
@@ -73,7 +75,7 @@ trend ↑1.5x/6h: 75,000 views/hour over the last 6h (2 observations)
 
 ### 2. Hackers can open your car with a $30 gadget?
 
-- Link: https://www.youtube.com/shorts/smpl_H1 · Channel: Signal Noise · Found by: phone hacked (US)
+- Link: https://www.youtube.com/shorts/smpl_H1 · Channel: Signal Noise · Found by: phone spyware (US)
 - Fact status: **UNVERIFIED** — the story's claims have not been checked against official/news sources
 - Radar Score: **76.1** / 100
 
@@ -116,7 +118,7 @@ trend ↑1.6x/6h: 66,667 views/hour over the last 6h (2 observations)
 
 ### 3. Zelle scammers stole $2,000 from my grandma — here's how
 
-- Link: https://www.youtube.com/shorts/smpl_E1 · Channel: MoneySafe USA · Found by: AI scam (US), cybercrime (US)
+- Link: https://www.youtube.com/shorts/smpl_E1 · Channel: MoneySafe USA · Found by: AI scam (US), data breach (US)
 - Fact status: **UNVERIFIED** — the story's claims have not been checked against official/news sources
 - Radar Score: **55.3** / 100
 
@@ -159,7 +161,7 @@ trend →1.0x/6h: 12,000 views/hour over the last 6h (2 observations)
 
 ### 4. Why your phone battery dies at 20% (it's not what you think)
 
-- Link: https://www.youtube.com/shorts/smpl_D1 · Channel: PhoneFixLab · Found by: phone hacked (US)
+- Link: https://www.youtube.com/shorts/smpl_D1 · Channel: PhoneFixLab · Found by: phone spyware (US)
 - Fact status: **UNVERIFIED** — the story's claims have not been checked against official/news sources
 - Radar Score: **54.0** / 100
 
@@ -288,7 +290,7 @@ trend →1.0x/6h: 7,500 views/hour over the last 6h (2 observations)
 
 ### 7. iPhone 18 unboxing in 60 seconds
 
-- Link: https://www.youtube.com/shorts/smpl_B1 · Channel: TechGiant Daily · Found by: phone hacked (US)
+- Link: https://www.youtube.com/shorts/smpl_B1 · Channel: TechGiant Daily · Found by: phone spyware (US)
 - Fact status: **UNVERIFIED** — the story's claims have not been checked against official/news sources
 - Radar Score: **43.0** / 100 — provisional, missing: Korea Localization Gap
 

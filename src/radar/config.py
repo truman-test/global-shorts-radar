@@ -21,6 +21,7 @@ class Settings:
     keywords: list[str]
     regions: list[str]
     relevance_language: str | None
+    exclude_channel_countries: list[str]
     max_results_per_query: int
     published_within_hours: int
     recent_uploads_per_channel: int
@@ -45,6 +46,13 @@ class Settings:
     @property
     def has_api_key(self) -> bool:
         return bool(self.api_key)
+
+
+def _string_list(value, name: str) -> list[str]:
+    """TOML lets a user write "IN" where ["IN"] was meant; iterating a string would yield letters."""
+    if isinstance(value, str) or not isinstance(value, (list, tuple)):
+        raise ConfigError(f'{name} must be a list of strings, e.g. ["IN"], got {value!r}')
+    return [str(v) for v in value]
 
 
 def read_dotenv(path: Path) -> dict[str, str]:
@@ -82,6 +90,7 @@ def load_settings(
             keywords=list(collect["keywords"]),
             regions=list(collect["regions"]),
             relevance_language=(str(collect["relevance_language"]) or None) if collect.get("relevance_language") else None,
+            exclude_channel_countries=[c.upper() for c in _string_list(collect.get("exclude_channel_countries", []), "collect.exclude_channel_countries")],
             max_results_per_query=int(collect["max_results_per_query"]),
             published_within_hours=int(collect["published_within_hours"]),
             recent_uploads_per_channel=int(collect["recent_uploads_per_channel"]),

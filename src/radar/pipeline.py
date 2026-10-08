@@ -10,6 +10,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
 from radar.analysis import heuristic, korea_gap
+from radar.analysis.cluster import cluster_titles, generic_tokens
 from radar.analysis.judgments import resolve
 from radar.collectors.youtube import QuotaBudgetError, QuotaExceededError, YouTubeAPIError
 from radar.metrics import compute as m
@@ -191,8 +192,15 @@ def _trend_columns(snapshots, published_at: str) -> dict:
 
 
 def short_candidates(db, settings, since: str | None = None) -> list[str]:
+    """Candidates that are Shorts and not excluded by channel country (opt-in config).
+
+    Channels without an observed country are always kept.
+    """
+    excluded = db.video_ids_by_channel_country(settings.exclude_channel_countries)
     out = []
     for vid in _candidates(db, settings, since):
+        if vid in excluded:
+            continue
         met = db.latest_metrics(vid)
         if met is not None and met["is_short"]:
             out.append(vid)
@@ -213,14 +221,23 @@ def run_heuristics(db, settings, now: datetime, since: str | None = None) -> int
     return n
 
 
+def korea_gap_targets(db, settings, top_n: int, since: str | None = None) -> list[str]:
+    """Top-N *stories*: one video per title cluster, so one event is not checked (and paid for) N times."""
+    items = []
+    for row in ranked_candidates(db, settings, since):
+        video = db.video(row["video_id"])
+        items.append((row["video_id"], video["title"] if video else None, video["channel_id"] if video else None))
+    ignore = generic_tokens(settings.keywords, *settings.topic_lexicon.values(),
+                            settings.universal_terms, settings.region_specific_terms)
+    return [c.leader for c in cluster_titles(items, ignore_tokens=ignore)][:top_n]
+
+
 def run_korea_gap(client, db, settings, now: datetime, top_n: int, since: str | None = None) -> list[str]:
-    """Measure KR saturation for the current top-N candidates. Returns log lines."""
+    """Measure KR saturation for the top-N stories (~101 units each). Returns log lines."""
     now_iso = m.to_iso(now)
     published_after = m.to_iso(now - timedelta(days=30))
-    ranked = ranked_candidates(db, settings, since)[:top_n]
     lines = []
-    for row in ranked:
-        vid = row["video_id"]
+    for vid in korea_gap_targets(db, settings, top_n, since):
         try:
             res = korea_gap.check_korea_gap(client, db.video(vid)["title"] or "", settings.korean_terms, published_after)
         except YouTubeAPIError as exc:

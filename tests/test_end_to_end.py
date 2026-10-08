@@ -141,7 +141,7 @@ def test_collect_reobserves_previous_candidates(db, settings, now, tmp_path):
 
     run_fixture(db, settings, now)
     data = json.loads(FixtureClient().path.read_text(encoding="utf-8"))
-    data["search"] = [e for e in data["search"] if e["match"]["q"] not in ("AI scam", "cybercrime")]
+    data["search"] = [e for e in data["search"] if e["match"]["q"] not in ("AI scam", "data breach")]
     path = tmp_path / "fixture.json"
     path.write_text(json.dumps(data), encoding="utf-8")
     later = now + timedelta(hours=6)
@@ -162,3 +162,69 @@ def test_cli_track(tmp_path, capsys):
     # standalone report days later still shows the last observation's candidates
     assert cli.main(["--db", str(db_path), "report", "--out", str(out), "--now", "2026-10-08T00:00:00Z"]) == 0
     assert "smpl_A1" in (out / "radar_20261008_0000.md").read_text(encoding="utf-8")
+
+
+def test_exclude_channel_countries_is_opt_in_and_keeps_data(db, settings, now):
+    run_fixture(db, settings, now)
+    assert len(build_rows(db, settings)) == 7
+    settings.exclude_channel_countries = ["US"]  # every sample channel is US
+    pipeline.score_candidates(db, settings, now)
+    assert build_rows(db, settings) == []
+    assert db.query("SELECT COUNT(*) AS n FROM videos")[0]["n"] > 0  # observed data untouched
+    settings.exclude_channel_countries = []
+    assert len(build_rows(db, settings)) == 7
+
+
+def test_story_clusters_in_rows_and_csv(db, settings, now, tmp_path):
+    run_fixture(db, settings, now)
+    rows = build_rows(db, settings)
+    assert all(r["story_cluster"].startswith("S") and r["cluster_size"] == 1 and r["cluster_leader"] for r in rows)
+    assert len({r["story_cluster"] for r in rows}) == len(rows)
+    text = write_csv(rows, tmp_path / "c.csv").read_text(encoding="utf-8-sig")
+    parsed = list(csv.DictReader(text.splitlines()))
+    assert parsed[0]["story_cluster"] == "S1" and parsed[0]["cluster_leader"] == "True"
+    md = render_markdown(rows, generated_at=now, mode="fixture", settings=settings)
+    assert "| Story |" in md and "Stories covered by several videos" not in md
+
+
+def test_relevance_language_is_sent_with_every_search(db, settings, now):
+    import json as _json
+    settings.relevance_language = "en"
+    run_fixture(db, settings, now)
+    params = [_json.loads(r["params_json"]) for r in db.query("SELECT params_json FROM raw_responses WHERE endpoint = 'search'")]
+    assert params and all(p.get("relevanceLanguage") == "en" for p in params)
+
+
+def test_channels_without_country_survive_the_exclusion(db, settings, now):
+    run_fixture(db, settings, now)
+    db.conn.execute("UPDATE channels SET country = NULL WHERE channel_id = 'UCbytesized'")  # smpl_A1's channel
+    db.conn.commit()
+    settings.exclude_channel_countries = ["us"]  # case-insensitive
+    assert [r["video_id"] for r in build_rows(db, settings)] == ["smpl_A1"]
+
+
+def test_korea_gap_targets_one_video_per_story(db, settings, now):
+    s = run_fixture(db, settings, now)
+    a1 = db.video("smpl_A1")
+    twin = {"id": "smpl_A1b", "snippet": {"channelId": a1["channel_id"], "publishedAt": a1["published_at"],
+            "title": "My mom got a call from 'me' - the AI voice clone scam, full story", "description": ""},
+            "contentDetails": {"duration": "PT40S"}, "statistics": {"viewCount": "900000", "likeCount": "1", "commentCount": "1"}}
+    db.upsert_video(twin, cli.to_iso(now))
+    db.add_discovery("smpl_A1b", s.run_id, "AI scam", "US", cli.to_iso(now))
+    pipeline.compute_metrics(db, settings, now)
+    pipeline.run_heuristics(db, settings, now)
+    pipeline.score_candidates(db, settings, now)
+    ranked = [r["video_id"] for r in pipeline.ranked_candidates(db, settings)]
+    assert ranked[:2] == ["smpl_A1", "smpl_A1b"], "the twin ranks right behind the original"
+    targets = pipeline.korea_gap_targets(db, settings, 3)
+    assert targets[0] == "smpl_A1" and "smpl_A1b" not in targets and len(targets) == 3
+
+
+def test_exclude_channel_countries_rejects_a_bare_string(tmp_path):
+    import pytest
+    from radar.config import DEFAULT_CONFIG_PATH, ConfigError, load_settings
+    text = DEFAULT_CONFIG_PATH.read_text(encoding="utf-8").replace('exclude_channel_countries = []', 'exclude_channel_countries = "IN"')
+    bad = tmp_path / "radar.toml"
+    bad.write_text(text, encoding="utf-8")
+    with pytest.raises(ConfigError):
+        load_settings(bad, env={}, dotenv_path="/nonexistent/.env")

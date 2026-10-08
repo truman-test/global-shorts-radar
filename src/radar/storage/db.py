@@ -268,6 +268,17 @@ class Database:
             (channel_id,),
         ).fetchone()
 
+    def video_ids_by_channel_country(self, countries: Iterable[str]) -> set[str]:
+        """Videos whose channel's observed country is in `countries` (case-insensitive ISO codes)."""
+        codes = [c.upper() for c in countries]
+        if not codes:
+            return set()
+        marks = ", ".join("?" for _ in codes)
+        rows = self.query(
+            f"SELECT v.video_id FROM videos v JOIN channels c ON c.channel_id = v.channel_id "
+            f"WHERE c.country IS NOT NULL AND upper(c.country) IN ({marks})", codes)
+        return {r["video_id"] for r in rows}
+
     def latest_snapshot(self, video_id: str) -> sqlite3.Row | None:
         return self.conn.execute(
             "SELECT * FROM video_snapshots WHERE video_id = ? ORDER BY fetched_at DESC LIMIT 1", (video_id,)

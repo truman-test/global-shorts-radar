@@ -6,6 +6,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 
+from radar.analysis.cluster import SOURCE as CLUSTER_SOURCE, cluster_titles, generic_tokens
 from radar.analysis.judgments import resolve
 from radar.pipeline import ranked_candidates
 from radar.scoring.radar import JUDGMENT_DIMENSIONS, METRIC_DIMENSIONS
@@ -75,7 +76,29 @@ def build_rows(db, settings, since: str | None = None) -> list[dict]:
             "verification_status": ver["status"] if ver else "unverified",
             "verification_sources": json.loads(ver["sources_json"]) if ver else [],
         })
+    _attach_story_clusters(rows, settings)
     return rows
+
+
+def _attach_story_clusters(rows: list[dict], settings) -> None:
+    """Derived, report-time grouping of candidates that cover the same event (title overlap)."""
+    by_id = {r["video_id"]: r for r in rows}
+    ignore = generic_tokens(settings.keywords, *settings.topic_lexicon.values(),
+                            settings.universal_terms, settings.region_specific_terms)
+    for c in cluster_titles([(r["video_id"], r["title"], r["channel_id"]) for r in rows], ignore_tokens=ignore):
+        for vid in c.members:
+            by_id[vid].update({
+                "story_cluster": f"S{c.cluster_id}",
+                "cluster_size": c.size,
+                "cluster_leader": vid == c.leader,
+                "cluster_members": list(c.members),
+                "cluster_shared_tokens": list(c.shared_tokens),
+            })
+
+
+def _cell(text) -> str:
+    """Escape a value for a Markdown table cell."""
+    return str(text or "").replace("|", "/").replace("\n", " ")
 
 
 def _fmt_int(x) -> str:
@@ -128,25 +151,53 @@ def render_markdown(rows: list[dict], *, generated_at: datetime, mode: str, sett
     out.append("Trend = views/hour between the last two observations ÷ the video's average views/hour before that "
                "(↑ ≥1.2x accelerating · → steady · ↓ ≤0.8x cooling · — needs `radar track`). Derived data shown for "
                "context; it is **not** part of the Radar Score.\n")
+    out.append(f"Story = candidates whose titles describe the same event (`{CLUSTER_SOURCE}`, derived from title "
+               "overlap, not part of the score). The ranking shows one row per story (its best-scoring video); "
+               "`×N` = N videos cover it. Every video is listed in the CSV.\n")
+    leaders = [r for r in rows if r.get("cluster_leader", True)]
+    shown = leaders[:top_n]
 
     out.append("## Ranking\n")
-    out.append("| # | Score | Outlier | Views/h | Trend | Age (h) | Views | Topic fit | Title | Channel | Verified |")
-    out.append("|---|---|---|---|---|---|---|---|---|---|---|")
-    for r in rows[:top_n]:
+    out.append("| # | Score | Story | Outlier | Views/h | Trend | Age (h) | Views | Topic fit | Title | Channel | Verified |")
+    out.append("|---|---|---|---|---|---|---|---|---|---|---|---|")
+    for r in shown:
         prov = "*" if r["missing"] else ""
-        title = (r["title"] or "").replace("|", "/")
+        title = _cell(r["title"])
+        story = f"×{r['cluster_size']}" if r.get("cluster_size", 1) > 1 else ""
         out.append(
-            f"| {r['rank']} | {r['radar_score']:.1f}{prov} | {_fmt_ratio(r['outlier_ratio'])} | "
+            f"| {r['rank']} | {r['radar_score']:.1f}{prov} | {story} | {_fmt_ratio(r['outlier_ratio'])} | "
             f"{_fmt(r['views_per_hour'], ',.0f')} | {_fmt_trend(r)} | {_fmt(r['hours_since_publish'], '.0f')} | "
             f"{_fmt_int(r['view_count'])} | {_fit_label(r['components']['channel_fit']['value'])} | "
-            f"[{title}]({r['url']}) | {r['channel_title'] or ''} | {r['verification_status'].upper()} |"
+            f"[{title}]({r['url']}) | {_cell(r['channel_title'])} | {r['verification_status'].upper()} |"
         )
     out.append("\n`*` = provisional (some dimensions missing).\n")
 
+    by_id = {r["video_id"]: r for r in rows}
+    stories = [r for r in shown if r.get("cluster_size", 1) > 1]
+    if stories:
+        out.append("## Stories covered by several videos\n")
+        out.append("One event reported by many channels is a topic signal in itself. Members are ranked videos "
+                   "outside the table above; judge the story, not any single upload.\n")
+        for r in stories:
+            members = [by_id[v] for v in r["cluster_members"]]
+            views = sum(m["view_count"] or 0 for m in members)
+            channels = len({m["channel_id"] for m in members})
+            shared = ", ".join(r["cluster_shared_tokens"][:5]) or "n/a"
+            out.append(f"- **{r['story_cluster']}** ×{r['cluster_size']} · {channels} channels · {views:,} views total · "
+                       f"shared title terms: {shared}")
+            for m in members[1:]:
+                out.append(f"  - #{m['rank']} {m['radar_score']:.1f} · {_fmt_ratio(m['outlier_ratio'])} · "
+                           f"[{_cell(m['title'])}]({m['url']}) · {_cell(m['channel_title'])}")
+        out.append("")
+
     out.append("## Candidates\n")
-    for r in rows[:top_n]:
+    for r in shown:
         out.append(f"### {r['rank']}. {r['title']}\n")
         out.append(f"- Link: {r['url']} · Channel: {r['channel_title']} · Found by: {r['found_by']}")
+        if r.get("cluster_size", 1) > 1:
+            others = ", ".join(f"#{by_id[v]['rank']}" for v in r["cluster_members"][1:])
+            out.append(f"- Story: **{r['story_cluster']}** — {r['cluster_size']} videos cover this event (also {others}); "
+                       f"shared title terms: {', '.join(r['cluster_shared_tokens'][:5]) or 'n/a'}")
         out.append(f"- Fact status: **{r['verification_status'].upper()}**"
                    + (f" (sources: {', '.join(r['verification_sources'])})" if r["verification_sources"] else
                       " — the story's claims have not been checked against official/news sources"))
@@ -179,7 +230,7 @@ def render_markdown(rows: list[dict], *, generated_at: datetime, mode: str, sett
             j = r["judgments"].get(dim)
             why = f"{c['source']}: {j['rationale']}" if j else c["source"]
             out.append(f"| {DIM_LABELS[dim]} | {kind} | {_fmt(c['value'], '.2f', '—')} | "
-                       f"{c['points']:.1f}/{c['weight']:.0f} | {why.replace('|', '/')} |")
+                       f"{c['points']:.1f}/{c['weight']:.0f} | {_cell(why)} |")
         out.append("")
         out.append("**Story DNA — to fill by analyst/LLM (do not transcribe the source)**\n")
         out.extend(f"- [ ] {f}:" for f in STORY_DNA_FIELDS)
@@ -192,7 +243,7 @@ def render_markdown(rows: list[dict], *, generated_at: datetime, mode: str, sett
 
 CSV_COLUMNS = [
     "rank", "radar_score", "provisional", "missing", "video_id", "url", "title", "channel_title", "channel_id",
-    "found_by", "published_at", "duration_seconds", "view_count", "like_count", "comment_count", "subscriber_count",
+    "found_by", "story_cluster", "cluster_size", "cluster_leader", "published_at", "duration_seconds", "view_count", "like_count", "comment_count", "subscriber_count",
     "observed_at", "hours_since_publish", "views_per_hour", "channel_median_views", "baseline_size", "baseline_kind",
     "outlier_ratio", "engagement_rate", "freshness", "recent_views_per_hour", "velocity_ratio", "trend_window_hours",
     "snapshot_count", "weights_version", "verification_status",

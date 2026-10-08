@@ -21,7 +21,7 @@ Collectors → Raw Storage → Metrics → Scoring → Analysis(heuristic/manual
 | Raw Storage | `radar/storage/db.py` | SQLite. 원본 API 응답(`raw_responses`) 보존 |
 | Metrics | `radar/metrics/compute.py` | 순수 함수: views/hour, outlier ratio, freshness, engagement, Shorts 판정 |
 | Scoring | `radar/scoring/radar.py` | 0–100 Radar Score. 가중치는 `config/radar.toml` |
-| Analysis | `radar/analysis/` | `heuristic_v0`(제목 키워드 기반 저신뢰 판단), 수동 CSV 판단 import, 한국 포화도 체크(opt-in) |
+| Analysis | `radar/analysis/` | `heuristic_v0`(제목 키워드 기반 저신뢰 판단), 수동 CSV 판단 import, 한국 포화도 체크(opt-in), 제목 기반 같은 사건 묶기(`cluster.py`) |
 | Reports | `radar/reports/build.py` | Markdown 리포트 + CSV export |
 
 ### 데이터 원칙: Observed / Derived / Judgment 분리
@@ -51,7 +51,8 @@ Collectors → Raw Storage → Metrics → Scoring → Analysis(heuristic/manual
 
 - **누락된 차원은 추정하지 않습니다.** 0점 처리 후 `missing`에 기록하고 리포트에 `*`(provisional)로 표시합니다 → 점수는 하한값.
 - 가중치는 가설입니다. 바꿀 때는 `weights_version`을 올려 저장된 점수의 추적성을 유지하세요.
-- `v0.1-live` (2026-10-08, 첫 live run 후): velocity 상한 100k → 10k (실측 p90 ≈ 2.3k, 최대 ≈ 35k), 검색에 `relevance_language = "en"` 추가. **효과는 미미했습니다**: 두 번째 live run의 발견 영상 149개 중 124개가 첫 run과 동일했고, 인도 채널 콘텐츠는 대부분 영어(`default_language=en`)라 언어 필터로는 걸러지지 않습니다 (regionCode도 지역 필터가 아님). 채널 국가(`channels.country`, observed 데이터) 기반 필터가 필요한지는 미결정, 키워드 `phone hack` → `phone hacked` (게임 치트·모드 APK 영상 유입).
+- `v0.1-live` (2026-10-08, 첫 live run 후): velocity 상한 100k → 10k (실측 p90 ≈ 2.3k, 최대 ≈ 35k), 검색에 `relevance_language = "en"` 추가. **효과는 미미했습니다**: 두 번째 live run의 발견 영상 149개 중 124개가 첫 run과 동일했고, 인도 채널 콘텐츠는 대부분 영어(`default_language=en`)라 언어 필터로는 걸러지지 않습니다 (regionCode도 지역 필터가 아님). 채널 국가(`channels.country`, observed 데이터) 기반 필터는 `exclude_channel_countries` 옵션으로 추가(기본 꺼짐), 키워드 `phone hack` → `phone hacked` (게임 치트·모드 APK 영상 유입).
+- 두 번째 보정 (같은 날): 키워드 `cybercrime` → `data breach`, `phone hacked` → `phone spyware`. 두 번째 run에서 `cybercrime` 결과 25개 중 18개, `phone hacked` 13개가 인도 채널이었고 힌디어권 "hack hai ya nahi" 형식 영상이 주를 이뤘습니다. `AI scam`(미국 9, 인도 1)은 유지.
 
 ### Outlier 계산 세부
 
@@ -77,6 +78,19 @@ window 기준 시각은 **마지막 관측 시각**이라서, 며칠 뒤에 `rad
 
 기존 DB는 실행 시 자동으로 마이그레이션됩니다 (컬럼 추가만 하며, 데이터는 삭제하지 않음).
 
+### 같은 사건 묶기 (Story cluster)
+
+첫 live run에서 인도 영화배우 딥페이크 사건 하나가 상위 20개 중 7개를 차지했습니다. 같은 사건을 여러 채널이 올린 것이라 소재로는 하나입니다.
+
+- `radar/analysis/cluster.py`: 제목 토큰(NFKC 소문자, 불용어·숫자·2글자 이하 제거, 복수형 s 제거) 중 **후보 집합에서 드문 토큰**만 비교합니다. 검색 키워드와 lexicon 용어(hack, scam, phone …)는 항상 제외합니다. 한 채널이 3개 이상 영상에 반복하는 토큰(상용 해시태그)도 그 채널의 서명일 뿐이라 제외합니다. 랭킹 순서대로 내려가며 **클러스터 대표(최고 점수) 영상과** 2개 이상 공유하면서 작은 쪽 제목의 30% 이상을 덮거나 3개 이상 공유하면 합류시킵니다. 멤버끼리 연결하면 다리 영상을 통해 무관한 사건이 연쇄로 묶이므로(첫 실데이터에서 딥페이크 사건 + 해시태그 스팸 = 29개) 대표 연결만 씁니다.
+- 보수적으로 설계했습니다. 잘못 합치는 것이 놓치는 것보다 해로우므로 단일 영상 클러스터가 대부분입니다.
+- 리포트 Ranking 표는 **사건당 한 줄**(최고 점수 영상)만 보이고 `×N`으로 영상 수를 표시합니다. "Stories covered by several videos" 섹션에 나머지 영상이 나오고, CSV에는 모든 영상이 `story_cluster`·`cluster_size`·`cluster_leader` 열과 함께 들어갑니다.
+- 점수에는 반영하지 않습니다 (`derived:title_cluster_v0`, 리포트 시점 계산, DB에 저장하지 않음).
+
+### 채널 국가 제외 (opt-in)
+
+`[collect] exclude_channel_countries = ["IN"]`처럼 지정하면 해당 국가 채널의 영상은 판단·점수·랭킹에서 빠집니다 (수집·저장은 그대로). 기본값은 비어 있으며, 채널 국가가 비어 있는 경우(live run 기준 약 25%)는 항상 유지됩니다. "전 세계 탐지"라는 목표를 좁히는 설정이므로 필요할 때만 켜세요.
+
 ## 설치
 
 ```bash
@@ -97,7 +111,7 @@ radar --db data/sample.db track --fixture     # 샘플 기준 6시간 뒤 재관
 
 # 실제 수집
 radar run                      # collect → compute → judge(heuristic) → score → report
-radar run --check-korea 5      # + 상위 5개 한국 포화도 체크 (후보당 ~101 units)
+radar run --check-korea 5      # + 상위 5개 *사건*(클러스터 대표 영상) 한국 포화도 체크 (사건당 ~101 units)
 radar track                    # window 내 후보만 재관측 (검색 없음, 50개당 1 unit) → 리포트
 
 # 단계별 실행 (API 호출 없이 재계산 가능)
@@ -154,7 +168,7 @@ abc123,korea_localization_gap,0.7,"국내 유사 콘텐츠 거의 없음",kim
 ## 리포트 읽는 법
 
 - 상단: FIXTURE 여부, "UNVERIFIED / 복제 금지" 원칙, 가중치 버전
-- Ranking 표: Score(`*`=provisional), Outlier, Views/h, Trend(`↑`/`→`/`↓`, 재관측 전에는 `—`), Age, Topic fit(`core`/`partial`/`off-topic?`), 검증 상태
+- Ranking 표: Score(`*`=provisional), Story(`×N` = 같은 사건을 다룬 영상 수, 사건당 한 줄), Outlier, Views/h, Trend(`↑`/`→`/`↓`, 재관측 전에는 `—`), Age, Topic fit(`core`/`partial`/`off-topic?`), 검증 상태
 - 후보별: Observed / Derived / Score breakdown(차원별 출처·근거) / **Story DNA 체크리스트**(분석가 또는 향후 LLM이 채움) / 독립 출처 / 독창적 한국 각도
 
 예시: [`samples/example_report.md`](samples/example_report.md) (합성 데이터로 생성).

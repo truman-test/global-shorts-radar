@@ -30,7 +30,7 @@
   },
   {
    "match": {
-    "q": "phone hacked",
+    "q": "phone spyware",
     "regionCode": "US"
    },
    "response": {
@@ -62,7 +62,7 @@
   },
   {
    "match": {
-    "q": "cybercrime",
+    "q": "data breach",
     "regionCode": "US"
    },
    "response": {

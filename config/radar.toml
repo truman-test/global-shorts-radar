@@ -6,14 +6,17 @@
 # Each keyword x region costs one search.list call = 100 quota units (free tier: 10,000/day).
 keywords = [
   "AI scam",
-  "phone hacked",
-  "cybercrime",
+  "phone spyware",
+  "data breach",
   "deepfake",
   "weird technology",
   "internet mystery",
 ]
 regions = ["US"]
 relevance_language = "en"      # search.list relevanceLanguage; regionCode alone does not filter by language
+# Opt-in: drop candidates whose channel country (observed, channels.country) is listed. Empty = keep all.
+# Channels without a country (~25% in live runs) are always kept.
+exclude_channel_countries = []
 max_results_per_query = 25
 published_within_hours = 168        # only discover videos from the last 7 days
 recent_uploads_per_channel = 15     # size of channel baseline sample
@@ -48,7 +51,7 @@ top_n = 20
 ai = ["ai", "artificial intelligence", "chatgpt", "gpt", "deepfake", "voice clone", "voice cloning", "robot", "algorithm", "llm"]
 scam = ["scam", "scammer", "scammers", "fraud", "phishing", "fake", "con", "stole", "stolen", "smishing"]
 cybercrime = ["hacker", "hackers", "hacked", "hack", "malware", "ransomware", "breach", "leak", "leaked", "cybercrime"]
-smartphone = ["phone", "iphone", "android", "smartphone", "battery", "sim", "charger", "airtag"]
+smartphone = ["phone", "iphone", "android", "smartphone", "battery", "sim", "charger", "airtag", "samsung", "galaxy", "pixel", "oppo", "xiaomi"]
 apps_social = ["app", "apps", "tiktok", "instagram", "youtube", "whatsapp", "telegram", "social media", "account"]
 privacy = ["privacy", "tracking", "tracked", "password", "passwords", "camera", "microphone", "location", "data"]
 strange_tech = ["weird", "strange", "mystery", "creepy", "glitch", "bug", "failure", "future", "invention"]

@@ -116,8 +116,8 @@ def search_response(ids):
 
 search = [
     {"match": {"q": "AI scam", "regionCode": "US"}, "response": search_response(["smpl_A1", "smpl_E1"])},
-    {"match": {"q": "phone hacked", "regionCode": "US"}, "response": search_response(["smpl_B1", "smpl_D1", "smpl_H1"])},
-    {"match": {"q": "cybercrime", "regionCode": "US"}, "response": search_response(["smpl_G1", "smpl_E1"])},
+    {"match": {"q": "phone spyware", "regionCode": "US"}, "response": search_response(["smpl_B1", "smpl_D1", "smpl_H1"])},
+    {"match": {"q": "data breach", "regionCode": "US"}, "response": search_response(["smpl_G1", "smpl_E1"])},
     {"match": {"q": "deepfake", "regionCode": "US"}, "response": search_response(["smpl_A1"])},
     {"match": {"q": "weird technology", "regionCode": "US"}, "response": search_response(["smpl_F1", "smpl_C1"])},
     {"match": {"q": "internet mystery", "regionCode": "US"}, "response": search_response(["smpl_C1"])},
