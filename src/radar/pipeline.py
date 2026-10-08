@@ -59,7 +59,8 @@ def collect(client, db, settings, now: datetime, mode: str) -> CollectSummary:
         for region in settings.regions:
             for keyword in settings.keywords:
                 try:
-                    resp = client.search_shorts(keyword, region_code=region, published_after=published_after,
+                    resp = client.search_shorts(keyword, region_code=region, relevance_language=settings.relevance_language,
+                                                published_after=published_after,
                                                 max_results=settings.max_results_per_query)
                 except QUOTA_ERRORS:
                     raise

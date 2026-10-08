@@ -6,13 +6,14 @@
 # Each keyword x region costs one search.list call = 100 quota units (free tier: 10,000/day).
 keywords = [
   "AI scam",
-  "phone hack",
+  "phone hacked",
   "cybercrime",
   "deepfake",
   "weird technology",
   "internet mystery",
 ]
 regions = ["US"]
+relevance_language = "en"      # search.list relevanceLanguage; regionCode alone does not filter by language
 max_results_per_query = 25
 published_within_hours = 168        # only discover videos from the last 7 days
 recent_uploads_per_channel = 15     # size of channel baseline sample
@@ -26,9 +27,9 @@ baseline_min_age_hours = 48         # very new uploads are excluded from the cha
 freshness_half_life_hours = 48
 
 [scoring]
-weights_version = "v0-spec"
+weights_version = "v0.1-live"      # v0-spec + velocity_cap 100k -> 10k after the first live run (2026-10-08)
 outlier_cap = 50.0                  # outlier ratio at/above this normalizes to 1.0 (log scale)
-velocity_cap = 100000.0             # views/hour at/above this normalizes to 1.0 (log scale)
+velocity_cap = 10000.0              # views/hour at/above this normalizes to 1.0 (log scale); live p90 was ~2.3k, max ~35k
 
 [scoring.weights]
 outlier_ratio = 25

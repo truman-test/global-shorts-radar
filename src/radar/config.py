@@ -20,6 +20,7 @@ class ConfigError(ValueError):
 class Settings:
     keywords: list[str]
     regions: list[str]
+    relevance_language: str | None
     max_results_per_query: int
     published_within_hours: int
     recent_uploads_per_channel: int
@@ -80,6 +81,7 @@ def load_settings(
         settings = Settings(
             keywords=list(collect["keywords"]),
             regions=list(collect["regions"]),
+            relevance_language=(str(collect["relevance_language"]) or None) if collect.get("relevance_language") else None,
             max_results_per_query=int(collect["max_results_per_query"]),
             published_within_hours=int(collect["published_within_hours"]),
             recent_uploads_per_channel=int(collect["recent_uploads_per_channel"]),

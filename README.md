@@ -42,7 +42,7 @@ Collectors → Raw Storage → Metrics → Scoring → Analysis(heuristic/manual
 | 차원 | 가중치 | 유형 | 정규화 |
 |---|---|---|---|
 | Outlier Ratio | 25 | metric | `log(ratio)/log(50)`, 1x 이하 = 0 |
-| View Velocity | 20 | metric | `log10(1+vph)/log10(1+100k)` |
+| View Velocity | 20 | metric | `log10(1+vph)/log10(1+10k)` |
 | Freshness | 10 | metric | 반감기 48h 지수 감쇠 |
 | Story Strength | 15 | judgment | heuristic_v0 / manual / (향후 LLM) |
 | Korea Localization Gap | 15 | judgment | `--check-korea` 시 KR 검색 포화도 (opt-in) |
@@ -51,6 +51,7 @@ Collectors → Raw Storage → Metrics → Scoring → Analysis(heuristic/manual
 
 - **누락된 차원은 추정하지 않습니다.** 0점 처리 후 `missing`에 기록하고 리포트에 `*`(provisional)로 표시합니다 → 점수는 하한값.
 - 가중치는 가설입니다. 바꿀 때는 `weights_version`을 올려 저장된 점수의 추적성을 유지하세요.
+- `v0.1-live` (2026-10-08, 첫 live run 후): velocity 상한 100k → 10k (실측 p90 ≈ 2.3k, 최대 ≈ 35k), 검색에 `relevance_language = "en"` 추가. **효과는 미미했습니다**: 두 번째 live run의 발견 영상 149개 중 124개가 첫 run과 동일했고, 인도 채널 콘텐츠는 대부분 영어(`default_language=en`)라 언어 필터로는 걸러지지 않습니다 (regionCode도 지역 필터가 아님). 채널 국가(`channels.country`, observed 데이터) 기반 필터가 필요한지는 미결정, 키워드 `phone hack` → `phone hacked` (게임 치트·모드 APK 영상 유입).
 
 ### Outlier 계산 세부
 
