@@ -333,6 +333,10 @@ class Database:
             (channel_id,),
         )
 
+    def discovery_sources(self, video_id: str) -> set[str]:
+        """{'keyword', 'seed_channel'} subset: how this video entered the candidate pool."""
+        return {r["source"] for r in self.query("SELECT DISTINCT source FROM discoveries WHERE video_id = ?", (video_id,))}
+
     def discovery_queries(self, video_id: str) -> list[str]:
         """Human-readable discovery sources: 'keyword (REGION)' or 'seed channel <id>'."""
         rows = self.query(

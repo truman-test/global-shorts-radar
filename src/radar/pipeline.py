@@ -197,10 +197,15 @@ def filter_reasons(db, settings, video_id: str, met=None, snap=None, score=None,
         reasons.append(f"outlier {current} < {settings.min_outlier_ratio}x")
     if score is not None and score["radar_score"] < settings.min_radar_score:
         reasons.append(f"score {score['radar_score']:.1f} < {settings.min_radar_score:.1f}")
+    text = f"{video['title'] or ''} {(video['description'] or '')[:500]}" if video else ""
     if settings.topic_categories:
-        text = f"{video['title'] or ''} {(video['description'] or '')[:500]}" if video else ""
         if not any(heuristic.matched_terms(text, settings.topic_lexicon.get(cat, [])) for cat in settings.topic_categories):
             reasons.append(f"no term from topics {settings.topic_categories}")
+    if settings.seed_uploads_need_topic_match and db.discovery_sources(video_id) == {"seed_channel"}:
+        # Title only: descriptions carry channel boilerplate ("follow me on instagram") that matches the lexicon.
+        title = video["title"] or "" if video else ""
+        if not any(heuristic.matched_terms(title, terms) for terms in settings.topic_lexicon.values()):
+            reasons.append("seed-channel upload with no digital-topic term in the title")
     return reasons
 
 

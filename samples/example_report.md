@@ -18,15 +18,15 @@ Filters: age ≤ 240h · views ≥ 100 · outlier ≥ 0x · score ≥ 0 · topic
 
 ## Ranking
 
-| # | Score | Story | Outlier | Views/h | Trend | Age (h) | Views | Topic fit | Title | Channel | Verified |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| 1 | 85.6 |  | 29.0x | 55,769 | ↑1.5x/6h | 26 | 1,450,000 | core | [My mom got a call from 'me' — but it was an AI voice clone scam](https://www.youtube.com/shorts/smpl_A1) | ByteSized Mysteries | UNVERIFIED |
-| 2 | 76.1 |  | 21.7x | 54,167 | ↑1.6x/6h | 12 | 650,000 | partial | [Hackers can open your car with a $30 gadget?](https://www.youtube.com/shorts/smpl_H1) | Signal Noise | UNVERIFIED |
-| 3 | 55.3 |  | 9.0x | 12,000 | →1.0x/6h | 56 | 672,000 | partial | [Zelle scammers stole $2,000 from my grandma — here's how](https://www.youtube.com/shorts/smpl_E1) | MoneySafe USA | UNVERIFIED |
-| 4 | 54.0 |  | 10.2x | 5,395 | ↓0.3x/6h | 76 | 410,000 | partial | [Why your phone battery dies at 20% (it's not what you think)](https://www.youtube.com/shorts/smpl_D1) | PhoneFixLab | UNVERIFIED |
-| 5 | 53.7* |  | 16.5x | 91,667 | ↓0.5x/6h | 36 | 3,300,000 | off-topic? | [15-second garlic peeling trick](https://www.youtube.com/shorts/smpl_F1) | Kitchen Speedruns | UNVERIFIED |
-| 6 | 44.9* |  | n/a | 7,500 | →1.0x/6h | 46 | 345,000 | core | [This app tracked my location for 3 years and I never noticed](https://www.youtube.com/shorts/smpl_C1) | NewChannel Lab | UNVERIFIED |
-| 7 | 43.0* |  | 1.3x | 72,778 | ↓0.2x/6h | 36 | 2,620,000 | partial | [iPhone 18 unboxing in 60 seconds](https://www.youtube.com/shorts/smpl_B1) | TechGiant Daily | UNVERIFIED |
+| # | Score | Story | Outlier | Median | Views/h | Trend | Age (h) | Views | Topic fit | Title | Channel | Verified |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | 85.6 |  | 29.0x | 50,000 | 55,769 | ↑1.5x/6h | 26 | 1,450,000 | core | [My mom got a call from 'me' — but it was an AI voice clone scam](https://www.youtube.com/shorts/smpl_A1) | ByteSized Mysteries | UNVERIFIED |
+| 2 | 76.1 |  | 21.7x | 30,000 | 54,167 | ↑1.6x/6h | 12 | 650,000 | partial | [Hackers can open your car with a $30 gadget?](https://www.youtube.com/shorts/smpl_H1) | Signal Noise | UNVERIFIED |
+| 3 | 55.3 |  | 9.0x | 75,000 | 12,000 | →1.0x/6h | 56 | 672,000 | partial | [Zelle scammers stole $2,000 from my grandma — here's how](https://www.youtube.com/shorts/smpl_E1) | MoneySafe USA | UNVERIFIED |
+| 4 | 54.0 |  | 10.2x | 40,000 | 5,395 | ↓0.3x/6h | 76 | 410,000 | partial | [Why your phone battery dies at 20% (it's not what you think)](https://www.youtube.com/shorts/smpl_D1) | PhoneFixLab | UNVERIFIED |
+| 5 | 53.7* |  | 16.5x | 200,000 | 91,667 | ↓0.5x/6h | 36 | 3,300,000 | off-topic? | [15-second garlic peeling trick](https://www.youtube.com/shorts/smpl_F1) | Kitchen Speedruns | UNVERIFIED |
+| 6 | 44.9* |  | n/a | n/a | 7,500 | →1.0x/6h | 46 | 345,000 | core | [This app tracked my location for 3 years and I never noticed](https://www.youtube.com/shorts/smpl_C1) | NewChannel Lab | UNVERIFIED |
+| 7 | 43.0* |  | 1.3x | 2,000,000 | 72,778 | ↓0.2x/6h | 36 | 2,620,000 | partial | [iPhone 18 unboxing in 60 seconds](https://www.youtube.com/shorts/smpl_B1) | TechGiant Daily | UNVERIFIED |
 
 `*` = provisional (some dimensions missing).
 

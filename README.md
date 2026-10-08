@@ -88,6 +88,7 @@ window 기준 시각은 **마지막 관측 시각**이라서, 며칠 뒤에 `rad
 - **키워드**: `[collect] keywords` × `regions`로 `search.list` (100 units/호출).
 - **Seed 채널**: `[collect] seed_channels = ["UC..."]`에 적은 채널의 최근 업로드(`recent_uploads_per_channel`개)를 검색 없이 가져옵니다 (채널당 약 3 units). `published_within_hours` 안의 업로드는 후보(`discoveries.source = seed_channel`)가 되고, 더 오래된 업로드는 그 채널의 기준선으로만 쓰입니다.
 - 두 방식은 독립적으로 범위가 적용됩니다. 키워드·지역·seed 채널을 설정에서 빼면 그것으로만 발견됐던 후보는 다음 리포트부터 빠집니다.
+- **어떤 채널을 seed로 넣을지**는 `radar suggest-seeds`가 저장된 데이터에서 규칙으로 뽑아 줍니다: 랭킹에 오른 후보 중 Radar Score ≥ 45이고 channel_fit ≥ 0.6(주제 맞음)인 영상을 낸 채널, 이미 seed인 채널 제외. 결과를 TOML 조각으로 출력하므로 검토 후 붙여 넣으면 됩니다. 현재 설정의 seed 목록은 2026-10-08 live 데이터에서 이 규칙으로 뽑은 것입니다.
 
 ### 후보 필터 (`[filter]`)
 
@@ -100,6 +101,7 @@ window 기준 시각은 **마지막 관측 시각**이라서, 며칠 뒤에 `rad
 | `min_outlier_ratio` | 0 | 0이면 outlier 계산 불가(`n/a`)인 후보도 유지, 양수면 `n/a`는 탈락 |
 | `min_radar_score` | 0 | CLI `--min-score`로 덮어쓸 수 있음 |
 | `topic_categories` | `[]` | 비어 있으면 모두 허용. 지정하면 제목·설명이 해당 `[lexicon.topics]` 카테고리 용어와 하나 이상 일치해야 함 |
+| `seed_uploads_need_topic_match` | `true` | seed 채널로**만** 발견된 업로드는 `[lexicon.topics]` 어느 카테고리든 용어 하나 이상 포함해야 함. 키워드 검색 결과는 주제가 보장되지만 seed 채널의 일상 업로드는 아니기 때문 (첫 live run에서 seed 채널의 신앙·장난감 영상이 상위에 올라옴) |
 
 `radar run --top 10 --min-score 50`처럼 CLI에서 상위 개수와 점수 하한을 바로 바꿀 수 있습니다. 리포트 상단 `Filters:` 줄에 적용된 필터가 적힙니다.
 
@@ -237,7 +239,7 @@ SQLite 파일 하나(`data/radar.db`, 기본값). 테이블은 데이터 성격�
 ## 리포트 읽는 법
 
 - 상단: FIXTURE 여부, "UNVERIFIED / 복제 금지" 원칙, 가중치 버전
-- Ranking 표: Score(`*`=provisional), Story(`×N` = 같은 사건을 다룬 영상 수, 사건당 한 줄), Outlier, Views/h, Trend(`↑`/`→`/`↓`, 재관측 전에는 `—`), Age, Topic fit(`core`/`partial`/`off-topic?`), 검증 상태
+- Ranking 표: Score(`*`=provisional), Story(`×N` = 같은 사건을 다룬 영상 수, 사건당 한 줄), Outlier, Median(채널 기준선 중앙값), Views/h, Trend(`↑`/`→`/`↓`, 재관측 전에는 `—`), Age, Topic fit(`core`/`partial`/`off-topic?`), 검증 상태
 - 후보별: **Why** 한 줄(계산된 지표만으로 설명: `20.0x channel baseline · 50,000 views/hour · published 20h ago`) / Observed / Derived / Score breakdown(차원별 출처·근거) / **Story DNA 체크리스트**(분석가 또는 향후 LLM이 채움) / 독립 출처 / 독창적 한국 각도
 
 예시: [`samples/example_report.md`](samples/example_report.md) (합성 데이터로 생성).

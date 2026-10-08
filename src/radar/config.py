@@ -43,6 +43,7 @@ class Settings:
     min_outlier_ratio: float
     min_radar_score: float
     topic_categories: list[str]
+    seed_uploads_need_topic_match: bool
     topic_lexicon: dict[str, list[str]]
     region_specific_terms: list[str]
     universal_terms: list[str]
@@ -120,6 +121,7 @@ def load_settings(
             min_outlier_ratio=float(filt.get("min_outlier_ratio", 0)),
             min_radar_score=float(filt.get("min_radar_score", 0)),
             topic_categories=[str(c).lower() for c in _string_list(filt.get("topic_categories", []), "filter.topic_categories")],
+            seed_uploads_need_topic_match=bool(filt.get("seed_uploads_need_topic_match", True)),
             topic_lexicon={k: [t.lower() for t in v] for k, v in lexicon.get("topics", {}).items()},
             region_specific_terms=[t.lower() for t in lexicon.get("region_specific", {}).get("terms", [])],
             universal_terms=[t.lower() for t in lexicon.get("universal", {}).get("terms", [])],

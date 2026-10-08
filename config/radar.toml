@@ -14,14 +14,23 @@ keywords = [
 regions = ["US"]
 # Seed channels: recent uploads of these channel ids become candidates too (channels.list +
 # playlistItems.list + videos.list = ~3 units per channel, no search). Empty = keywords only.
-seed_channels = []
+# Filled on 2026-10-08 by `radar suggest-seeds` (rule: a ranked candidate scoring >= 45 with
+# channel_fit >= 0.6, Indian channels already excluded). Review and edit freely.
+seed_channels = [
+  "UChsrqFLf9541GEaMGhIWfZw",  # Diyo Kids TV [US] 1,810 subs · best 61.4 · fit 0.8 · Would Your Kid Tap It? Uncle Himal on AI, Scams an
+  "UC8UpR3jUos1jnEJQlzZ-idw",  # Ahmed Khanji [--] 554 subs · best 56.1 · fit 0.9 · How they spy on your phone and devices
+  "UCE7spuKzxP1k8A-XucxxUAQ",  # John Casterline [US] 8,370,000 subs · best 53.7 · fit 0.8 · Insane AirBNB AI Scam 😭
+  "UCCaqZuf3oz-xd7Ut4LWY8dA",  # Oddly Told [ES] 4,000 subs · best 53.1 · fit 0.9 · Why Families Now Have a Secret Password
+  "UCEUe1bPnLYjjgLz2RZAmdeg",  # Joanna Jewell [ZA] 560,000 subs · best 52.2 · fit 0.8 · The terrifying AI scam every parent must know abou
+  "UCZaT_X_mc0BI-djXOlfhqWQ",  # VICE News [US] 9,300,000 subs · best 49.1 · fit 0.8 · They used AI to clone his boss's face.
+]
 relevance_language = "en"      # search.list relevanceLanguage; regionCode alone does not filter by language
 # Opt-in: drop candidates whose channel country (observed, channels.country) is listed. Empty = keep all.
 # Channels without a country (~25% in live runs) are always kept.
 exclude_channel_countries = ["IN"]   # on since 2026-10-08 (user decision): live runs #1-#4 were dominated by Indian-channel content
 max_results_per_query = 25
 published_within_hours = 168        # only discover videos from the last 7 days
-recent_uploads_per_channel = 15     # size of channel baseline sample
+recent_uploads_per_channel = 20     # size of channel baseline sample (and of a seed channel's observed uploads)
 quota_budget = 2000                 # hard stop for estimated units per run
 candidate_window_hours = 72         # candidates stay on the radar (and get re-tracked) this long after discovery
 
@@ -57,6 +66,10 @@ min_views = 100              # drop near-zero-view candidates
 min_outlier_ratio = 0.0      # 0 = keep candidates with no computable or low outlier ratio
 min_radar_score = 0.0
 topic_categories = []        # e.g. ["scam", "ai"]: title/description must match a term of a listed [lexicon.topics] category
+# Uploads found ONLY through a seed channel (not by any keyword) must have a term from any
+# [lexicon.topics] category in the TITLE (descriptions are channel boilerplate); keyword hits are
+# topical by construction, seed uploads are not.
+seed_uploads_need_topic_match = true
 
 # Topic lexicon used by the heuristic_v0 channel-fit judgment. Categories are a lens, not a fence.
 [lexicon.topics]

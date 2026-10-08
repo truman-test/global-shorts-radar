@@ -14,6 +14,7 @@ from radar.collectors.youtube import QuotaTracker, YouTubeAPIError, YouTubeClien
 from radar.config import ConfigError, load_settings
 from radar.metrics.compute import parse_ts, to_iso
 from radar.reports.build import build_rows, render_markdown, write_csv
+from radar.reports.seeds import DEFAULT_MIN_FIT, DEFAULT_MIN_SCORE, suggest_seed_channels, toml_snippet
 from radar.reports.worksheet import render_worksheet_markdown, worksheet_rows, write_worksheet_csv
 from radar.storage.db import Database
 
@@ -93,6 +94,10 @@ def build_parser() -> argparse.ArgumentParser:
     ws.add_argument("--out", default="reports")
     ws.add_argument("--now")
     ws.add_argument("--since", help="only candidates discovered at/after this ISO time")
+    ss = sub.add_parser("suggest-seeds", help="channels that produced well-scored on-topic candidates -> TOML snippet")
+    ss.add_argument("--min-score", type=float, default=DEFAULT_MIN_SCORE, dest="seed_min_score")
+    ss.add_argument("--min-fit", type=float, default=DEFAULT_MIN_FIT, dest="seed_min_fit")
+    ss.add_argument("--top", type=int, default=10)
     v = sub.add_parser("verify", help="record fact-check status for a candidate")
     v.add_argument("video_id")
     v.add_argument("--status", required=True, choices=["unverified", "in_progress", "verified", "false"])
@@ -182,6 +187,16 @@ def _dispatch(args, settings, db) -> int:
         md = out_dir / f"worksheet_{stamp}.md"
         md.write_text(render_worksheet_markdown(rows, generated_at=now, csv_name=csv_path.as_posix()), encoding="utf-8")
         print(f"{len(rows)} stories -> {md} , {csv_path}")
+        return 0
+    if cmd == "suggest-seeds":
+        found = suggest_seed_channels(db, settings, args.seed_min_score, args.seed_min_fit, args.top)
+        print(f"{len(found)} channels with a candidate scoring >= {args.seed_min_score:g} and channel_fit >= {args.seed_min_fit:g}:")
+        for s in found:
+            subs = "hidden" if s["subscriber_count"] is None else f"{s['subscriber_count']:,}"
+            print(f"  {s['best_score']:5.1f}  {s['ranked_candidates']} ranked  [{s['country'] or '--'}] {subs:>12} subs  "
+                  f"{s['channel_title']}  |  {s['best_title'][:60]}")
+        print("\n# paste into config/radar.toml [collect]:")
+        print(toml_snippet(found))
         return 0
     if cmd == "verify":
         db.set_verification(args.video_id, args.status, to_iso(datetime.now(timezone.utc)), args.source, args.note)

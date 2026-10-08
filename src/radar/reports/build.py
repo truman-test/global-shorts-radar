@@ -175,14 +175,15 @@ def render_markdown(rows: list[dict], *, generated_at: datetime, mode: str, sett
     shown = leaders[:top_n]
 
     out.append("## Ranking\n")
-    out.append("| # | Score | Story | Outlier | Views/h | Trend | Age (h) | Views | Topic fit | Title | Channel | Verified |")
-    out.append("|---|---|---|---|---|---|---|---|---|---|---|---|")
+    out.append("| # | Score | Story | Outlier | Median | Views/h | Trend | Age (h) | Views | Topic fit | Title | Channel | Verified |")
+    out.append("|---|---|---|---|---|---|---|---|---|---|---|---|---|")
     for r in shown:
         prov = "*" if r["missing"] else ""
         title = _cell(r["title"])
         story = f"×{r['cluster_size']}" if r.get("cluster_size", 1) > 1 else ""
         out.append(
             f"| {r['rank']} | {r['radar_score']:.1f}{prov} | {story} | {_fmt_ratio(r['outlier_ratio'])} | "
+            f"{_fmt(r['channel_median_views'], ',.0f')} | "
             f"{_fmt(r['views_per_hour'], ',.0f')} | {_fmt_trend(r)} | {_fmt(r['hours_since_publish'], '.0f')} | "
             f"{_fmt_int(r['view_count'])} | {_fit_label(r['components']['channel_fit']['value'])} | "
             f"[{title}]({r['url']}) | {_cell(r['channel_title'])} | {r['verification_status'].upper()} |"

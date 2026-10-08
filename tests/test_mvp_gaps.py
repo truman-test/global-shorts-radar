@@ -32,12 +32,18 @@ def test_seed_channel_uploads_become_candidates_without_search(db, settings, now
     assert rows[0]["found_by"] == "seed channel Signal Noise"
     src = {r["source"] for r in db.query("SELECT source FROM discoveries")}
     assert src == {"seed_channel"}
-    # uploads inside the discovery window are candidates; older ones are baseline only
-    assert s.candidates == len(ids) and s.candidates >= 2
+    # uploads inside the discovery window are discovered; those without a digital-topic term are
+    # filtered from the ranking (seed_uploads_need_topic_match), older uploads are baseline only
+    discovered = db.query("SELECT COUNT(DISTINCT video_id) AS n FROM discoveries")[0]["n"]
+    assert s.candidates == discovered and discovered > len(ids) >= 1
+    assert all("short #" not in r["title"] for r in rows), "generic 'Signal Noise short #N' uploads are not ranked"
+    settings.seed_uploads_need_topic_match = False
+    assert len(build_rows(db, settings)) > len(ids), "gate off: the generic uploads rank again"
 
 
 def test_seed_and_keywords_combine_and_scope_independently(db, settings, now):
     settings.seed_channels = ["UCsignal"]
+    settings.seed_uploads_need_topic_match = False  # count scoping, not the topic gate
     s, _ = _run(db, settings, now)
     ids = {r["video_id"] for r in build_rows(db, settings)}
     assert {"smpl_A1", "smpl_H1"} <= ids
@@ -154,3 +160,12 @@ def test_max_age_is_measured_at_the_last_observation(db, settings, now):
     reasons = pipeline.filter_reasons(db, settings, "smpl_H1", anchor=now + timedelta(days=5))
     assert reasons and reasons[0].startswith("age ")
     assert pipeline.filter_reasons(db, settings, "smpl_H1") == []
+
+
+def test_seed_topic_gate_does_not_touch_keyword_hits(db, settings, now):
+    settings.seed_channels = ["UCkitchen"]  # F1 "garlic peeling trick" is a keyword hit too
+    _run(db, settings, now)
+    rows = {r["video_id"]: r for r in build_rows(db, settings)}
+    assert "smpl_F1" in rows, "found by a keyword as well: the seed gate does not apply"
+    assert db.discovery_sources("smpl_F1") == {"keyword", "seed_channel"}
+    assert pipeline.filter_reasons(db, settings, "smpl_F1") == []
