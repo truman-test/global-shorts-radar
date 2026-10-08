@@ -14,6 +14,8 @@ Trend = views/hour between the last two observations ÷ the video's average view
 
 Story = candidates whose titles describe the same event (`derived:title_cluster_v0`, derived from title overlap, not part of the score). The ranking shows one row per story (its best-scoring video); `×N` = N videos cover it. Every video is listed in the CSV.
 
+Filters: age ≤ 240h · views ≥ 100 · outlier ≥ 0x · score ≥ 0 · topics: any
+
 ## Ranking
 
 | # | Score | Story | Outlier | Views/h | Trend | Age (h) | Views | Topic fit | Title | Channel | Verified |
@@ -35,6 +37,7 @@ Story = candidates whose titles describe the same event (`derived:title_cluster_
 - Link: https://www.youtube.com/shorts/smpl_A1 · Channel: ByteSized Mysteries · Found by: AI scam (US)
 - Fact status: **UNVERIFIED** — the story's claims have not been checked against official/news sources
 - Radar Score: **85.6** / 100
+- Why (observed metrics only): 29.0x channel baseline · 55,769 views/hour · published 26h ago (freshness 0.69) · trend ↑1.5x/6h
 
 **Observed** (YouTube Data API, as of 2026-10-03T06:00:00Z)
 
@@ -78,6 +81,7 @@ trend ↑1.5x/6h: 75,000 views/hour over the last 6h (2 observations)
 - Link: https://www.youtube.com/shorts/smpl_H1 · Channel: Signal Noise · Found by: phone spyware (US)
 - Fact status: **UNVERIFIED** — the story's claims have not been checked against official/news sources
 - Radar Score: **76.1** / 100
+- Why (observed metrics only): 21.7x channel baseline · 54,167 views/hour · published 12h ago (freshness 0.84) · trend ↑1.6x/6h
 
 **Observed** (YouTube Data API, as of 2026-10-03T06:00:00Z)
 
@@ -121,6 +125,7 @@ trend ↑1.6x/6h: 66,667 views/hour over the last 6h (2 observations)
 - Link: https://www.youtube.com/shorts/smpl_E1 · Channel: MoneySafe USA · Found by: AI scam (US), data breach (US)
 - Fact status: **UNVERIFIED** — the story's claims have not been checked against official/news sources
 - Radar Score: **55.3** / 100
+- Why (observed metrics only): 9.0x channel baseline · 12,000 views/hour · published 56h ago (freshness 0.45) · trend →1.0x/6h
 
 **Observed** (YouTube Data API, as of 2026-10-03T06:00:00Z)
 
@@ -164,6 +169,7 @@ trend →1.0x/6h: 12,000 views/hour over the last 6h (2 observations)
 - Link: https://www.youtube.com/shorts/smpl_D1 · Channel: PhoneFixLab · Found by: phone spyware (US)
 - Fact status: **UNVERIFIED** — the story's claims have not been checked against official/news sources
 - Radar Score: **54.0** / 100
+- Why (observed metrics only): 10.2x channel baseline · 5,395 views/hour · published 76h ago (freshness 0.33) · trend ↓0.3x/6h
 
 **Observed** (YouTube Data API, as of 2026-10-03T06:00:00Z)
 
@@ -207,6 +213,7 @@ trend ↓0.3x/6h: 1,667 views/hour over the last 6h (2 observations)
 - Link: https://www.youtube.com/shorts/smpl_F1 · Channel: Kitchen Speedruns · Found by: weird technology (US)
 - Fact status: **UNVERIFIED** — the story's claims have not been checked against official/news sources
 - Radar Score: **53.7** / 100 — provisional, missing: Korea Localization Gap
+- Why (observed metrics only): 16.5x channel baseline · 91,667 views/hour · published 36h ago (freshness 0.59) · trend ↓0.5x/6h
 
 **Observed** (YouTube Data API, as of 2026-10-03T06:00:00Z)
 
@@ -250,6 +257,7 @@ trend ↓0.5x/6h: 50,000 views/hour over the last 6h (2 observations)
 - Link: https://www.youtube.com/shorts/smpl_C1 · Channel: NewChannel Lab · Found by: internet mystery (US), weird technology (US)
 - Fact status: **UNVERIFIED** — the story's claims have not been checked against official/news sources
 - Radar Score: **44.9** / 100 — provisional, missing: Outlier Ratio, Korea Localization Gap
+- Why (observed metrics only): no channel baseline yet · 7,500 views/hour · published 46h ago (freshness 0.51) · trend →1.0x/6h
 
 **Observed** (YouTube Data API, as of 2026-10-03T06:00:00Z)
 
@@ -293,6 +301,7 @@ trend →1.0x/6h: 7,500 views/hour over the last 6h (2 observations)
 - Link: https://www.youtube.com/shorts/smpl_B1 · Channel: TechGiant Daily · Found by: phone spyware (US)
 - Fact status: **UNVERIFIED** — the story's claims have not been checked against official/news sources
 - Radar Score: **43.0** / 100 — provisional, missing: Korea Localization Gap
+- Why (observed metrics only): 1.3x channel baseline · 72,778 views/hour · published 36h ago (freshness 0.59) · trend ↓0.2x/6h
 
 **Observed** (YouTube Data API, as of 2026-10-03T06:00:00Z)
 

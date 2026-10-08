@@ -73,6 +73,7 @@ CREATE TABLE IF NOT EXISTS discoveries (
     query TEXT NOT NULL,
     region TEXT,
     discovered_at TEXT NOT NULL,
+    source TEXT NOT NULL DEFAULT 'keyword',   -- keyword | seed_channel (query = channel id)
     PRIMARY KEY (video_id, run_id, query, region)
 );
 
@@ -139,6 +140,7 @@ MIGRATIONS = [
     ("metrics", "velocity_ratio", "REAL"),
     ("metrics", "trend_window_hours", "REAL"),
     ("metrics", "snapshot_count", "INTEGER"),
+    ("discoveries", "source", "TEXT NOT NULL DEFAULT 'keyword'"),
 ]
 
 
@@ -237,10 +239,12 @@ class Database:
         )
         self.conn.commit()
 
-    def add_discovery(self, video_id: str, run_id: int, query: str, region: str | None, discovered_at: str) -> None:
+    def add_discovery(self, video_id: str, run_id: int, query: str, region: str | None, discovered_at: str,
+                      source: str = "keyword") -> None:
+        """source: 'keyword' (query = search keyword) or 'seed_channel' (query = channel id)."""
         self.conn.execute(
-            "INSERT OR IGNORE INTO discoveries (video_id, run_id, query, region, discovered_at) VALUES (?, ?, ?, ?, ?)",
-            (video_id, run_id, query, region or "", discovered_at),
+            "INSERT OR IGNORE INTO discoveries (video_id, run_id, query, region, discovered_at, source) VALUES (?, ?, ?, ?, ?, ?)",
+            (video_id, run_id, query, region or "", discovered_at, source),
         )
         self.conn.commit()
 
@@ -249,28 +253,43 @@ class Database:
         return row["t"] if row else None
 
     def candidate_ids(self, since: str | None = None, queries: Iterable[str] | None = None,
-                      regions: Iterable[str] | None = None) -> list[str]:
-        """Videos discovered by search at or after `since` (ISO; all if None), optionally only by `queries`/`regions`.
+                      regions: Iterable[str] | None = None, seed_channels: Iterable[str] | None = None) -> list[str]:
+        """Videos discovered at or after `since` (ISO; all if None), scoped to the current configuration.
 
-        Passing the currently configured keywords as `queries` retires candidates that were only
-        found by a keyword that has since been removed, without deleting their discoveries.
+        `queries`/`regions` scope keyword discoveries and `seed_channels` scopes seed-channel
+        discoveries; a video qualifies through either path. Passing the configured values retires
+        candidates that were only found by a keyword, region or seed channel that has since been
+        removed, without deleting their discovery rows. None for all three = no scoping.
         """
         where, params = [], []
         if since is not None:
             where.append("discovered_at >= ?")
             params.append(since)
-        if queries is not None:
-            qs = list(queries)
-            if not qs:
-                return []
-            where.append(f"query IN ({', '.join('?' for _ in qs)})")
-            params.extend(qs)
-        if regions is not None:
-            rs = list(regions)
-            if not rs:
-                return []
-            where.append(f"region IN ({', '.join('?' for _ in rs)})")
-            params.extend(rs)
+        scopes = []
+        if queries is not None or regions is not None:
+            clause, ok = ["source = 'keyword'"], True
+            for col, values in (("query", queries), ("region", regions)):
+                if values is None:
+                    continue
+                vs = list(values)
+                if not vs:
+                    ok = False
+                    break
+                clause.append(f"{col} IN ({', '.join('?' for _ in vs)})")
+                params.extend(vs)
+            if ok:
+                scopes.append("(" + " AND ".join(clause) + ")")
+            else:
+                params = params[:1] if since is not None else []
+        if seed_channels is not None:
+            seeds = list(seed_channels)
+            if seeds:
+                scopes.append(f"(source = 'seed_channel' AND query IN ({', '.join('?' for _ in seeds)}))")
+                params.extend(seeds)
+        if (queries is not None or regions is not None or seed_channels is not None) and not scopes:
+            return []
+        if scopes:
+            where.append("(" + " OR ".join(scopes) + ")")
         sql = "SELECT DISTINCT video_id FROM discoveries" + (" WHERE " + " AND ".join(where) if where else "") + " ORDER BY video_id"
         return [r["video_id"] for r in self.query(sql, params)]
 
@@ -315,8 +334,18 @@ class Database:
         )
 
     def discovery_queries(self, video_id: str) -> list[str]:
-        rows = self.query("SELECT DISTINCT query, region FROM discoveries WHERE video_id = ?", (video_id,))
-        return [f"{r['query']} ({r['region']})" if r["region"] else r["query"] for r in rows]
+        """Human-readable discovery sources: 'keyword (REGION)' or 'seed channel <id>'."""
+        rows = self.query(
+            """SELECT DISTINCT d.query, d.region, d.source, c.title AS channel_title FROM discoveries d
+               LEFT JOIN channels c ON d.source = 'seed_channel' AND c.channel_id = d.query
+               WHERE d.video_id = ?""", (video_id,))
+        out = []
+        for r in rows:
+            if r["source"] == "seed_channel":
+                out.append(f"seed channel {r['channel_title'] or r['query']}")
+            else:
+                out.append(f"{r['query']} ({r['region']})" if r["region"] else r["query"])
+        return out
 
     # -- derived ---------------------------------------------------------
     def save_metrics(self, row: dict) -> None:

@@ -76,20 +76,47 @@ def collect(client, db, settings, now: datetime, mode: str) -> CollectSummary:
                         discovered.append(vid)
         discovered = list(dict.fromkeys(discovered))
 
-        # 2. Observed stats for new hits plus earlier candidates still in the window, so every
-        #    tracked candidate gets a fresh snapshot (videos.list: 1 unit per 50 ids).
-        previous = [v for v in db.candidate_ids(window_start(db, settings, now), settings.keywords, settings.regions)
-                    if v not in discovered]
+        # 1b. Seed channels: every recent upload is observed; those inside the discovery window
+        #     become candidates (source = seed_channel), the rest serve as the channel baseline.
+        seeded: set[str] = set()
+        seed_discovered: list[str] = []
+        seed_upload_ids: list[str] = []
+        for ch in client.channels(settings.seed_channels) if settings.seed_channels else []:
+            db.upsert_channel(ch, now_iso)
+            summary.channels += 1
+            seeded.add(ch["id"])
+            uploads = ch.get("contentDetails", {}).get("relatedPlaylists", {}).get("uploads")
+            if not uploads:
+                continue
+            try:
+                seed_upload_ids.extend(client.recent_upload_ids(uploads, settings.recent_uploads_per_channel))
+            except QUOTA_ERRORS:
+                raise
+            except YouTubeAPIError as exc:
+                summary.errors.append(f"uploads for seed channel {ch['id']}: {exc}")
+        for item in client.videos(seed_upload_ids) if seed_upload_ids else []:  # batched: 1 unit per 50 ids
+            db.upsert_video(item, now_iso)
+            if item.get("snippet", {}).get("publishedAt", "") >= published_after:
+                db.add_discovery(item["id"], run_id, item["snippet"]["channelId"], None, now_iso, source="seed_channel")
+                seed_discovered.append(item["id"])
+            else:
+                summary.baseline_videos += 1
+        discovered = [v for v in discovered if v not in seed_discovered]
+
+        # 2. Observed stats for new keyword hits plus earlier candidates still in the window, so
+        #    every tracked candidate gets a fresh snapshot (videos.list: 1 unit per 50 ids).
+        previous = [v for v in _candidates(db, settings, window_start(db, settings, now))
+                    if v not in discovered and v not in seed_discovered]
         items = client.videos(discovered + previous) if (discovered or previous) else []
         for item in items:
             db.upsert_video(item, now_iso)
         new_items = [i for i in items if i["id"] not in previous]
-        summary.candidates = len(new_items)
+        summary.candidates = len(new_items) + len(seed_discovered)
         summary.refreshed = len(items) - len(new_items)
 
-        # 3. Channels + recent uploads for the outlier baseline (new hits only; earlier
-        #    candidates' channels were sampled when they were discovered).
-        channel_ids = list(dict.fromkeys(i["snippet"]["channelId"] for i in new_items))
+        # 3. Channels + recent uploads for the outlier baseline (new keyword hits only; seed and
+        #    earlier candidates' channels were sampled already).
+        channel_ids = [c for c in dict.fromkeys(i["snippet"]["channelId"] for i in new_items) if c not in seeded]
         for ch in client.channels(channel_ids) if channel_ids else []:
             db.upsert_channel(ch, now_iso)
             summary.channels += 1
@@ -122,7 +149,7 @@ def track(client, db, settings, now: datetime, mode: str) -> CollectSummary:
     Each call appends a snapshot per video; repeated tracking enables velocity_trend.
     """
     now_iso = m.to_iso(now)
-    ids = db.candidate_ids(window_start(db, settings, now), settings.keywords, settings.regions)
+    ids = _candidates(db, settings, window_start(db, settings, now))
     run_id = db.start_run(now_iso, f"{mode}-track")
     client.raw_sink = lambda endpoint, params, data: db.save_raw(run_id, endpoint, params, now_iso, data)
     summary = CollectSummary(run_id=run_id)
@@ -139,8 +166,42 @@ def track(client, db, settings, now: datetime, mode: str) -> CollectSummary:
 
 
 def _candidates(db, settings, since: str | None) -> list[str]:
-    """Candidates in the window that were found by a currently configured keyword and region."""
-    return db.candidate_ids(since if since is not None else window_start(db, settings), settings.keywords, settings.regions)
+    """Candidates in the window found by a currently configured keyword+region or seed channel."""
+    return db.candidate_ids(since if since is not None else window_start(db, settings),
+                            settings.keywords, settings.regions, settings.seed_channels)
+
+
+def filter_reasons(db, settings, video_id: str, met=None, snap=None, score=None, anchor: datetime | None = None) -> list[str]:
+    """Why a scored candidate is left out of the ranking ([filter] config). Empty = it passes.
+
+    Age is measured at `anchor` (default: the latest run's observation time, like the candidate
+    window), not at the wall clock, so a report generated days later still reflects the last
+    observation. Rows already fetched by the caller can be passed in to avoid re-querying.
+    """
+    met = db.latest_metrics(video_id) if met is None else met
+    snap = db.latest_snapshot(video_id) if snap is None else snap
+    score = db.latest_score(video_id) if score is None else score
+    if anchor is None:
+        latest = db.latest_run_started_at()
+        anchor = m.parse_ts(latest) if latest else None
+    reasons = []
+    video = db.video(video_id)
+    if anchor is not None and video is not None:
+        age = m.hours_since(video["published_at"], anchor)
+        if age > settings.max_age_hours:
+            reasons.append(f"age {age:.0f}h > {settings.max_age_hours:.0f}h (as of {m.to_iso(anchor)})")
+    if snap is not None and (snap["view_count"] or 0) < settings.min_views:
+        reasons.append(f"views {snap['view_count'] or 0} < {settings.min_views}")
+    if settings.min_outlier_ratio > 0 and (met is None or met["outlier_ratio"] is None or met["outlier_ratio"] < settings.min_outlier_ratio):
+        current = "n/a" if met is None or met["outlier_ratio"] is None else f"{met['outlier_ratio']:.1f}x"
+        reasons.append(f"outlier {current} < {settings.min_outlier_ratio}x")
+    if score is not None and score["radar_score"] < settings.min_radar_score:
+        reasons.append(f"score {score['radar_score']:.1f} < {settings.min_radar_score:.1f}")
+    if settings.topic_categories:
+        text = f"{video['title'] or ''} {(video['description'] or '')[:500]}" if video else ""
+        if not any(heuristic.matched_terms(text, settings.topic_lexicon.get(cat, [])) for cat in settings.topic_categories):
+            reasons.append(f"no term from topics {settings.topic_categories}")
+    return reasons
 
 
 def compute_metrics(db, settings, now: datetime, since: str | None = None) -> int:
@@ -282,10 +343,13 @@ def score_candidates(db, settings, now: datetime, since: str | None = None) -> i
 
 
 def ranked_candidates(db, settings, since: str | None = None) -> list[dict]:
+    """Scored Shorts that pass the [filter] config, best first."""
+    latest = db.latest_run_started_at()
+    anchor = m.parse_ts(latest) if latest else None
     rows = []
     for vid in short_candidates(db, settings, since):
         score = db.latest_score(vid)
-        if score is not None:
+        if score is not None and not filter_reasons(db, settings, vid, score=score, anchor=anchor):
             rows.append({"video_id": vid, "radar_score": score["radar_score"]})
     rows.sort(key=lambda r: (-r["radar_score"], r["video_id"]))
     return rows

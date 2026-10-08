@@ -96,6 +96,20 @@ def _attach_story_clusters(rows: list[dict], settings) -> None:
             })
 
 
+def _why(r: dict) -> list[str]:
+    """Plain-language reasons from computed metrics (no model, no judgment)."""
+    parts = []
+    if r["outlier_ratio"] is not None:
+        parts.append(f"{r['outlier_ratio']:.1f}x channel baseline")
+    else:
+        parts.append("no channel baseline yet")
+    parts.append(f"{_fmt(r['views_per_hour'], ',.0f')} views/hour")
+    parts.append(f"published {_fmt(r['hours_since_publish'], '.0f')}h ago (freshness {_fmt(r['freshness'], '.2f')})")
+    if r.get("velocity_ratio") is not None:
+        parts.append(f"trend {_fmt_trend(r)}")
+    return parts
+
+
 def _cell(text) -> str:
     """Escape a value for a Markdown table cell."""
     return str(text or "").replace("|", "/").replace("\n", " ")
@@ -154,6 +168,9 @@ def render_markdown(rows: list[dict], *, generated_at: datetime, mode: str, sett
     out.append(f"Story = candidates whose titles describe the same event (`{CLUSTER_SOURCE}`, derived from title "
                "overlap, not part of the score). The ranking shows one row per story (its best-scoring video); "
                "`×N` = N videos cover it. Every video is listed in the CSV.\n")
+    topics = ", ".join(settings.topic_categories) if settings.topic_categories else "any"
+    out.append(f"Filters: age ≤ {settings.max_age_hours:.0f}h · views ≥ {settings.min_views:,} · "
+               f"outlier ≥ {settings.min_outlier_ratio:g}x · score ≥ {settings.min_radar_score:g} · topics: {topics}\n")
     leaders = [r for r in rows if r.get("cluster_leader", True)]
     shown = leaders[:top_n]
 
@@ -203,6 +220,7 @@ def render_markdown(rows: list[dict], *, generated_at: datetime, mode: str, sett
                       " — the story's claims have not been checked against official/news sources"))
         out.append(f"- Radar Score: **{r['radar_score']:.1f}** / 100"
                    + (f" — provisional, missing: {', '.join(DIM_LABELS[m] for m in r['missing'])}" if r["missing"] else ""))
+        out.append("- Why (observed metrics only): " + " · ".join(_why(r)))
         out.append("")
         out.append("**Observed** (YouTube Data API, as of " + str(r["observed_at"]) + ")\n")
         out.append(f"views {_fmt_int(r['view_count'])} · likes {_fmt_int(r['like_count'])} · comments "

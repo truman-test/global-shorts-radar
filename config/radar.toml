@@ -12,6 +12,9 @@ keywords = [
   "internet mystery",
 ]
 regions = ["US"]
+# Seed channels: recent uploads of these channel ids become candidates too (channels.list +
+# playlistItems.list + videos.list = ~3 units per channel, no search). Empty = keywords only.
+seed_channels = []
 relevance_language = "en"      # search.list relevanceLanguage; regionCode alone does not filter by language
 # Opt-in: drop candidates whose channel country (observed, channels.country) is listed. Empty = keep all.
 # Channels without a country (~25% in live runs) are always kept.
@@ -45,6 +48,15 @@ channel_fit = 5
 
 [report]
 top_n = 20
+
+# Candidate filters, applied after scoring (ranking, Korea gap targets, reports). Deliberately
+# loose: the point of v0 is to observe the data, not to hide it.
+[filter]
+max_age_hours = 240          # drop candidates older than this at report time
+min_views = 100              # drop near-zero-view candidates
+min_outlier_ratio = 0.0      # 0 = keep candidates with no computable or low outlier ratio
+min_radar_score = 0.0
+topic_categories = []        # e.g. ["scam", "ai"]: title/description must match a term of a listed [lexicon.topics] category
 
 # Topic lexicon used by the heuristic_v0 channel-fit judgment. Categories are a lens, not a fence.
 [lexicon.topics]

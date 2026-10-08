@@ -19,6 +19,7 @@ class ConfigError(ValueError):
 @dataclass
 class Settings:
     keywords: list[str]
+    seed_channels: list[str]
     regions: list[str]
     relevance_language: str | None
     exclude_channel_countries: list[str]
@@ -37,6 +38,11 @@ class Settings:
     outlier_cap: float
     velocity_cap: float
     top_n: int
+    max_age_hours: float
+    min_views: int
+    min_outlier_ratio: float
+    min_radar_score: float
+    topic_categories: list[str]
     topic_lexicon: dict[str, list[str]]
     region_specific_terms: list[str]
     universal_terms: list[str]
@@ -87,8 +93,10 @@ def load_settings(
     try:
         collect, metrics, scoring = raw["collect"], raw["metrics"], raw["scoring"]
         lexicon = raw.get("lexicon", {})
+        filt = raw.get("filter", {})
         settings = Settings(
             keywords=list(collect["keywords"]),
+            seed_channels=_string_list(collect.get("seed_channels", []), "collect.seed_channels"),
             regions=list(collect["regions"]),
             relevance_language=(str(collect["relevance_language"]) or None) if collect.get("relevance_language") else None,
             exclude_channel_countries=[c.upper() for c in _string_list(collect.get("exclude_channel_countries", []), "collect.exclude_channel_countries")],
@@ -107,6 +115,11 @@ def load_settings(
             outlier_cap=float(scoring["outlier_cap"]),
             velocity_cap=float(scoring["velocity_cap"]),
             top_n=int(raw.get("report", {}).get("top_n", 20)),
+            max_age_hours=float(filt.get("max_age_hours", 240)),
+            min_views=int(filt.get("min_views", 0)),
+            min_outlier_ratio=float(filt.get("min_outlier_ratio", 0)),
+            min_radar_score=float(filt.get("min_radar_score", 0)),
+            topic_categories=[str(c).lower() for c in _string_list(filt.get("topic_categories", []), "filter.topic_categories")],
             topic_lexicon={k: [t.lower() for t in v] for k, v in lexicon.get("topics", {}).items()},
             region_specific_terms=[t.lower() for t in lexicon.get("region_specific", {}).get("terms", [])],
             universal_terms=[t.lower() for t in lexicon.get("universal", {}).get("terms", [])],
@@ -120,6 +133,9 @@ def load_settings(
     from radar.scoring.radar import validate_weights  # local import keeps config free of cycles
 
     validate_weights(settings.weights)
+    unknown = set(settings.topic_categories) - set(settings.topic_lexicon)
+    if unknown:
+        raise ConfigError(f"filter.topic_categories not in [lexicon.topics]: {sorted(unknown)}")
     if settings.max_results_per_query < 1 or settings.max_results_per_query > 50:
         raise ConfigError("max_results_per_query must be between 1 and 50")
     return settings

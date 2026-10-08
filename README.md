@@ -16,7 +16,7 @@ Collectors → Raw Storage → Metrics → Scoring → Analysis(heuristic/manual
 
 | 계층 | 모듈 | 내용 |
 |---|---|---|
-| Collectors | `radar/collectors/youtube.py` | YouTube Data API v3 (HTTP만, scoring 없음). 재시도, quota 예산, 오류 시 API 키 마스킹 |
+| Collectors | `radar/collectors/youtube.py` | YouTube Data API v3 (HTTP만, scoring 없음). 키워드 검색 + seed 채널 최근 업로드. 재시도, quota 예산, 오류 시 API 키 마스킹 |
 | | `radar/collectors/fixture.py` | 동일 인터페이스의 오프라인 수집기 (합성 샘플 데이터) |
 | Raw Storage | `radar/storage/db.py` | SQLite. 원본 API 응답(`raw_responses`) 보존 |
 | Metrics | `radar/metrics/compute.py` | 순수 함수: views/hour, outlier ratio, freshness, engagement, Shorts 판정 |
@@ -29,7 +29,7 @@ Collectors → Raw Storage → Metrics → Scoring → Analysis(heuristic/manual
 | 구분 | 테이블 | 예 |
 |---|---|---|
 | Raw | `raw_responses` | API 응답 JSON 원본 (키 제외) |
-| Observed | `videos`, `video_snapshots`, `channels`, `channel_snapshots`, `discoveries` | 조회수, 좋아요, 댓글, 구독자, 게시시각, 길이 |
+| Observed | `videos`, `video_snapshots`, `channels`, `channel_snapshots`, `discoveries` | 조회수, 좋아요, 댓글, 구독자, 게시시각, 길이, 발견 출처(`source`: keyword / seed_channel, `query`, `region`, `discovered_at`) |
 | Derived (결정적 계산) | `metrics`, `scores` | views_per_hour, outlier_ratio, freshness, radar_score |
 | Judgment (판단) | `judgments` | story_strength, localization_potential, channel_fit, korea_localization_gap — **모든 행에 `source` 기록** |
 | Fact check | `verification` | 기본값 `unverified` |
@@ -83,6 +83,26 @@ window 기준 시각은 **마지막 관측 시각**이라서, 며칠 뒤에 `rad
 
 기존 DB는 실행 시 자동으로 마이그레이션됩니다 (컬럼 추가만 하며, 데이터는 삭제하지 않음).
 
+### 후보 발견 방식: 키워드 + Seed 채널
+
+- **키워드**: `[collect] keywords` × `regions`로 `search.list` (100 units/호출).
+- **Seed 채널**: `[collect] seed_channels = ["UC..."]`에 적은 채널의 최근 업로드(`recent_uploads_per_channel`개)를 검색 없이 가져옵니다 (채널당 약 3 units). `published_within_hours` 안의 업로드는 후보(`discoveries.source = seed_channel`)가 되고, 더 오래된 업로드는 그 채널의 기준선으로만 쓰입니다.
+- 두 방식은 독립적으로 범위가 적용됩니다. 키워드·지역·seed 채널을 설정에서 빼면 그것으로만 발견됐던 후보는 다음 리포트부터 빠집니다.
+
+### 후보 필터 (`[filter]`)
+
+점수 계산 뒤 랭킹·Korea gap 대상·리포트에 적용됩니다. 저장된 데이터에는 손대지 않습니다. 기본값은 일부러 느슨합니다 (v0의 목적은 데이터를 **보는** 것).
+
+| 설정 | 기본 | 의미 |
+|---|---|---|
+| `max_age_hours` | 240 | 게시 후 경과 시간 상한. 기준 시각은 **마지막 관측 시각**(후보 window와 동일)이라 며칠 뒤 `report`를 돌려도 마지막 수집 결과가 유지됨 |
+| `min_views` | 100 | 조회수 하한 |
+| `min_outlier_ratio` | 0 | 0이면 outlier 계산 불가(`n/a`)인 후보도 유지, 양수면 `n/a`는 탈락 |
+| `min_radar_score` | 0 | CLI `--min-score`로 덮어쓸 수 있음 |
+| `topic_categories` | `[]` | 비어 있으면 모두 허용. 지정하면 제목·설명이 해당 `[lexicon.topics]` 카테고리 용어와 하나 이상 일치해야 함 |
+
+`radar run --top 10 --min-score 50`처럼 CLI에서 상위 개수와 점수 하한을 바로 바꿀 수 있습니다. 리포트 상단 `Filters:` 줄에 적용된 필터가 적힙니다.
+
 ### 같은 사건 묶기 (Story cluster)
 
 첫 live run에서 인도 영화배우 딥페이크 사건 하나가 상위 20개 중 7개를 차지했습니다. 같은 사건을 여러 채널이 올린 것이라 소재로는 하나입니다.
@@ -105,6 +125,10 @@ cp .env.example .env   # YOUTUBE_API_KEY 입력 (.env는 git에 포함되지 않
 ```
 
 API 키: Google Cloud Console → YouTube Data API v3 활성화 → API 키 생성 (API 제한을 YouTube Data API v3로 걸어두는 것을 권장).
+
+키는 `.env`(로컬) 또는 환경 변수 `YOUTUBE_API_KEY`로만 전달합니다. 환경 변수가 `.env`보다 우선합니다.
+
+**Codex Cloud / CI에서 실행할 때**: 저장소에는 키를 절대 넣지 말고, 실행 환경의 Secret으로 `YOUTUBE_API_KEY`를 등록하세요. Codex Cloud는 프로젝트 설정의 *Environment → Secrets*에 `YOUTUBE_API_KEY`를 추가하면 작업 실행 시 환경 변수로 주입됩니다 (GitHub Actions라면 *Settings → Secrets and variables → Actions*, 워크플로에서 `env: YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}`). 키가 없으면 `radar run`은 `--fixture` 안내와 함께 종료 코드 2로 멈춥니다.
 
 ## 사용법
 
@@ -190,11 +214,31 @@ abc123,korea_localization_gap,0.7,"국내 유사 콘텐츠 거의 없음",kim
 `collect.quota_budget`(기본 2,000)에 도달하면 호출 전에 중단하고, 그때까지의 데이터는 보존합니다.
 키워드·지역을 늘리면 비용이 선형으로 증가합니다.
 
+## 데이터베이스 구조
+
+SQLite 파일 하나(`data/radar.db`, 기본값). 테이블은 데이터 성격별로 분리되며 서로 섞이지 않습니다.
+
+| 테이블 | 성격 | 키 | 내용 |
+|---|---|---|---|
+| `runs` | 메타 | run_id | 실행 시각, 모드(live/fixture/track), 사용 quota, 경고 |
+| `raw_responses` | raw | id | API 응답 JSON 원본 (키 제거), 엔드포인트, 파라미터 |
+| `videos` | observed | video_id | 제목, 설명, 게시시각, 길이, 채널, 태그 |
+| `video_snapshots` | observed | (video_id, fetched_at) | 관측 시각별 조회수·좋아요·댓글. 재수집 시 덮어쓰지 않고 행이 추가됨 |
+| `channels` | observed | channel_id | 채널명, 국가, 업로드 재생목록 |
+| `channel_snapshots` | observed | (channel_id, fetched_at) | 구독자·총 조회수·영상 수 |
+| `discoveries` | observed | (video_id, run_id, query, region) | 어떤 run에서 어떤 키워드/seed 채널로 발견됐는지 (`source`) |
+| `metrics` | derived | (video_id, computed_at) | views/hour, 기준선 중앙값, outlier ratio, freshness, trend |
+| `scores` | derived | (video_id, scored_at) | Radar Score, 가중치 버전, 차원별 점수·출처 JSON, 누락 차원 |
+| `judgments` | judgment | id | 차원, 값(0~1), **출처**(manual / llm:* / derived:* / heuristic_v0), 근거, 작성자 |
+| `verification` | judgment | video_id | 팩트체크 상태, 출처 URL, 메모 |
+
+스키마 변경은 `ALTER TABLE ADD COLUMN`만 사용하는 마이그레이션으로 기존 DB에 그대로 적용됩니다 (`storage/db.py`의 `MIGRATIONS`).
+
 ## 리포트 읽는 법
 
 - 상단: FIXTURE 여부, "UNVERIFIED / 복제 금지" 원칙, 가중치 버전
 - Ranking 표: Score(`*`=provisional), Story(`×N` = 같은 사건을 다룬 영상 수, 사건당 한 줄), Outlier, Views/h, Trend(`↑`/`→`/`↓`, 재관측 전에는 `—`), Age, Topic fit(`core`/`partial`/`off-topic?`), 검증 상태
-- 후보별: Observed / Derived / Score breakdown(차원별 출처·근거) / **Story DNA 체크리스트**(분석가 또는 향후 LLM이 채움) / 독립 출처 / 독창적 한국 각도
+- 후보별: **Why** 한 줄(계산된 지표만으로 설명: `20.0x channel baseline · 50,000 views/hour · published 20h ago`) / Observed / Derived / Score breakdown(차원별 출처·근거) / **Story DNA 체크리스트**(분석가 또는 향후 LLM이 채움) / 독립 출처 / 독창적 한국 각도
 
 예시: [`samples/example_report.md`](samples/example_report.md) (합성 데이터로 생성).
 

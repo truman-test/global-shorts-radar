@@ -60,6 +60,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("-v", "--verbose", action="store_true")
     sub = p.add_subparsers(dest="command", required=True)
 
+    def add_report_args(sp):
+        sp.add_argument("--top", type=int, help="rows in the Markdown ranking (default: report.top_n)")
+        sp.add_argument("--min-score", type=float, dest="min_score", help="override filter.min_radar_score")
+
     def add_source_args(sp):
         sp.add_argument("--fixture", action="store_true", help="use offline sample data instead of the API")
         sp.add_argument("--fixture-path", help="custom fixture JSON")
@@ -81,6 +85,7 @@ def build_parser() -> argparse.ArgumentParser:
     r = sub.add_parser("report")
     r.add_argument("--out", default="reports")
     r.add_argument("--now")
+    add_report_args(r)
     r.add_argument("--since", help="only candidates discovered at/after this ISO time (e.g. after a keyword change); "
                                    "default: the candidate window")
     ws = sub.add_parser("worksheet", help="analyst worksheet for the top stories + CSV template for `judge --import`")
@@ -101,6 +106,7 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument("--check-korea", type=int, default=0, metavar="N",
                      help="also run the Korea gap check for the top N (costs ~101 units each; default off)")
     run.add_argument("--out", default="reports")
+    add_report_args(run)
     return p
 
 
@@ -120,6 +126,11 @@ def main(argv: list[str] | None = None) -> int:
 
 def _dispatch(args, settings, db) -> int:
     cmd = args.command
+    if cmd in ("run", "report"):
+        if args.top:
+            settings.top_n = args.top
+        if args.min_score is not None:
+            settings.min_radar_score = args.min_score
     if cmd == "init-db":
         print(f"database ready: {db.path}")
         return 0
