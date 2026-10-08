@@ -223,7 +223,10 @@ def test_korea_gap_targets_one_video_per_story(db, settings, now):
 def test_exclude_channel_countries_rejects_a_bare_string(tmp_path):
     import pytest
     from radar.config import DEFAULT_CONFIG_PATH, ConfigError, load_settings
-    text = DEFAULT_CONFIG_PATH.read_text(encoding="utf-8").replace('exclude_channel_countries = []', 'exclude_channel_countries = "IN"')
+    import re
+    text = re.sub(r'^exclude_channel_countries = \[.*\]', 'exclude_channel_countries = "IN"',
+                  DEFAULT_CONFIG_PATH.read_text(encoding="utf-8"), count=1, flags=re.M)
+    assert 'exclude_channel_countries = "IN"' in text
     bad = tmp_path / "radar.toml"
     bad.write_text(text, encoding="utf-8")
     with pytest.raises(ConfigError):
