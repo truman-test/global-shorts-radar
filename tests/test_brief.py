@@ -47,7 +47,7 @@ def test_brief_prefers_verified_then_score_and_needs_story_dna(db, settings, now
     db.set_verification("smpl_E1", "false", "2026-10-03T03:00:00Z", [], "debunked")
     assert "smpl_E1" not in [r["video_id"] for r in brief_rows(build_rows(db, settings), top=3)]
     assert [r["video_id"] for r in brief_rows(build_rows(db, settings), top=3, produced={"smpl_A1"})][0] == "smpl_D1"
-    low_fit = {**ANALYSIS, "video_id": "smpl_D1", "judgments": {"channel_fit": 0.2}}
+    low_fit = {**ANALYSIS, "video_id": "smpl_D1", "topic": "배터리 잡담 (주제 밖)", "judgments": {"channel_fit": 0.2}}  # new fields: not a duplicate
     _analyze(db, tmp_path, low_fit)
     pipeline.score_candidates(db, settings, now)
     assert "smpl_D1" not in [r["video_id"] for r in brief_rows(build_rows(db, settings), top=3)], "off-topic stories leave the brief"
