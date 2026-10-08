@@ -78,7 +78,8 @@ def collect(client, db, settings, now: datetime, mode: str) -> CollectSummary:
 
         # 2. Observed stats for new hits plus earlier candidates still in the window, so every
         #    tracked candidate gets a fresh snapshot (videos.list: 1 unit per 50 ids).
-        previous = [v for v in db.candidate_ids(window_start(db, settings, now)) if v not in discovered]
+        previous = [v for v in db.candidate_ids(window_start(db, settings, now), settings.keywords, settings.regions)
+                    if v not in discovered]
         items = client.videos(discovered + previous) if (discovered or previous) else []
         for item in items:
             db.upsert_video(item, now_iso)
@@ -121,7 +122,7 @@ def track(client, db, settings, now: datetime, mode: str) -> CollectSummary:
     Each call appends a snapshot per video; repeated tracking enables velocity_trend.
     """
     now_iso = m.to_iso(now)
-    ids = db.candidate_ids(window_start(db, settings, now))
+    ids = db.candidate_ids(window_start(db, settings, now), settings.keywords, settings.regions)
     run_id = db.start_run(now_iso, f"{mode}-track")
     client.raw_sink = lambda endpoint, params, data: db.save_raw(run_id, endpoint, params, now_iso, data)
     summary = CollectSummary(run_id=run_id)
@@ -138,7 +139,8 @@ def track(client, db, settings, now: datetime, mode: str) -> CollectSummary:
 
 
 def _candidates(db, settings, since: str | None) -> list[str]:
-    return db.candidate_ids(since if since is not None else window_start(db, settings))
+    """Candidates in the window that were found by a currently configured keyword and region."""
+    return db.candidate_ids(since if since is not None else window_start(db, settings), settings.keywords, settings.regions)
 
 
 def compute_metrics(db, settings, now: datetime, since: str | None = None) -> int:
@@ -237,14 +239,23 @@ def run_korea_gap(client, db, settings, now: datetime, top_n: int, since: str | 
     now_iso = m.to_iso(now)
     published_after = m.to_iso(now - timedelta(days=30))
     lines = []
+    seen: dict[str, tuple[str, korea_gap.GapResult]] = {}  # KR query -> (first video, result): same query, same answer
     for vid in korea_gap_targets(db, settings, top_n, since):
-        try:
-            res = korea_gap.check_korea_gap(client, db.video(vid)["title"] or "", settings.korean_terms, published_after)
-        except YouTubeAPIError as exc:
-            lines.append(f"{vid}: korea gap skipped ({exc})")
-            if isinstance(exc, QUOTA_ERRORS):
-                break
-            continue
+        title = db.video(vid)["title"] or ""
+        query = korea_gap.korean_query(title, settings.korean_terms)
+        if query in seen:
+            first, res = seen[query]
+            res = korea_gap.GapResult(res.query, res.value, f"{res.rationale} (reused from {first}, no extra quota)")
+        else:
+            try:
+                res = korea_gap.check_korea_gap(client, title, settings.korean_terms, published_after)
+            except YouTubeAPIError as exc:
+                lines.append(f"{vid}: korea gap skipped ({exc})")
+                if isinstance(exc, QUOTA_ERRORS):
+                    break
+                continue
+            if query:
+                seen[query] = (vid, res)
         if res.value is not None:
             db.add_judgment(vid, "korea_localization_gap", res.value, korea_gap.SOURCE, now_iso, rationale=res.rationale)
         lines.append(f"{vid}: {res.rationale}")

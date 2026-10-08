@@ -77,6 +77,7 @@ views/hour(게시 후 평균)만으로는 "지금 가속 중인 영상"과 "어�
 
 후보 window: 검색으로 발견된 후 `candidate_window_hours`(기본 72h) 동안 레이더에 남고, 이후 `run`/`track` 때마다 재관측됩니다.
 window 기준 시각은 **마지막 관측 시각**이라서, 며칠 뒤에 `radar report`를 실행해도 마지막 수집 결과가 그대로 나옵니다.
+후보는 **현재 설정된 키워드로 발견된 것만** 유효합니다. 키워드를 빼면 그 키워드로만 발견됐던 영상은 다음 `report`부터 바로 빠지고 `track`도 재관측하지 않습니다 (발견 기록은 삭제하지 않음).
 
 기존 DB는 실행 시 자동으로 마이그레이션됩니다 (컬럼 추가만 하며, 데이터는 삭제하지 않음).
 
@@ -113,7 +114,7 @@ radar --db data/sample.db track --fixture     # 샘플 기준 6시간 뒤 재관
 
 # 실제 수집
 radar run                      # collect → compute → judge(heuristic) → score → report
-radar run --check-korea 5      # + 상위 5개 *사건*(클러스터 대표 영상) 한국 포화도 체크 (사건당 ~101 units)
+radar run --check-korea 5      # + 상위 5개 *사건*(클러스터 대표 영상) 한국 포화도 체크 (사건당 ~101 units, 같은 한국어 질의는 한 번만 호출)
 radar track                    # window 내 후보만 재관측 (검색 없음, 50개당 1 unit) → 리포트
 
 # 단계별 실행 (API 호출 없이 재계산 가능)

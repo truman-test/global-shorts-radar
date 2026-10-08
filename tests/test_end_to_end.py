@@ -244,3 +244,41 @@ def test_cli_report_since_limits_to_new_discoveries(tmp_path):
     assert cli.main(["--db", str(db_path), "report", "--out", str(out), "--now", "2026-10-03T02:00:00Z",
                      "--since", "2026-10-03T00:00:00Z"]) == 0
     assert "smpl_A1" in (out / "radar_20261003_0200.md").read_text(encoding="utf-8")
+
+
+def test_removed_keyword_retires_its_only_candidates(db, settings, now):
+    run_fixture(db, settings, now)
+    assert "smpl_F1" in {r["video_id"] for r in build_rows(db, settings)}
+    settings.keywords = [k for k in settings.keywords if k != "weird technology"]  # F1 found only by it; C1 also by "internet mystery"
+    ids = {r["video_id"] for r in build_rows(db, settings)}
+    assert "smpl_F1" not in ids and "smpl_C1" in ids
+    assert db.query("SELECT COUNT(*) AS n FROM discoveries WHERE video_id = 'smpl_F1'")[0]["n"] == 1  # history kept
+    assert db.candidate_ids(queries=[]) == []
+
+
+def test_korea_gap_reuses_identical_korean_query(db, settings, now):
+    s = run_fixture(db, settings, now)
+    a1 = db.video("smpl_A1")
+    twin = {"id": "smpl_A1c", "snippet": {"channelId": a1["channel_id"], "publishedAt": a1["published_at"],
+            "title": "AI voice clone scam strikes totally unrelated wording here", "description": ""},
+            "contentDetails": {"duration": "PT40S"}, "statistics": {"viewCount": "950000", "likeCount": "1", "commentCount": "1"}}
+    db.upsert_video(twin, cli.to_iso(now))
+    db.add_discovery("smpl_A1c", s.run_id, "AI scam", "US", cli.to_iso(now))
+    pipeline.compute_metrics(db, settings, now)
+    pipeline.run_heuristics(db, settings, now)
+    pipeline.score_candidates(db, settings, now)
+    assert pipeline.korea_gap_targets(db, settings, 2) == ["smpl_A1", "smpl_A1c"], "different titles, so two stories"
+    client = FixtureClient(quota=QuotaTracker(10_000))
+    lines = pipeline.run_korea_gap(client, db, settings, now, 2)
+    assert client.quota.used == 101, "one search + one videos.list, not two of each"
+    assert "reused from smpl_A1" in lines[1]
+    rows = {r["video_id"]: r for r in build_rows(db, settings)}
+    assert rows["smpl_A1c"]["judgments"]["korea_localization_gap"]["value"] == rows["smpl_A1"]["judgments"]["korea_localization_gap"]["value"]
+
+
+def test_removed_region_retires_its_candidates_too(db, settings, now):
+    run_fixture(db, settings, now)
+    settings.regions = ["GB"]  # every fixture discovery is US
+    assert build_rows(db, settings) == []
+    settings.regions = ["US"]
+    assert len(build_rows(db, settings)) == 7

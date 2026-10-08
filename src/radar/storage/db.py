@@ -248,14 +248,31 @@ class Database:
         row = self.conn.execute("SELECT MAX(started_at) AS t FROM runs").fetchone()
         return row["t"] if row else None
 
-    def candidate_ids(self, since: str | None = None) -> list[str]:
-        """Videos discovered by search at or after `since` (ISO); all discoveries if None."""
-        if since is None:
-            rows = self.query("SELECT DISTINCT video_id FROM discoveries ORDER BY video_id")
-        else:
-            rows = self.query("SELECT DISTINCT video_id FROM discoveries WHERE discovered_at >= ? ORDER BY video_id",
-                              (since,))
-        return [r["video_id"] for r in rows]
+    def candidate_ids(self, since: str | None = None, queries: Iterable[str] | None = None,
+                      regions: Iterable[str] | None = None) -> list[str]:
+        """Videos discovered by search at or after `since` (ISO; all if None), optionally only by `queries`/`regions`.
+
+        Passing the currently configured keywords as `queries` retires candidates that were only
+        found by a keyword that has since been removed, without deleting their discoveries.
+        """
+        where, params = [], []
+        if since is not None:
+            where.append("discovered_at >= ?")
+            params.append(since)
+        if queries is not None:
+            qs = list(queries)
+            if not qs:
+                return []
+            where.append(f"query IN ({', '.join('?' for _ in qs)})")
+            params.extend(qs)
+        if regions is not None:
+            rs = list(regions)
+            if not rs:
+                return []
+            where.append(f"region IN ({', '.join('?' for _ in rs)})")
+            params.extend(rs)
+        sql = "SELECT DISTINCT video_id FROM discoveries" + (" WHERE " + " AND ".join(where) if where else "") + " ORDER BY video_id"
+        return [r["video_id"] for r in self.query(sql, params)]
 
     def video(self, video_id: str) -> sqlite3.Row | None:
         return self.conn.execute("SELECT * FROM videos WHERE video_id = ?", (video_id,)).fetchone()
