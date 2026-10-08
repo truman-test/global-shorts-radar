@@ -121,6 +121,15 @@ CREATE TABLE IF NOT EXISTS judgments (
     author TEXT,
     created_at TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS story_dna (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    video_id TEXT NOT NULL,
+    source TEXT NOT NULL,            -- manual | llm:<model>
+    author TEXT,
+    created_at TEXT NOT NULL,
+    fields_json TEXT NOT NULL,       -- topic, hook, ... korean_angle (text, never a transcript)
+    sources_json TEXT NOT NULL       -- [{url, type, note}] independent sources found by the analyst
+);
 CREATE TABLE IF NOT EXISTS verification (
     video_id TEXT PRIMARY KEY,
     status TEXT NOT NULL DEFAULT 'unverified'
@@ -390,6 +399,27 @@ class Database:
 
     def judgments(self, video_id: str) -> list[sqlite3.Row]:
         return self.query("SELECT * FROM judgments WHERE video_id = ? ORDER BY created_at, id", (video_id,))
+
+    def add_story_dna(self, video_id: str, source: str, created_at: str, fields: dict, sources: list[dict],
+                      author: str | None = None) -> None:
+        self.conn.execute(
+            "INSERT INTO story_dna (video_id, source, author, created_at, fields_json, sources_json) VALUES (?, ?, ?, ?, ?, ?)",
+            (video_id, source, author, created_at, json.dumps(fields, ensure_ascii=False), json.dumps(sources, ensure_ascii=False)),
+        )
+        self.conn.commit()
+
+    def has_story_dna(self, video_id: str, source: str, fields: dict, sources: list[dict]) -> bool:
+        row = self.conn.execute(
+            "SELECT 1 FROM story_dna WHERE video_id = ? AND source = ? AND fields_json = ? AND sources_json = ? LIMIT 1",
+            (video_id, source, json.dumps(fields, ensure_ascii=False), json.dumps(sources, ensure_ascii=False)),
+        ).fetchone()
+        return row is not None
+
+    def story_dna(self, video_id: str) -> sqlite3.Row | None:
+        """Best analysis for a video: human over LLM, then the most recent."""
+        from radar.analysis.judgments import source_rank  # judgment-layer policy lives there
+        rows = self.query("SELECT * FROM story_dna WHERE video_id = ? ORDER BY created_at DESC, id DESC", (video_id,))
+        return max(rows, key=lambda r: (source_rank(r["source"]), r["created_at"], r["id"]), default=None)
 
     def ensure_verification(self, video_id: str, now: str) -> None:
         self.conn.execute(

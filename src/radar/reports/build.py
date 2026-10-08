@@ -8,6 +8,7 @@ from pathlib import Path
 
 from radar.analysis.cluster import SOURCE as CLUSTER_SOURCE, cluster_titles, generic_tokens
 from radar.analysis.judgments import resolve
+from radar.analysis.story_dna import FIELDS as DNA_FIELDS, LABELS as DNA_LABELS
 from radar.pipeline import ranked_candidates
 from radar.scoring.radar import JUDGMENT_DIMENSIONS, METRIC_DIMENSIONS
 
@@ -75,9 +76,18 @@ def build_rows(db, settings, since: str | None = None) -> list[dict]:
             # verification
             "verification_status": ver["status"] if ver else "unverified",
             "verification_sources": json.loads(ver["sources_json"]) if ver else [],
+            "verification_note": (ver["note"] if ver else "") or "",
+            "story_dna": _story_dna_row(db.story_dna(vid)),
         })
     _attach_story_clusters(rows, settings)
     return rows
+
+
+def _story_dna_row(row) -> dict | None:
+    if row is None:
+        return None
+    return {"source": row["source"], "author": row["author"], "created_at": row["created_at"],
+            "fields": json.loads(row["fields_json"]), "sources": json.loads(row["sources_json"])}
 
 
 def _attach_story_clusters(rows: list[dict], settings) -> None:
@@ -254,10 +264,24 @@ def render_markdown(rows: list[dict], *, generated_at: datetime, mode: str, sett
             out.append(f"| {DIM_LABELS[dim]} | {kind} | {_fmt(c['value'], '.2f', '—')} | "
                        f"{c['points']:.1f}/{c['weight']:.0f} | {_cell(why)} |")
         out.append("")
-        out.append("**Story DNA — to fill by analyst/LLM (do not transcribe the source)**\n")
-        out.extend(f"- [ ] {f}:" for f in STORY_DNA_FIELDS)
-        out.append("- [ ] Independent sources found (official → police/company → major news → specialist):")
-        out.append("- [ ] Original Korean angle (must stand on its own without the source video):\n")
+        dna = r.get("story_dna")
+        if dna:
+            who = dna["source"] + (f", {dna['author']}" if dna.get("author") else "")
+            out.append(f"**Story DNA** ({who}, {dna['created_at'][:10]}; a judgment, not a fact — public metadata only)\n")
+            for f in DNA_FIELDS:
+                out.append(f"- {DNA_LABELS[f]}: {_cell(dna['fields'].get(f) or '—')}")
+            if dna["sources"]:
+                out.append("- Independent sources proposed (human confirmation pending):")
+                out.extend(f"  - {s.get('type') or 'source'}: {s['url']}" + (f" — {_cell(s['note'])}" if s.get("note") else "")
+                           for s in dna["sources"])
+            else:
+                out.append("- Independent sources proposed: none found")
+            out.append("")
+        else:
+            out.append("**Story DNA — to fill by analyst/LLM (do not transcribe the source)**\n")
+            out.extend(f"- [ ] {f}:" for f in STORY_DNA_FIELDS)
+            out.append("- [ ] Independent sources found (official → police/company → major news → specialist):")
+            out.append("- [ ] Original Korean angle (must stand on its own without the source video):\n")
     if not rows:
         out.append("_No Short candidates found in this run._\n")
     return "\n".join(out)

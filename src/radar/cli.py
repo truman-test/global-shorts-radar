@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 import sys
 from datetime import datetime, timezone
@@ -9,6 +10,7 @@ from pathlib import Path
 
 from radar import pipeline
 from radar.analysis.manual import import_manual_csv
+from radar.analysis.story_dna import export_bundle, import_story_dna
 from radar.collectors.fixture import DEFAULT_FIXTURE, FixtureClient
 from radar.collectors.youtube import QuotaTracker, YouTubeAPIError, YouTubeClient
 from radar.config import ConfigError, load_settings
@@ -94,6 +96,13 @@ def build_parser() -> argparse.ArgumentParser:
     ws.add_argument("--out", default="reports")
     ws.add_argument("--now")
     ws.add_argument("--since", help="only candidates discovered at/after this ISO time")
+    sd = sub.add_parser("story-dna", help="export an analysis bundle for analysts / import their Story DNA JSON")
+    sd.add_argument("--export", type=int, metavar="N", help="write the top N stories' public metadata as JSON (--out)")
+    sd.add_argument("--import", dest="import_json", metavar="FILE", help="JSON list of analyses to import")
+    sd.add_argument("--source", default="manual", help="for --import: manual (default) or llm:<model>")
+    sd.add_argument("--out", default="reports/story_dna_bundle.json")
+    sd.add_argument("--now")
+    sd.add_argument("--since")
     ss = sub.add_parser("suggest-seeds", help="channels that produced well-scored on-topic candidates -> TOML snippet")
     ss.add_argument("--min-score", type=float, default=DEFAULT_MIN_SCORE, dest="seed_min_score")
     ss.add_argument("--min-fit", type=float, default=DEFAULT_MIN_FIT, dest="seed_min_fit")
@@ -188,6 +197,24 @@ def _dispatch(args, settings, db) -> int:
         md.write_text(render_worksheet_markdown(rows, generated_at=now, csv_name=csv_path.as_posix()), encoding="utf-8")
         print(f"{len(rows)} stories -> {md} , {csv_path}")
         return 0
+    if cmd == "story-dna":
+        now = _now(args)
+        if args.import_json:
+            n, errors = import_story_dna(db, args.import_json, to_iso(now), args.source)
+            print(f"imported {n} {args.source} Story DNA analyses")
+            for e in errors:
+                print(f"  rejected: {e}")
+            return 1 if errors and n == 0 else 0
+        if args.export:
+            since = to_iso(parse_ts(args.since)) if args.since else None
+            rows = worksheet_rows(build_rows(db, settings, since), args.export)
+            out = Path(args.out)
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text(json.dumps(export_bundle(db, rows), ensure_ascii=False, indent=1), encoding="utf-8")
+            print(f"{len(rows)} stories -> {out}")
+            return 0
+        print("story-dna: use --export N or --import FILE")
+        return 2
     if cmd == "suggest-seeds":
         found = suggest_seed_channels(db, settings, args.seed_min_score, args.seed_min_fit, args.top)
         print(f"{len(found)} channels with a candidate scoring >= {args.seed_min_score:g} and channel_fit >= {args.seed_min_fit:g}:")

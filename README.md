@@ -167,6 +167,19 @@ radar verify <video_id> --status verified --source https://police.example/notice
 2. CSV의 `value`에 0~1 값을 적습니다. 모르는 칸은 비워 둡니다 (import 때 건너뜀). `rationale`, `author`는 선택.
 3. `radar judge --import reports/judgments_*.csv` 후 `radar score` · `radar report`
 
+### Story DNA 분석 (사람 또는 LLM 에이전트)
+
+원본에서 가져오는 것은 콘텐츠가 아니라 구조입니다. 분석 결과는 `story_dna` 테이블(judgment 계층)에 출처와 함께 저장됩니다.
+
+1. `radar story-dna --export 10 --out reports/story_dna_bundle.json` → 상위 10개 사건의 **공개 메타데이터만**(제목·설명·태그·지표·현재 판단) 담은 JSON. 대본·영상은 포함되지 않습니다.
+2. 분석가(사람 또는 에이전트)가 각 항목에 대해 JSON을 작성합니다: `topic, hook, curiosity_gap, conflict, emotion, story_progression, reveal, payoff, audience_desire_fear, why_viral, korean_angle`(텍스트), `judgments`(차원별 0~1 값과 근거), `independent_sources`(`url`, `type`, `note`).
+3. `radar story-dna --import analyses.json --source llm:<모델명>` (사람이면 `--source manual`). 판단 값은 같은 출처로 `judgments`에, 출처 URL이 있으면 `verification`이 `unverified`인 경우에만 `in_progress`로 바뀝니다. **에이전트는 `verified`로 만들 수 없습니다.** 사람이 `radar verify`로 확정합니다.
+4. 리포트의 후보 섹션에 Story DNA가 출처·날짜와 함께 채워져 나옵니다. 사람 분석이 LLM 분석보다 우선합니다.
+
+이 세션형 에이전트 워크플로(오케스트레이터가 후보별 분석 에이전트를 병렬로 띄우고 결과를 import)는 API 비용이 없고, 결과가 쌓이면 파이프라인 내 자동 호출(유료)로 옮길지 결정합니다.
+
+첫 실행 결과(2026-10-08, 상위 10개, 에이전트 5개 병렬): `judgments/2026-10-08_story_dna_llm_claude-agents.json`. 출처 58건 중 55건이 실제 응답했고(3건은 봇 차단 403), 원본 사건을 특정할 수 없는 2건(리액션 클립, 설명 없는 영상)은 출처 0건으로 정직하게 남겼습니다. **주의**: 이 1차 실행의 번들에는 오케스트레이터의 이전 LLM 판단이 포함돼 있어 에이전트 판단이 그 값에 앵커링됐습니다(평균 차이 0.03). 이후 `--export`는 휴리스틱·파생 값만 노출하므로 다음 실행부터는 독립적인 2차 의견이 됩니다.
+
 ### 정기 실행 예시 (Windows 작업 스케줄러)
 
 ```powershell
@@ -232,6 +245,7 @@ SQLite 파일 하나(`data/radar.db`, 기본값). 테이블은 데이터 성격�
 | `metrics` | derived | (video_id, computed_at) | views/hour, 기준선 중앙값, outlier ratio, freshness, trend |
 | `scores` | derived | (video_id, scored_at) | Radar Score, 가중치 버전, 차원별 점수·출처 JSON, 누락 차원 |
 | `judgments` | judgment | id | 차원, 값(0~1), **출처**(manual / llm:* / derived:* / heuristic_v0), 근거, 작성자 |
+| `story_dna` | judgment | id | Story DNA 11개 필드(텍스트), 독립 출처 목록, **출처**(manual / llm:*), 작성자 |
 | `verification` | judgment | video_id | 팩트체크 상태, 출처 URL, 메모 |
 
 스키마 변경은 `ALTER TABLE ADD COLUMN`만 사용하는 마이그레이션으로 기존 DB에 그대로 적용됩니다 (`storage/db.py`의 `MIGRATIONS`).

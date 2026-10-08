@@ -1,0 +1,640 @@
+[
+ {
+  "video_id": "hpMCY56yDWA",
+  "topic": "아이가 화면에 뜬 '당첨' 팝업을 눌러버리는 순간을 보여주며, 디지털 시대 아이에게 돈·비밀번호·사기·AI를 누가 가르치느냐는 부모 대상 교육 숏츠(키즈 채널 홍보 성격)",
+  "hook": "'당신 아이라면 눌렀을까?'라는 2인칭 질문형 훅으로 부모를 즉시 당사자로 끌어들임",
+  "curiosity_gap": "'우리 아이는 안 그럴 것'이라는 부모의 믿음과 '아이들은 실제로 누른다'는 통계(10대 사기 신고 3만 건) 사이의 간극",
+  "conflict": "아이의 호기심·즉흥성 vs 함정 설계된 디지털 환경, 그리고 학교·부모가 이를 가르치지 않는다는 공백",
+  "emotion": "부모의 불안과 죄책감을 자극한 뒤 '한 번에 한 가지 규칙'이라는 안도감으로 전환",
+  "story_progression": "아이가 팝업을 누르는 장면 → 부모 세대와 달라진 환경 대비 → 권위 있는 통계 3개 연속 제시 → 해결책(에피소드별 한 규칙) 제안",
+  "reveal": "극적 반전보다는 '아이의 금전 습관은 7세에 이미 형성된다'는 연구가 '지금 당장'이라는 시급성을 만드는 정보형 반전",
+  "payoff": "부모가 아이와 함께 따라 말할 수 있는 한 줄 규칙과 다음 에피소드로의 CTA",
+  "audience_desire_fear": "욕구: 아이에게 디지털·금융 면역력을 길러주고 싶음 / 공포: 내 아이가 사기·결제 사고의 첫 피해자가 될지 모른다는 불안",
+  "why_viral": "구독자 2천 명 대비 1.5만 뷰의 아웃라이어는 질문형 훅과 통계 인용(Pew·FBI IC3)의 신뢰감 덕분으로 보이며, 인용 통계 자체는 독립 출처로 확인됨. 다만 댓글 0건은 공유보다 광고·추천 노출에 가까운 확산일 가능성이 있음",
+  "korean_angle": "부모 폰으로 게임하다 '무료 아이템' 팝업을 눌러 소액결제가 30만 원까지 빠져나간 한국 가정 사례를 축으로, 서울시·한국소비자원의 소액결제 차단 안내와 경찰청 사이버사기 통계를 붙여 '아이와 함께 외우는 한 줄 규칙'(모르는 당첨은 눌러도 안 당첨) 형식으로 구성",
+  "judgments": {
+   "story_strength": {
+    "value": 0.5,
+    "rationale": "질문형 훅과 통계 연쇄는 강하지만 긴장·반전 없이 설명과 CTA로 흐르는 교육·홍보 구조라 끝까지 볼 이유가 중간 수준"
+   },
+   "korea_localization_gap": {
+    "value": 0.6,
+    "rationale": "한국에는 소액결제 피해 보도와 성인 대상 피싱 콘텐츠는 많지만 아이 눈높이의 '사기·AI·돈' 숏츠 형식은 드문 편(추정)"
+   },
+   "localization_potential": {
+    "value": 0.8,
+    "rationale": "자녀 스마트폰·결제 사고 불안은 한국 부모에게 보편적이며 미국 통계는 국내 기관 자료로 쉽게 치환 가능"
+   },
+   "channel_fit": {
+    "value": 0.8,
+    "rationale": "평범한 가정이 디지털 세상에서 겪는 위험과 실용적 대처라는 채널 정체성에 부합하나 원본은 키즈 채널 홍보물"
+   }
+  },
+  "independent_sources": [
+   {
+    "url": "https://www.pewresearch.org/wp-content/uploads/sites/20/2026/02/PI_2026.02.24_Teens-and-AI_REPORT.pdf",
+    "type": "specialist",
+    "note": "Pew Research 2026.02 '10대의 AI 이용' 보고서 원문: 10대 54%가 챗봇으로 과제 도움(설명의 '절반' 수치 근거)"
+   },
+   {
+    "url": "https://www.eweek.com/news/teens-ai-chatbot-use-pew-survey/",
+    "type": "secondary",
+    "note": "Pew 조사 결과 보도(10대 과반이 과제에 챗봇 사용)"
+   },
+   {
+    "url": "https://www.waterisac.org/tlpclear-fbis-ic3-releases-2025-internet-crime-report",
+    "type": "specialist",
+    "note": "FBI IC3 2025 연례보고서 발표(2026.04) 안내"
+   },
+   {
+    "url": "https://ppc.land/content/files/2026/07/2025_IC3Report.pdf",
+    "type": "secondary",
+    "note": "IC3 2025 보고서 PDF 사본: 20세 미만 신고 31,254건·피해 6,710만 달러(설명 수치와 일치)"
+   },
+   {
+    "url": "https://www.jdsupra.com/legalnews/cybercrime-trends-to-watch-takeaways-6390565/",
+    "type": "specialist",
+    "note": "IC3 2025 보고서 주요 수치 법률 전문 해설"
+   },
+   {
+    "url": "https://www.fa-mag.com/news/children-form-financial-behaviors-by-7-and-advisors-are-acting-on-this-36829.html?print",
+    "type": "secondary",
+    "note": "케임브리지대 Whitebread·Bingham 2013 연구(금전 습관 7세 형성) 소개 기사"
+   },
+   {
+    "url": "https://codingireland.ie/ViewLesson/scams-tricks--popups--10282/8884",
+    "type": "specialist",
+    "note": "아동 대상 '당첨 팝업' 사기 수법 교육 자료(로블록스 등 게임 사칭 사례)"
+   },
+   {
+    "url": "https://mediahub.seoul.go.kr/archives/166854",
+    "type": "government_police_company",
+    "note": "서울시: 자녀 소액결제 피해 유형과 차단 설정 안내(한국형 치환 근거)"
+   },
+   {
+    "url": "https://www.seoul.co.kr/news/2017/04/22/20170422020001",
+    "type": "major_news",
+    "note": "자녀가 부모 폰으로 몰래 결제한 사례와 환불 쟁점 보도"
+   }
+  ],
+  "author": "agent-1 (claude, metadata only, video not watched)"
+ },
+ {
+  "video_id": "oAJ1AXzRK2U",
+  "topic": "친구들과 사기 콜센터를 운영해 AI 피해자를 속이고 할당량을 채우는 코옵 인디게임 'Scam with Your Friends'의 Steam 출시 예고 홍보 숏츠",
+  "hook": "'사기 콜센터 게임, 필요한 줄 몰랐지?'라는 금기 소재의 역발상 제목과 분노하는 상사·할당량이라는 압박 설정",
+  "curiosity_gap": "'사기범 입장에서 플레이한다'는 도덕적 금기가 실제로 어떻게 게임화됐는지 보고 싶은 욕구",
+  "conflict": "할당량 마감과 상사의 분노 vs 순진한 AI 피해자, 그리고 해고·직장 재난이라는 시간 압박",
+  "emotion": "블랙코미디적 죄책감 섞인 웃음과 친구와 함께하는 혼돈의 재미",
+  "story_progression": "상황 설정(상사·할당량) → 피해자 통화 조작 장면 → 재난 이벤트 → 출시 일정 CTA와 친구 태그 유도",
+  "reveal": "별도 반전 없이 게임플레이의 황당한 상황 자체가 연속적 작은 반전 역할",
+  "payoff": "'친구를 태그하라'는 사회적 공유 CTA와 10월 Steam 출시 정보",
+  "audience_desire_fear": "욕구: 친구와 함께 금기를 안전하게 체험하고 싶음 / 공포(잠재): 실제 사기 피해의 현실을 웃음으로 소비해도 되는가라는 불편함",
+  "why_viral": "'Gamble/Golf with Your Friends'류 친구 코옵 장르의 인기와 사기 콜센터라는 자극적 소재가 결합했고 친구 태그 CTA가 공유를 유도함. 게임 자체(코옵·AI 통화·할당량)는 판매 페이지 등 2차 출처로 확인되나 주요 매체 보도는 찾지 못함",
+  "korean_angle": "원본 게임 없이도, 해외 보이스피싱 콜센터에서 '상담원'으로 일하다 검거·송환된 한국인 조직원의 실제 구조(할당량·대본·상사 압박)를 경찰청 발표 사건('송남파' 등)으로 재구성해 '게임 같지만 현실'이라는 대비로 보이스피싱의 내부를 보여주는 소재",
+  "judgments": {
+   "story_strength": {
+    "value": 0.4,
+    "rationale": "역발상 설정과 압박 구조는 흥미롭지만 기승전결보다 게임플레이 나열과 출시 CTA가 중심인 홍보 영상"
+   },
+   "korea_localization_gap": {
+    "value": 0.7,
+    "rationale": "이 게임을 다룬 한국어 콘텐츠는 검색에서 확인되지 않았고, '사기범 시점' 포맷의 국내 숏츠도 드문 편(추정)"
+   },
+   "localization_potential": {
+    "value": 0.5,
+    "rationale": "보이스피싱이 국민적 관심사인 한국에서 '콜센터 내부' 시점은 호기심을 끌 수 있으나, 게임 홍보 자체는 국내 수요가 제한적"
+   },
+   "channel_fit": {
+    "value": 0.3,
+    "rationale": "인디게임 광고 영상으로 평범한 사람의 실제 디지털 경험담이 아니며, 구조만 차용해 실제 보이스피싱 사건으로 바꿔야 채널에 맞음"
+   }
+  },
+  "independent_sources": [
+   {
+    "url": "https://www.dekudeals.com/items/scam-with-your-friends",
+    "type": "secondary",
+    "note": "게임 정보 집계 사이트: 코옵·AI 통화·할당량 설정과 미출시(플레이테스트) 상태 확인"
+   },
+   {
+    "url": "https://www.instant-gaming.com/en/24156-buy-scam-with-your-friends-pc-steam/",
+    "type": "secondary",
+    "note": "판매 사이트 게임 설명: 사기 콜센터 코옵·얼리액세스 2026 출시 표기"
+   },
+   {
+    "url": "https://www.twig24.com/news/accident/2026/02/26/20260226500105",
+    "type": "secondary",
+    "note": "해외 거점 '송남파' 보이스피싱 조직 35명 검거 보도(한국형 치환 소재)"
+   },
+   {
+    "url": "https://www.tsisalaw.com/news/article.html?no=28432",
+    "type": "secondary",
+    "note": "라오스 콜센터 현장 검거·송환 과정을 다룬 '송남파' 사건 기사"
+   },
+   {
+    "url": "https://www.hankyung.com/article/2026091718347",
+    "type": "major_news",
+    "note": "2026년 보이스피싱 콜센터 조직 검거 관련 보도(검색 결과에 노출, 세부 내용 미확인)"
+   }
+  ],
+  "author": "agent-1 (claude, metadata only, video not watched)"
+ },
+ {
+  "video_id": "LhB_x5LQZss",
+  "topic": "클릭 한 번 없이 스마트폰이 뚫리는 '제로클릭' 상용 스파이웨어(Pegasus, Paragon Graphite)의 작동 방식과 위험성을 다루는 설명형 공포 콘텐츠.",
+  "hook": "'링크도, 다운로드도, 경고도 없이' 당신의 폰이 감시당할 수 있다는 단정형 선언으로 시작해 안전하다는 전제를 즉시 무너뜨리는 구조.",
+  "curiosity_gap": "아무것도 안 눌렀는데 어떻게 뚫리는가, 암호화 메신저조차 왜 소용없는가라는 '메커니즘의 공백'을 열어두고 답을 미룬다.",
+  "conflict": "일반인의 '나는 조심하니까 괜찮다'는 믿음 vs 사용자의 행동과 무관하게 침투하는 국가급 감시 도구라는 비대칭 대결.",
+  "emotion": "무력감과 침해 공포가 중심이고, 실명 도구(Pegasus·Graphite)와 실명 앱(Signal·WhatsApp)을 거론해 추상적 불안을 구체적 위협으로 바꾼다.",
+  "story_progression": "①'해킹은 진짜다' 선언 → ②제로클릭 개념 정의(링크·다운로드·경고 없음) → ③침투 후 장악 범위 나열(카메·마이크·메시지·위치) → ④'암호화 앱도 예외 아님'으로 안전망 제거 → ⑤(추정) 대응 또는 여운.",
+  "reveal": "암호화는 전송 구간만 보호할 뿐, 단말이 장악되면 화면에 보이는 모든 것이 그대로 노출된다는 '보안의 맹점' 공개.",
+  "payoff": "시청자가 '내 폰도 가능한가'를 자문하게 만들고, 업데이트·잠금모드 같은 최소 방어책 또는 '일반인은 표적이 아니다'라는 안도감 중 하나로 긴장을 해소.",
+  "audience_desire_fear": "욕구: 내 디지털 사생활을 지킬 통제감 확보. 공포: 눈에 보이지 않는 완전한 감시, 어떤 조심도 소용없다는 무력감.",
+  "why_viral": "소형 채널(구독 557)임에도 평균 대비 5.9배 조회를 기록한 것은 '당신 폰도 뚫린다'라는 보편적 공포 훅과 실명 스파이웨어의 신뢰감이 결합된 결과로 보이며, 독립 소스(Citizen Lab·WhatsApp·Apple 공지)가 실제 사건을 뒷받침한다.",
+  "korean_angle": "원본 없이 성립: '카톡 안 눌렀는데 폰이 털렸다?' 포맷으로 제로클릭 개념을 설명하되, KISA·국정원 보안 권고, 애플 위협 알림(한국 계정도 대상)과 iOS 잠금모드, 그리고 '일반인에겐 제로클릭보다 스미싱·악성앱이 현실 위협'이라는 팩트체크 반전으로 마무리.",
+  "judgments": {
+   "story_strength": {
+    "value": 0.65,
+    "rationale": "공포 훅과 '암호화도 소용없다'는 반전은 강하지만 사건·인물 중심 서사가 아닌 설명형이라 끝까지 볼 긴장은 중간 수준."
+   },
+   "korea_localization_gap": {
+    "value": 0.5,
+    "rationale": "보안뉴스·ITWorld 등 국내 전문매체가 페가수스·제로클릭을 이미 다뤘으나 숏츠형 쉬운 설명은 드문 편(국내 숏츠 현황은 확신 낮음)."
+   },
+   "localization_potential": {
+    "value": 0.75,
+    "rationale": "스마트폰 감시 공포는 보편적이나 실제 표적은 언론인·활동가 등 특정층이므로 과장 없이 다뤄야 공감이 유지됨."
+   },
+   "channel_fit": {
+    "value": 0.9,
+    "rationale": "평범한 사람이 디지털 세상에서 겪을 수 있는 '위험한 이야기'에 정확히 해당하며 유용한 대응책으로 확장 가능."
+   }
+  },
+  "independent_sources": [
+   {
+    "url": "https://citizenlab.ca/2025/03/a-first-look-at-paragons-proliferating-spyware-operations/",
+    "type": "specialist",
+    "note": "Citizen Lab의 Paragon Graphite 보고서: WhatsApp 제로클릭(PDF) 감염 경로와 배포 국가 분석."
+   },
+   {
+    "url": "https://support.apple.com/en-us/102174",
+    "type": "official",
+    "note": "애플 공식 '위협 알림 및 용병 스파이웨어' 안내 페이지(잠금모드 권고 포함)."
+   },
+   {
+    "url": "https://bleepingcomputer.com/news/security/whatsapp-patched-zero-day-flaw-used-in-paragon-spyware-attacks",
+    "type": "specialist",
+    "note": "WhatsApp이 Paragon 공격에 쓰인 제로데이를 패치했다는 보안 전문매체 보도."
+   },
+   {
+    "url": "https://cyberinsider.com/whatsapp-says-zero-click-attack-infected-users-with-spyware/",
+    "type": "secondary",
+    "note": "WhatsApp이 약 90명의 언론인·시민사회 인사가 제로클릭 공격 대상이었다고 통보한 내용."
+   },
+   {
+    "url": "https://infosecurity-magazine.com/news/pegasus-zero-click-exploit",
+    "type": "specialist",
+    "note": "2026년 세르비아 활동가 아이폰의 Pegasus iMessage 제로클릭 감염(Citizen Lab 포렌식 확인) 보도."
+   },
+   {
+    "url": "https://m.boannews.com/html/detail.html?idx=122038",
+    "type": "specialist",
+    "note": "국내 보안 전문매체 보안뉴스의 아이폰 제로클릭 익스플로잇·페가수스 기사(한국 커버리지 확인용)."
+   }
+  ],
+  "author": "agent-2 (claude, metadata only, video not watched)"
+ },
+ {
+  "video_id": "WNu1h71ID_4",
+  "topic": "에어비앤비 이용 과정에서 AI가 악용된 사기 사례를 소개하는 짧은 리액션·해설형 클립. 설명란이 없어 구체 사건은 미확인이며, AI 조작 사진으로 손해배상을 청구한 호스트 사건 또는 AI 생성 숙소 사진 허위 매물 사건으로 추정.",
+  "hook": "'미친(Insane)'이라는 과장 수식어와 우는 이모지로 '믿기 힘든 피해 사례'를 예고하며 3초 안에 호기심을 자극하는 구조.",
+  "curiosity_gap": "AI가 숙박 예약 어디에 어떻게 끼어들어 사람을 속였는가라는 '방법의 공백'을 열어두고 반전을 뒤로 미룬다.",
+  "conflict": "평범한 여행자(게스트) vs 플랫폼의 분쟁 절차를 AI 증거 조작으로 역이용하는 상대방, 그리고 1차 판정에서 피해자 편을 들지 않은 플랫폼이라는 이중 대립.",
+  "emotion": "억울함과 분노가 핵심이며, '증거 사진마저 믿을 수 없다'는 불신이 공포로 확장된다.",
+  "story_progression": "①평범한 예약·체크아웃 → ②뜻밖의 거액 청구 또는 사진과 다른 현실 → ③제시된 증거의 이상한 점 발견 → ④AI 조작이라는 정체 폭로 → ⑤플랫폼의 번복·환불 또는 교훈.",
+  "reveal": "믿었던 '사진 증거'가 AI로 생성·편집된 것이었고, 두 장의 사진이 서로 모순된다는 디테일이 결정적 단서가 되는 폭로.",
+  "payoff": "체크인·체크아웃 때 직접 사진을 남기고 AI 이미지 흔적을 식별하는 법이라는 실용적 방어책, 혹은 플랫폼 사과·환불로 얻는 정의감.",
+  "audience_desire_fear": "욕구: 여행 중 억울하게 돈을 뜯기지 않을 자기방어 지식. 공포: 아무 잘못 없이 수천 달러를 청구당하고 증거조차 조작당하는 상황.",
+  "why_viral": "837만 구독 대형 채널의 유통력에 '누구나 겪을 수 있는 여행 사기'와 'AI 조작'이라는 시의성 키워드가 결합해 126만 조회·참여율 5.4%를 기록. 다만 채널 평균 대비 0.44배로 콘텐츠 자체의 돌파력은 평균 이하이며, 영상 내용은 메타데이터로 확인 불가.",
+  "korean_angle": "원본 없이 성립: 한국 여행객이 해외 에어비앤비 또는 국내 숙박앱(야놀자·여기어때·농어촌민박)에서 'AI로 합성된 파손 사진'으로 배상 청구를 받는 설정. 한국소비자원 분쟁조정 절차, 사진 메타데이터·AI 생성 흔적 확인법, 체크인·아웃 타임스탬프 촬영 습관을 해법으로 제시.",
+  "judgments": {
+   "story_strength": {
+    "value": 0.6,
+    "rationale": "실제 사건(AI 조작 사진 배상 청구→항소→플랫폼 사과)은 반전과 보상이 뚜렷하지만, 이 숏츠가 어느 사건을 어떻게 다뤘는지 설명란이 없어 추정에 그침."
+   },
+   "korea_localization_gap": {
+    "value": 0.55,
+    "rationale": "2025년 8월 국내 매체(다음 뉴스 송고)가 동일 사건을 보도했고 2026년에도 관련 기사가 있어 뉴스 차원은 소개됐으나, 한국형 사례·대응법으로 풀어낸 숏츠는 드문 것으로 판단(확신 중간)."
+   },
+   "localization_potential": {
+    "value": 0.7,
+    "rationale": "해외여행·공유숙박 이용이 많은 한국 2030에게 직접 관련되며 국내 숙박앱·소비자원 사례로 치환 가능."
+   },
+   "channel_fit": {
+    "value": 0.75,
+    "rationale": "평범한 이용자가 디지털 플랫폼에서 당하는 AI 사기라는 점은 정확히 부합하나, 태그가 범용 바이럴 태그뿐이고 리액션형 클립일 가능성이 있어 감점."
+   }
+  },
+  "independent_sources": [
+   {
+    "url": "https://www-ak-ms.foxbusiness.com/lifestyle/airbnb-apologizes-superhost-allegedly-ai-doctored-photos-claim-16k-fake-damages",
+    "type": "major_news",
+    "note": "에어비앤비가 '슈퍼호스트'의 AI 조작 사진 기반 1만6천 달러 배상 청구 건에 사과·환불했다는 Fox Business 보도."
+   },
+   {
+    "url": "https://www.frommers.com/tips/money-and-currency/airbnb-scam-warning-ai-altered-photos-used-to-accuse-guest-of-16-000-in-damages/",
+    "type": "secondary",
+    "note": "Frommer's의 사건 정리: 런던 거주 게스트, 맨해튼 숙소, 커피테이블 사진 두 장의 모순이 단서."
+   },
+   {
+    "url": "https://incidentdatabase.ai/reports/5598",
+    "type": "specialist",
+    "note": "AI Incident Database에 등록된 에어비앤비 AI 조작 사진 손해배상 청구 사건 기록."
+   },
+   {
+    "url": "https://www.ctvnews.ca/toronto/article/ontario-family-thought-they-booked-an-amazing-airbnb-they-say-ai-was-used-to-generate-the-photos/",
+    "type": "major_news",
+    "note": "토론토 숙소 사진이 AI 생성이었다는 온타리오 가족 사례(CTV News), 허위 매물형 변주."
+   },
+   {
+    "url": "https://www.lbc.co.uk/tech/d924664ea92240409b630141b5965534",
+    "type": "major_news",
+    "note": "에어비앤비가 AI·소셜미디어 기반 휴가 사기에 대해 공식 경고와 안전 수칙을 발표한 보도."
+   },
+   {
+    "url": "https://v.daum.net/v/20250810060242612",
+    "type": "major_news",
+    "note": "국내 매체의 동일 사건 보도('당신이 부순 식탁'… AI 조작 사진 사기성 배상 청구) — 한국 커버리지 확인용."
+   }
+  ],
+  "author": "agent-2 (claude, metadata only, video not watched)"
+ },
+ {
+  "video_id": "pQ6QR-NXlr8",
+  "topic": "AI 음성 복제를 이용한 가족 사칭 사기와, 이를 막기 위해 가족끼리 비밀 암호를 정해두라는 부모 대상 경고(개인 경험담 프레임).",
+  "hook": "'모든 부모가 알아야 할 무서운 AI 사기'라는 공포형 선언으로 시작해, 내 아이도 표적이 될 수 있다는 위협을 첫 문장에서 제시하는 구조.",
+  "curiosity_gap": "'직접 겪은 무서운 경험'을 예고하되 무슨 일이 있었는지 숨겨, 사건의 정체와 결말을 끝까지 봐야 알 수 있게 만든다.",
+  "conflict": "일상의 거실까지 들어온 보이지 않는 가해자(AI 사칭 사기범) 대 아이를 지켜야 하는 부모의 대결 구도.",
+  "emotion": "공포와 불안을 먼저 자극한 뒤, '지금 당장 할 수 있는 행동(암호 정하기)'으로 통제감과 안도감을 돌려주는 흐름.",
+  "story_progression": "위협 선언 → 화자의 개인 체험(사건 발생) → 왜 위험한지 설명 → 해결책(가족 비밀 암호) 제시 → 행동 촉구 댓글 유도.",
+  "reveal": "친숙한 목소리·상황조차 AI로 위조될 수 있다는 사실이 사건을 통해 드러나며, '내 가족도 예외가 아니다'로 전환되는 지점.",
+  "payoff": "'비밀 암호 하나'라는 즉시 실행 가능한 단순 해법과, '나는 가족을 지키겠다'고 댓글로 선언하게 하는 참여형 마무리.",
+  "audience_desire_fear": "자녀가 디지털 범죄에 노출될까 하는 부모의 근원적 공포와, 간단한 규칙으로 가족을 지킬 수 있다는 유능감에 대한 욕구.",
+  "why_viral": "부모라는 넓은 타깃, 실제 체험담 프레임, 강한 공포 훅, 댓글 유도 CTA가 결합돼 확산됐으며 구독자 대비 약 2배의 조회 이탈치를 기록. 단, 제목·설명에 구체 사건이 없어 체험담 자체는 독립 검증이 불가하고, 아래 출처는 '배경 현상(AI 음성 복제 사기·암호 권고)'에 대한 것이다.",
+  "korean_angle": "경찰청·금융감독원이 소비자경보를 낸 '자녀 사칭 딥보이스 납치 빙자 보이스피싱'을 축으로, 학부모가 하교 시간에 받은 '울음소리 전화' 한 통을 재구성하고, 가족 암호·112 확인·SNS 음성 공개 자제라는 한국형 3단 대응을 제시하는 쇼츠.",
+  "judgments": {
+   "story_strength": {
+    "value": 0.65,
+    "rationale": "개인 체험 예고와 해법 제시로 끝까지 볼 이유는 있으나, 메타데이터상 반전·구체 사건이 없고 152초로 길어 긴장 유지가 불확실하다."
+   },
+   "korea_localization_gap": {
+    "value": 0.4,
+    "rationale": "한국은 딥보이스 자녀 납치 사기가 뉴스·금감원 경보로 이미 자주 다뤄졌고 '가족 암호' 팁도 일부 소개됐으나, 부모 1인칭 체험담 쇼츠 형식은 상대적으로 적다(확신도 중간)."
+   },
+   "localization_potential": {
+    "value": 0.85,
+    "rationale": "자녀 사칭 보이스피싱은 한국에서 실제 피해가 많은 보편적 공포라 부모층 공감도가 매우 높다."
+   },
+   "channel_fit": {
+    "value": 0.85,
+    "rationale": "일반인이 디지털 세계에서 겪는 위험한 이야기와 실용 대응법이라는 채널 정체성에 정확히 부합한다."
+   }
+  },
+  "independent_sources": [
+   {
+    "url": "https://www.ic3.gov/PSA/2024/PSA241203",
+    "type": "government_police_company",
+    "note": "FBI IC3 공식 PSA(2024.12): 생성형 AI 사기 경고와 가족 비밀 단어 설정 권고."
+   },
+   {
+    "url": "https://www.fbi.gov/contact-us/field-offices/sanfrancisco/news/fbi-warns-of-increasing-threat-of-cyber-criminals-utilizing-artificial-intelligence",
+    "type": "government_police_company",
+    "note": "FBI 샌프란시스코 지부의 AI 악용 사이버범죄 증가 경고."
+   },
+   {
+    "url": "https://consumer.ftc.gov/scams/family-emergency-scams",
+    "type": "government_police_company",
+    "note": "미 FTC 소비자 안내: AI 음성 복제를 쓴 가족 긴급상황 사기와 대응법."
+   },
+   {
+    "url": "https://www.scientificamerican.com/article/a-safe-word-can-protect-against-ai-impostor-scams/",
+    "type": "specialist",
+    "note": "Scientific American: AI 사칭 사기에 대한 '안전 단어' 방어의 원리 해설."
+   },
+   {
+    "url": "https://www.wsmv.com/2026/09/08/scammers-are-using-ai-mimic-childrens-voices-exploit-parents-expert-warns-heres-what-know/",
+    "type": "major_news",
+    "note": "미 지역 방송 보도(2026.09): AI로 아이 목소리를 흉내 내 부모를 노리는 사기 경고."
+   },
+   {
+    "url": "https://www.sidae.com/article/2026020116122946604",
+    "type": "major_news",
+    "note": "금융감독원 소비자경보(2026.02) 보도: AI 조작 자녀 목소리를 쓴 납치 빙자 보이스피싱."
+   },
+   {
+    "url": "https://www.ytn.co.kr/_ln/0103_202411071430514929",
+    "type": "major_news",
+    "note": "YTN(2024.11): 경찰청 국수본, 딥페이크·딥보이스 자녀 납치 빙자 사기 주의 당부."
+   }
+  ],
+  "author": "agent-3 (claude, metadata only, video not watched)"
+ },
+ {
+  "video_id": "Pqap_P3rFJc",
+  "topic": "AI 음성 복제 사기 때문에 가족들이 '비밀 암호'를 정하기 시작했다는 현상 설명과 FBI 권고를 근거로 한 실용 팁.",
+  "hook": "'왜 요즘 가족들은 비밀 암호를 갖고 있을까'라는 낯선 현상형 질문으로 시작해 이유를 궁금하게 만드는 구조.",
+  "curiosity_gap": "짧은 음성만으로 목소리가 복제된다는 위협을 먼저 보여주고, '그래서 가족들이 무엇을 하는가'라는 해법을 뒤로 미룬다.",
+  "conflict": "온라인에 올린 몇 초의 음성으로 자녀 목소리를 훔치는 사기범 대 진짜와 가짜를 구분해야 하는 부모의 긴박한 통화 상황.",
+  "emotion": "'엄마, 차 사고 났어, 돈 보내줘'식 긴급 상황의 불안 → 단순한 암호 한 마디로 가짜를 걸러낼 수 있다는 안도.",
+  "story_progression": "현상 제시(가족 암호 유행) → 원리(짧은 음성으로 복제) → 위협 시나리오(긴급 송금 요구 전화) → 해법(누구도 모르는 암호) → 권위 근거(FBI 권고)로 마무리.",
+  "reveal": "복제된 목소리는 '아무 데도 올린 적 없는 암호'를 알 수 없다는 단순한 논리가 핵심 반전이자 해법으로 드러난다.",
+  "payoff": "35초 안에 '오늘 가족과 암호 하나 정하라'는 즉시 실행 가능한 행동이 주어지고, FBI·조사기관 출처로 신뢰를 확정한다.",
+  "audience_desire_fear": "가족의 목소리조차 믿을 수 없게 됐다는 공포와, 돈 한 푼 안 들이고 가족을 지킬 수 있는 간단한 규칙에 대한 욕구.",
+  "why_viral": "구독자 4천 명 채널에서 2.6만 뷰로 구독자 대비 6배 이상 확산. 질문형 훅, 구체적 위협 대사, 단일 해법, 공식 출처 명시라는 '설명형 쇼츠' 공식을 35초에 압축한 것이 요인.",
+  "korean_angle": "'요즘 한국 가족들이 단톡방에서 암호를 정하는 이유'라는 현상형 훅으로, 금감원 소비자경보와 경찰청 국수본 사례를 근거 삼아 '3초 음성이면 복제되고, 올린 적 없는 암호만이 진짜를 가른다'는 원리를 보여주는 30초대 쇼츠.",
+  "judgments": {
+   "story_strength": {
+    "value": 0.8,
+    "rationale": "질문형 훅→위협→해법→권위 근거가 35초에 완결되어 끝까지 볼 이유가 명확하고, '암호는 복제할 수 없다'는 깔끔한 논리적 반전이 있다."
+   },
+   "korea_localization_gap": {
+    "value": 0.55,
+    "rationale": "딥보이스 보이스피싱 자체는 한국 뉴스·금감원 경보로 잘 알려졌지만, '가족 암호 정하기'를 현상형 훅으로 설명하는 쇼츠는 상대적으로 드물다(확신도 중간)."
+   },
+   "localization_potential": {
+    "value": 0.9,
+    "rationale": "보이스피싱은 한국에서 가장 큰 생활 범죄 중 하나이며 FBI를 경찰청·금감원으로 치환하면 그대로 성립한다."
+   },
+   "channel_fit": {
+    "value": 0.9,
+    "rationale": "평범한 가족이 디지털 세계에서 겪는 위험과 유용한 대응법을 다루는 '우리 이야기'로 채널 정체성에 정확히 맞는다."
+   }
+  },
+  "independent_sources": [
+   {
+    "url": "https://www.ic3.gov/PSA/2024/PSA241203",
+    "type": "government_police_company",
+    "note": "영상이 인용한 FBI IC3 공식 PSA(I-120324-PSA, 2024.12): 가족 비밀 단어 설정 권고 원문."
+   },
+   {
+    "url": "https://www.mcafee.com/blogs/ai-security/artificial-imposters-cybercriminals-turn-to-ai-voice-cloning-for-a-new-breed-of-scam/",
+    "type": "specialist",
+    "note": "영상이 인용한 McAfee 'Artificial Imposters' 조사(2023): 3초 음성으로 85% 유사 복제, 7천 명 중 1/4 피해 경험."
+   },
+   {
+    "url": "https://www.cftc.gov/LearnAndProtect/AdvisoriesAndArticles/AI_Fraud.html",
+    "type": "government_police_company",
+    "note": "미 CFTC 안내: 생성형 AI를 이용한 사기 증가와 FBI 권고 재인용."
+   },
+   {
+    "url": "https://consumer.ftc.gov/scams/family-emergency-scams",
+    "type": "government_police_company",
+    "note": "미 FTC 소비자 안내: AI 음성 복제 가족 긴급상황 사기 대응법."
+   },
+   {
+    "url": "https://www.scientificamerican.com/article/a-safe-word-can-protect-against-ai-impostor-scams/",
+    "type": "specialist",
+    "note": "Scientific American: '안전 단어'가 AI 사칭 사기를 막는 원리."
+   },
+   {
+    "url": "https://www.notebookcheck.net/FBI-warns-of-surging-AI-powered-fraud-schemes-and-voice-cloning-scams.930838.0.html",
+    "type": "secondary",
+    "note": "FBI PSA를 보도한 기술 매체 기사."
+   },
+   {
+    "url": "https://www.sidae.com/article/2026020116122946604",
+    "type": "major_news",
+    "note": "금융감독원 소비자경보(2026.02) 보도: AI 조작 자녀 목소리 납치 빙자 보이스피싱."
+   },
+   {
+    "url": "https://www.ytn.co.kr/_ln/0103_202411071430514929",
+    "type": "major_news",
+    "note": "YTN(2024.11): 경찰청 국수본, 딥페이크·딥보이스 자녀 납치 빙자 사기 주의 당부."
+   },
+   {
+    "url": "https://m.boannews.com/html/detail.html?idx=134156",
+    "type": "specialist",
+    "note": "보안뉴스: 딥페이크 이용 '자녀 납치' 사기 주의 보도."
+   }
+  ],
+  "author": "agent-3 (claude, metadata only, video not watched)"
+ },
+ {
+  "video_id": "F2Ifbm11mE4",
+  "topic": "AI 딥페이크로 상사(임원) 얼굴·목소리를 복제해 직원에게 송금을 지시하는 '가짜 상사 영상통화' 사기와 그 식별 난이도",
+  "hook": "'상사 얼굴을 AI로 복제했다'는 한 문장으로 '내 직장에서도 벌어질 수 있는 일'이라는 즉각적 불안을 자극하는 전제형 훅.",
+  "curiosity_gap": "얼굴과 목소리까지 똑같다면 도대체 무엇으로 가짜를 알아차릴 수 있는가에 대한 답을 끝까지 미루는 구조.",
+  "conflict": "신뢰의 근거(눈으로 본 얼굴, 귀로 들은 목소리)가 무기화되는 상황 vs 의심해야 하지만 상사의 지시를 거부하기 어려운 직원의 위치.",
+  "emotion": "불안·섬뜩함(기술적 무력감)과 '나도 속았을 것'이라는 자기 투영.",
+  "story_progression": "사건 제시(상사 얼굴 복제) → 왜 기존 식별법이 무너지는지 전문가 해설 → 피해 규모·일반화 → 방어 원칙 제시로 흐르는 전문가 인터뷰형 전개.",
+  "reveal": "진짜처럼 보이는 영상통화 참석자 전원이 가짜일 수 있다는 '보는 것이 증거가 아니다'라는 반전.",
+  "payoff": "시청자가 가져가는 실용적 방어 수단(별도 채널 재확인, 사전 약속한 암호어, 긴급·비밀 요청 자체를 의심)이라는 교훈형 보상.",
+  "audience_desire_fear": "욕구: 속지 않는 방법을 알고 싶다. 공포: 회사 돈을 내 손으로 송금해 책임을 지게 되는 것, 가족·지인 목소리까지 복제되는 것.",
+  "why_viral": "Arup 2,560만 달러 사건 등 실제 대형 피해가 보도된 소재이고, 딥페이크 사기가 2025~2026년 급증(FBI IC3 2026년 7월 PSA, AI 관련 사기 손실 8.9억 달러)해 뉴스성과 실용성이 동시에 있음.",
+  "korean_angle": "한국 경찰청·금감원 딥페이크 경고와 '홍콩 직원 340억 송금' 국내 보도를 토대로, 한국 중견기업 재무팀 대리가 '대표 얼굴·목소리의 긴급 비공개 M&A 송금' 영상통화를 받았다가 사내 암호어·유선 역확인 규정 덕에 막아내는(또는 막지 못하는) 가상 사례로 재구성.",
+  "judgments": {
+   "story_strength": {
+    "value": 0.6,
+    "rationale": "소재 자체의 긴장·반전은 강하지만 원본은 사건 서사가 아닌 전문가 해설 형식이라 재창작 시 사건 중심 재구성이 필요함."
+   },
+   "korea_localization_gap": {
+    "value": 0.4,
+    "rationale": "Arup 사건·경찰청 경고가 국내 뉴스(아시아경제, 헤럴드, 보안뉴스 등)로 이미 보도됐고 보안업체 블로그도 많아 포화에 가깝지만, 직원 1인칭 숏폼 서사형은 상대적으로 적음(확신도 중간)."
+   },
+   "localization_potential": {
+    "value": 0.85,
+    "rationale": "상사 지시·송금·영상회의는 한국 직장인에게 완전히 보편적인 상황이라 기관명·회사만 바꾸면 그대로 성립함."
+   },
+   "channel_fit": {
+    "value": 0.85,
+    "rationale": "평범한 직장인이 디지털 세계에서 겪는 위험하고 섬뜩한 이야기라는 채널 정의에 정확히 부합함."
+   }
+  },
+  "independent_sources": [
+   {
+    "url": "https://edition.cnn.com/2024/05/16/tech/arup-deepfake-scam-loss-hong-kong-intl-hnk",
+    "type": "major_news",
+    "note": "영국 엔지니어링사 Arup이 홍콩 직원 대상 딥페이크 영상회의 사기로 2,500만 달러를 잃었다고 확인한 CNN 보도."
+   },
+   {
+    "url": "https://securityaffairs.com/158651/cyber-crime/cyber-heist-with-deepfake-tech",
+    "type": "specialist",
+    "note": "홍콩 경찰 발표 기반, CFO 딥페이크 영상통화로 15회 송금(HK$2억)이 이뤄진 경위를 다룬 보안 전문 매체 기사."
+   },
+   {
+    "url": "https://www.ic3.gov/PSA/2026/PSA260720",
+    "type": "government_police_company",
+    "note": "FBI IC3 2026년 7월 PSA: AI 생성 영상(딥페이크)으로 공무원·임원을 사칭하는 수법과 손 왜곡·그림자·통화 지연 등 식별 요령, 암호어 설정 권고."
+   },
+   {
+    "url": "https://view.asiae.co.kr/article/2024020508362728470",
+    "type": "major_news",
+    "note": "'상사 얼굴 보고 340억 보냈는데…' 홍콩 딥페이크 사기 사건을 다룬 국내 아시아경제 보도(한국 내 기존 커버리지 확인용)."
+   },
+   {
+    "url": "https://m.boannews.com/html/detail.html?idx=140886",
+    "type": "specialist",
+    "note": "국내 보안뉴스 칼럼: 딥페이크 CEO 사칭 송금 사기 수법과 경찰청의 SNS 공개설정 주의 경고 언급."
+   },
+   {
+    "url": "https://lifelock.norton.com/learn/identity-theft-resources/control-room-1",
+    "type": "secondary",
+    "note": "인터뷰 대상자 Renée DiResta가 AI 음성·얼굴 복제 사기를 해설한 별도 프로그램(발언자 전문성 확인용)."
+   }
+  ],
+  "author": "agent-4 (claude, metadata only, video not watched)"
+ },
+ {
+  "video_id": "kz0OmrZHsLM",
+  "topic": "조 로건이 '인터넷에서 가장 섬뜩한 개 영상'에 반응하는 팟캐스트 클립 리업로드(원본 영상의 실체는 메타데이터와 웹 검색으로 특정 불가).",
+  "hook": "유명인 이름 + '가장 섬뜩한' 최상급 + 이모지로 '대체 무슨 영상이길래'라는 호기심을 유발하는 반응형 훅.",
+  "curiosity_gap": "영상의 내용을 제목에서 전혀 밝히지 않고 유명인의 반응만 예고해 끝까지 봐야 정체를 알 수 있게 만드는 구조.",
+  "conflict": "'귀여운 개'라는 기대 vs '섬뜩함'이라는 불일치, 그리고 '설명 불가(unexplained)'라는 미스터리 프레임.",
+  "emotion": "오싹함·불쾌한 호기심(언캐니), 유명인의 당황을 함께 즐기는 대리 체험.",
+  "story_progression": "유명인 리액션 예고 → 영상 시청·반응 → 추측·해석 나열로 추정되는 전형적 리액션 클립 전개(실제 구성은 미확인).",
+  "reveal": "섬뜩한 개 영상의 실제 장면이 공개되는 순간이 유일한 반전이며 해설 없이 끝날 가능성이 높음.",
+  "payoff": "교훈이나 결론보다는 '봤다'는 체험과 댓글 토론 참여가 보상인 구조로, 실용적 payoff는 약함.",
+  "audience_desire_fear": "욕구: 설명되지 않는 기이한 것을 보고 싶다. 공포: 익숙한 반려동물이 낯설고 위협적으로 보이는 언캐니 공포.",
+  "why_viral": "유명인 네임드롭·최상급 제목·공포 해시태그 조합의 저비용 리업로드 포맷으로, 구독자 1.6만 채널 대비 14배 아웃라이어. 원본 '섬뜩한 개 영상'을 특정할 독립 출처는 웹 검색에서 찾지 못했음.",
+  "korean_angle": "유명인 리액션 자체는 복제 불가하므로, '반려동물 CCTV·홈캠에 찍힌 설명 안 되는 장면'이 한국 커뮤니티(에브리타임·디시·당근 동네생활 등)에서 괴담으로 번졌다가 수의사·IT 전문가 검증으로 원인(센서 오류, AI 생성 영상, 조명 착시)이 밝혀지는 '디지털 괴담 검증' 서사로 치환.",
+  "judgments": {
+   "story_strength": {
+    "value": 0.25,
+    "rationale": "'무슨 영상인가'라는 호기심 훅은 있으나 리액션 클립 특성상 긴장 전개·해소·교훈이 없고 원본 내용조차 확인되지 않음."
+   },
+   "korea_localization_gap": {
+    "value": 0.6,
+    "rationale": "유명인 리액션 리업로드와 공포 영상 모음은 국내에도 흔하지만 '반려동물 홈캠 괴담의 디지털 검증' 서사는 비교적 적음(불확실)."
+   },
+   "localization_potential": {
+    "value": 0.4,
+    "rationale": "조 로건 자체는 한국 시청자에게 인지도가 낮아 유명인 의존 구조는 이식되지 않고, 언캐니 동물 영상이라는 보편 요소만 남음."
+   },
+   "channel_fit": {
+    "value": 0.3,
+    "rationale": "평범한 사람이 디지털 세계에서 겪는 위험·유용한 이야기가 아닌 내용 미상의 유명인 리액션 클립이라 채널 정의에서 벗어남."
+   }
+  },
+  "independent_sources": [],
+  "author": "agent-4 (claude, metadata only, video not watched)"
+ },
+ {
+  "video_id": "_1R5FKG_MC0",
+  "topic": "애플 첫 폴더블 '아이폰 듀오'(2026-09-09 공개, $1,999)와 이틀 먼저 공개된 샤오미 18 폴드 등 중국 폴더블의 '거의 같은 외형·더 좋은 스펙·더 싼 가격' 비교를 코미디 스케치로 다룬 것으로 추정(메타데이터 기반 추정, 영상 미시청).",
+  "hook": "'중국이 더 나은 아이폰 듀오를 만들었다'는 한 줄 역전 선언으로 애플 팬의 자존심을 건드리며 시작.",
+  "curiosity_gap": "'애플 신제품인데 중국판이 더 낫다고? 뭐가 어떻게 더 나은데?'라는 비교 결과를 확인하고 싶게 만드는 구조.",
+  "conflict": "프리미엄 브랜드(애플) vs 가성비·스펙 우위(중국 제조사), 그리고 '누가 누구를 베꼈나'라는 원조 논쟁.",
+  "emotion": "허탈한 웃음(😭)과 소비자로서의 배신감·공감, 브랜드 충성도에 대한 자조.",
+  "story_progression": "기대(애플 폴더블) → 비교 대상 등장(중국 폴더블) → 항목별 역전(가격·배터리·카메라·두께) → 체념형 결론의 짧은 스케치 구조로 추정.",
+  "reveal": "거의 같은 형태의 제품이 더 저렴하고 스펙이 높다는 사실 자체가 반전이며, '애플이 오히려 베낀 것 아니냐'는 밈이 반전을 강화.",
+  "payoff": "'비싼 돈 주고 산 내가 바보'라는 자기 비하식 마무리로 공감 댓글과 공유를 유도.",
+  "audience_desire_fear": "욕망: 합리적 소비자로 보이고 싶음 / 두려움: 브랜드 값만 내고 호구가 되는 것.",
+  "why_viral": "애플 첫 폴더블이라는 초대형 이슈 직후(공개 3주 뒤) 타이밍, 애플 vs 중국이라는 보편적 대립 구도, 30초 안에 소화되는 비교 밈 포맷이 결합. 독립 출처로 샤오미 18 폴드의 이틀 선공개·유사 디자인·스펙 우위, 애플의 '경쟁사가 베꼈다' 주장이 확인됨.",
+  "korean_angle": "삼성 갤럭시 Z 폴드8·아이폰 듀오·샤오미 18 폴드를 한국 소비자 관점에서 놓고 '같은 모양 다른 가격, 누가 원조인가'를 다루되, 한국 출시 여부(샤오미는 중국 한정)·국내 구매대행 리스크·AS 문제라는 한국 특유의 함정을 반전으로 삼는 소재.",
+  "judgments": {
+   "story_strength": {
+    "value": 0.55,
+    "rationale": "비교형 반전(더 싸고 더 좋다)과 원조 논쟁이라는 명확한 긴장은 있으나 30초 밈 스케치라 결말의 깊이는 제한적."
+   },
+   "korea_localization_gap": {
+    "value": 0.25,
+    "rationale": "국내 IT 유튜브·언론이 아이폰 듀오 vs 샤오미 18 폴드 vs 갤럭시 폴드8 비교를 이미 다수 다루고 있어 포화에 가까움(검색으로 국내 기사 확인)."
+   },
+   "localization_potential": {
+    "value": 0.8,
+    "rationale": "아이폰·폴더블·중국산 가성비 논쟁은 한국 시청자에게 매우 익숙하고 삼성이 당사자라 관심도가 높음."
+   },
+   "channel_fit": {
+    "value": 0.55,
+    "rationale": "디지털 기기 소비자 이야기이긴 하나 코미디 스케치 성격이며 '위험하거나 유용한 경험담'보다는 제품 밈에 가까움."
+   }
+  },
+  "independent_sources": [
+   {
+    "url": "https://apple.com/newsroom/2026/09/apple-unveils-iphone-duo/",
+    "type": "official",
+    "note": "애플 뉴스룸 아이폰 듀오 공식 발표(7.6인치 내부 화면, $1,999부터, 10/16 예약·10/23 출시)."
+   },
+   {
+    "url": "https://www.macrumors.com/roundup/iphone-duo/",
+    "type": "specialist",
+    "note": "MacRumors 아이폰 듀오 종합 정리(이름·사양·출시 일정)."
+   },
+   {
+    "url": "https://www.opb.org/article/2026/09/09/apple-s-new-ceo-unveils-a-foldable-iphone/",
+    "type": "major_news",
+    "note": "OPB(AP 계열) 보도: 새 CEO 존 터너스가 첫 폴더블 아이폰 듀오 공개."
+   },
+   {
+    "url": "https://abc7news.com/post/apple-event-2026-new-ceo-john-ternus-unveil-latest-foldable-iphone-lineup/19810374/",
+    "type": "major_news",
+    "note": "ABC7 보도: 2026 애플 이벤트에서 폴더블 '듀오' 포함 라인업 공개."
+   },
+   {
+    "url": "https://scmp.com/tech/tech-trends/article/3366682/chinas-xiaomi-unveils-folding-phone-home-grown-chip-it-takes-apple-huawei",
+    "type": "major_news",
+    "note": "SCMP: 샤오미가 자체 칩 탑재 폴더블(18 폴드)로 애플·화웨이에 도전."
+   },
+   {
+    "url": "https://gulfnews.com/amp/story/technology%2Fapple-iphone-duo-vs-xiaomi-18-fold-comparison-1.500669625",
+    "type": "major_news",
+    "note": "Gulf News: 아이폰 듀오와 샤오미 18 폴드가 왜 이렇게 닮았는지 항목별 비교."
+   },
+   {
+    "url": "https://www.channelnews.com.au/apple-claims-rivals-copied-iphone-duo-design-after-samsung-mocks-launch/",
+    "type": "specialist",
+    "note": "애플(조스위악)이 경쟁사가 유출된 화면 비율을 베꼈다고 주장, 삼성의 조롱 트윗 보도."
+   },
+   {
+    "url": "https://www.pcguide.com/news/xiaomi-18-fold-sales-numbers-are-already-impressive-despite-launching-right-after-apples-iphone-duo-reveal/",
+    "type": "specialist",
+    "note": "샤오미 18 폴드가 아이폰 듀오 공개 직후에도 판매 호조라는 보도."
+   },
+   {
+    "url": "https://www.wikitree.co.kr/articles/1159234",
+    "type": "secondary",
+    "note": "국내(위키트리) 샤오미 18 폴드 핸즈온 보도 — 한국 내 커버리지 존재 확인용."
+   },
+   {
+    "url": "https://v.daum.net/v/VN8z9P3Gty",
+    "type": "secondary",
+    "note": "국내 포털 기사: 샤오미가 삼성 따라 접는 폰 출시 — 한국 내 비교 담론 포화 근거."
+   }
+  ],
+  "author": "agent-5 (claude, metadata only, video not watched)"
+ },
+ {
+  "video_id": "6ABLhCB28T8",
+  "topic": "메타데이터만으로 사건 특정 불가. 제목 '내 다음 AI 구매'만 있고 설명·태그가 비어 있어, 특정 AI 기기(AI 안경·AI 동반 로봇·OpenAI 기기 등)나 AI 서비스 중 무엇을 다루는지 확인할 수 없음. 채널 성격상 AI 소비 트렌드를 풍자한 코미디 스케치로 추정.",
+  "hook": "'다음에 살 AI 제품'이라는 1인칭 예고형 제목과 😭 이모지로 '어이없는 물건을 사겠다는 건가?'라는 궁금증을 유발(추정).",
+  "curiosity_gap": "무엇을 사려는지 제목이 숨기고 있어 정체를 확인하려는 클릭을 유도하는 구조(추정).",
+  "conflict": "AI 과대광고 vs 실제 효용, 혹은 '필요 없는데 사고 싶은' 소비 욕구와 지갑의 갈등(추정, 미확인).",
+  "emotion": "자조적 웃음·FOMO 공감(추정).",
+  "story_progression": "메타데이터만으로 전개 구조 파악 불가. 채널 포맷상 '제품 소개 → 과장된 기능 → 허무한 결말'형 30초 스케치로 추정.",
+  "reveal": "구매 대상 AI 제품의 정체가 반전 지점일 것으로 추정되나 특정 불가.",
+  "payoff": "특정 불가. '결국 나도 산다'식 공감형 마무리 추정.",
+  "audience_desire_fear": "욕망: 최신 AI 기기를 먼저 써보고 싶음 / 두려움: 쓸모없는 AI 가전에 돈을 낭비하는 것(일반론).",
+  "why_viral": "독립 출처로 대상 사건을 특정하지 못했음. 837만 구독 채널의 기본 도달력과 'AI 제품' 키워드의 보편적 관심이 조회를 견인한 것으로 보이며, 발행 13시간 만의 수치라 outlier_ratio(0.55)는 아직 채널 평균 이하.",
+  "korean_angle": "원본 특정 없이도 성립하는 소재: 한국 소비자가 실제로 산 AI 기기(AI 안경, AI 동반 로봇, AI 녹음기·번역기)를 한국소비자원 상담 사례·전자제품 환불 분쟁 사례와 엮어 '사기 전 알았어야 할 것'으로 구성.",
+  "judgments": {
+   "story_strength": {
+    "value": 0.2,
+    "rationale": "제목이 정체를 숨기는 미끼 구조는 있으나 어떤 사건·제품인지 확인되지 않아 저신뢰 판단."
+   },
+   "korea_localization_gap": {
+    "value": 0.4,
+    "rationale": "AI 기기 구매·리뷰 콘텐츠는 국내에도 많지만 대상 제품을 특정할 수 없어 불확실한 중간값."
+   },
+   "localization_potential": {
+    "value": 0.6,
+    "rationale": "AI 소비 풍자는 보편적이지만 구체 제품이 한국 미출시일 가능성이 있어 보수적으로 평가."
+   },
+   "channel_fit": {
+    "value": 0.3,
+    "rationale": "내용 미상의 코미디 스케치로 '일반인의 디지털 경험담'과의 연결이 확인되지 않음."
+   }
+  },
+  "independent_sources": [],
+  "author": "agent-5 (claude, metadata only, video not watched)"
+ }
+]
