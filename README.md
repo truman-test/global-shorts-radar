@@ -186,6 +186,24 @@ radar verify <video_id> --status verified --source https://police.example/notice
 - `radar publish-log <video_id> --url <내 영상 URL> --title ...`: 어떤 후보에서 어떤 영상을 만들었는지 기록(`published` 테이블). 다음 브리프에서 제외되고, 성과 피드백(로드맵 6)의 기준이 됩니다.
 - 30일 실행 계획: [`docs/plan_1k_subscribers.md`](docs/plan_1k_subscribers.md)
 
+### 우리 영상 만들기 (대본 → 음성 → 자막 → 장면 카드 → mp4)
+
+원칙: 남의 영상·음성·이미지는 쓰지 않습니다. 대본은 Story DNA와 **검증된 독립 출처**만으로 새로 쓰고, 화면은 로컬에서 그린 타이포그래피 카드입니다 (스톡 영상은 내레이션과 어긋나는 것이 자동 생성기의 공통 실패 원인이라 기본으로 쓰지 않음).
+
+```bash
+pip install -e ".[produce]"                          # Pillow, imageio-ffmpeg(ffmpeg 바이너리 포함), edge-tts
+radar script-check content/scripts/2026-10-08-family-password.json   # QA 게이트 + 실제로 읽힐 문장 출력
+radar produce content/scripts/2026-10-08-family-password.json --backend edge   # 로컬 미리보기
+radar produce content/scripts/2026-10-08-family-password.json --backend google # 게시용 (GOOGLE_TTS_API_KEY)
+```
+
+- **대본 형식**: `content/scripts/*.json` — 장면별 `narration`(자막·음성), `headline`·`sub`(카드 문구), `icon`(phone, voice, shield, lock, family, warning, money, check, video, update), `accent`, 그리고 `disclaimer`, `sources`, `title`, `description`, `tags`. 형식 설명은 `radar/production/script.py` 상단.
+- **QA 게이트** (`radar script-check`, `produce`가 먼저 실행): 출처 URL 필수, 재연 고지문 필수, 원본 신호가 `verified`가 아니면 거부(`--allow-unverified`로 경고만), `false` 판정 소재 거부, 화면·내레이션에 URL 금지, TTS가 잘못 읽을 숫자·영문 잔존 시 거부, 한국어 비율, 예상 길이 12~50초.
+- **읽기 정규화**: 자막에는 "2024년 · 340억 원 · FBI"를 그대로 쓰고, 음성에는 "이천이십사년 · 삼백사십억 원 · 에프비아이"로 바꿔 넣습니다 (`textnorm.py`, 세 명·두 시간처럼 고유어 수사 처리 포함).
+- **음성**: `google`(Google Cloud TTS, 상업 이용 가능, 월 100만 자 무료)만 게시용입니다. `edge`(edge-tts)는 Microsoft가 상업 이용을 허가한 적이 없어 **로컬 미리보기 전용**이며, 그렇게 만든 영상은 `meta.json`에 `publishable: false`로 기록됩니다. 장면마다 앞뒤 무음을 잘라 템포를 유지합니다 (실측 초당 약 6자, 대본 5장면 ≈ 27~31초).
+- **화면**: 1080×1920, 상단 채널명과 첫 장면 재연 배지, 아이콘, 두 줄로 균형 있게 나눈 헤드라인, 화면 66~78% 높이에 굵은 자막(10자 단위, 자동 줄바꿈), 상단 진행 바. 하단 20%와 오른쪽 버튼 영역은 비워 둡니다.
+- **산출물**: `media/<script id>/video.mp4`, `thumb.png`, `meta.json`(제목, 고지·출처·해시태그가 들어간 설명, 태그, 길이, 음성 백엔드, `publishable`). `media/`는 git에 포함되지 않습니다.
+
 ### 정기 실행 예시 (Windows 작업 스케줄러)
 
 ```powershell

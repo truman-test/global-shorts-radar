@@ -97,6 +97,14 @@ def build_parser() -> argparse.ArgumentParser:
     ws.add_argument("--out", default="reports")
     ws.add_argument("--now")
     ws.add_argument("--since", help="only candidates discovered at/after this ISO time")
+    scc = sub.add_parser("script-check", help="QA gate for a production script (no network)")
+    scc.add_argument("script")
+    scc.add_argument("--allow-unverified", action="store_true")
+    prd = sub.add_parser("produce", help="script -> TTS -> captions -> scene cards -> vertical mp4")
+    prd.add_argument("script")
+    prd.add_argument("--backend", choices=["google", "edge", "tone"], help="default: [production] backend")
+    prd.add_argument("--out", help="default: [production] out_dir")
+    prd.add_argument("--allow-unverified", action="store_true")
     b = sub.add_parser("brief", help="production brief: verified-first top stories with Story DNA (Korean, one page)")
     b.add_argument("--top", type=int, default=3)
     b.add_argument("--out", default="reports")
@@ -148,6 +156,46 @@ def main(argv: list[str] | None = None) -> int:
     except (ConfigError, YouTubeAPIError, ValueError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
+
+
+def _script_command(cmd, args, db) -> int:
+    from radar.production.script import ScriptError, estimate_seconds, load_script, validate
+
+    try:
+        script = load_script(args.script)
+    except ScriptError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    errors, warnings = validate(script, db, args.allow_unverified)
+    print(f"{script.id}: {len(script.scenes)} scenes, ~{estimate_seconds(script):.1f}s estimated")
+    for w in warnings:
+        print(f"  warning: {w}")
+    for e in errors:
+        print(f"  error: {e}")
+    if cmd == "script-check":
+        for i, scene in enumerate(script.scenes, start=1):
+            print(f"  [{i}] spoken: {scene.tts_text()}")
+        return 1 if errors else 0
+    if errors:
+        print("refusing to produce: fix the errors above")
+        return 1
+    from radar.production.assemble import ProductionError, produce
+    from radar.production.config import load_production_config
+    from radar.production.render import find_font
+    from radar.production.tts import TTSError, make_backend
+
+    pcfg = load_production_config(args.config)
+    try:
+        backend = make_backend(args.backend or pcfg.backend, pcfg)
+        result = produce(script, args.out or pcfg.out_dir, tts=backend, channel_name=pcfg.channel_name,
+                         font_path=find_font(pcfg.font_file))
+    except (TTSError, ProductionError, FileNotFoundError) as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return 2
+    print(f"video: {result.video} ({result.duration:.1f}s, {result.size}) publishable={result.publishable}")
+    for w in result.warnings:
+        print(f"  warning: {w}")
+    return 0
 
 
 def _dispatch(args, settings, db) -> int:
@@ -209,6 +257,8 @@ def _dispatch(args, settings, db) -> int:
         md.write_text(render_worksheet_markdown(rows, generated_at=now, csv_name=csv_path.as_posix()), encoding="utf-8")
         print(f"{len(rows)} stories -> {md} , {csv_path}")
         return 0
+    if cmd in ("script-check", "produce"):
+        return _script_command(cmd, args, db)
     if cmd == "brief":
         now = _now(args)
         since = to_iso(parse_ts(args.since)) if args.since else None

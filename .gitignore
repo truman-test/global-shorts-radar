@@ -7,3 +7,4 @@ __pycache__/
 *.db
 .claude/
 research_notes/
+media/

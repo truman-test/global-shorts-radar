@@ -1,0 +1,24 @@
+{
+ "id": "2026-10-08-deepfake-cfo",
+ "source_video_id": "F2Ifbm11mE4",
+ "title": "화상회의 속 상사가 가짜였다… 340억 원 딥페이크 사기 #Shorts",
+ "description": "영상통화로 받은 송금 지시, 화면 속 얼굴과 목소리가 AI로 만든 가짜라면? 2024년 홍콩에서 실제로 일어난 딥페이크 사기와 막는 방법.",
+ "tags": ["딥페이크", "AI 사기", "영상통화 사기", "회사 보안", "송금 사기"],
+ "disclaimer": "※ 실제 사건을 바탕으로 한 재연입니다",
+ "scenes": [
+  {"narration": "화상회의에서 상사가 직접 송금을 지시합니다. 여러분이라면 의심할 수 있을까요?",
+   "headline": "영상통화 속 상사, 진짜일까?", "sub": "", "icon": "video", "accent": "red"},
+  {"narration": "2024년 홍콩, 한 다국적 기업의 재무 담당 직원이 회의에서 지시받은 대로 돈을 보냈습니다.",
+   "headline": "지시대로 송금한 직원", "sub": "2024년 홍콩의 한 다국적 기업", "icon": "money", "accent": "yellow"},
+  {"narration": "그런데 화면 속 최고재무책임자의 얼굴과 목소리는 AI로 합성한 가짜였습니다.",
+   "headline": "얼굴도 목소리도 AI였다", "sub": "", "icon": "warning", "accent": "red"},
+  {"narration": "보낸 돈은 2억 홍콩달러, 우리 돈 약 340억 원이었습니다.",
+   "headline": "약 340억 원 피해", "sub": "2억 홍콩달러", "icon": "money", "accent": "red"},
+  {"narration": "영상 속 지시만 믿지 마세요. 송금 전에는 알고 있는 번호로 직접 다시 확인하세요.",
+   "headline": "송금 지시는 다른 경로로 확인", "sub": "알고 있는 번호로 직접 전화", "icon": "phone", "accent": "green"}
+ ],
+ "sources": [
+  {"title": "아시아경제, 홍콩 딥페이크 화상회의 사기 (2024-02)", "url": "https://view.asiae.co.kr/article/2024020508362728470"}
+ ],
+ "author": "llm:claude-opus-5-5 (orchestrator; source video not watched)"
+}

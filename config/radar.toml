@@ -116,3 +116,18 @@ terms = ["phone", "iphone", "android", "ai", "scam", "password", "hacker", "hack
 "airtag" = "에어태그"
 "malware" = "악성코드"
 "ransomware" = "랜섬웨어"
+
+# ---------------------------------------------------------------- production (our own Shorts)
+[channel]
+name = "디지털 생존노트"      # chosen by the orchestrator on 2026-10-08 (user delegated); change freely
+
+[production]
+# edge   = Microsoft Edge voice via edge-tts: LOCAL PREVIEW ONLY (never licensed for commercial use)
+# google = Google Cloud Text-to-Speech (GOOGLE_TTS_API_KEY in .env): publishable, 1M chars/month free
+backend = "edge"
+edge_voice = "ko-KR-SunHiNeural"
+edge_rate = "+15%"
+google_voice = "ko-KR-Neural2-A"
+google_rate = 1.15
+out_dir = "media"
+# font_file = "C:/Windows/Fonts/malgunbd.ttf"   # auto-detected when omitted
