@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from statistics import median
 from typing import Iterable, Sequence
 
-METRIC_VERSION = "m2"
+METRIC_VERSION = "m3"  # m3: outlier baseline floored at min_baseline_median_views
 
 _DURATION = re.compile(r"^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$")
 
@@ -76,10 +76,16 @@ def channel_baseline(
     return None, len(eligible[:sample_size]), "insufficient"
 
 
-def outlier_ratio(views: int | None, baseline_median: float | None) -> float | None:
+def outlier_ratio(views: int | None, baseline_median: float | None, min_baseline: float = 0.0) -> float | None:
+    """views / max(channel median, min_baseline).
+
+    A channel whose uploads normally get ~10 views makes any video a 100x "outlier"; the floor
+    says a video must beat at least `min_baseline` views to count as beating its channel.
+    The observed median is stored unchanged; only the ratio uses the floor.
+    """
     if views is None or baseline_median is None or baseline_median <= 0:
         return None
-    return views / baseline_median
+    return views / max(baseline_median, min_baseline)
 
 
 def engagement_rate(views: int | None, likes: int | None, comments: int | None) -> float | None:

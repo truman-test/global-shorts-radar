@@ -27,6 +27,7 @@ candidate_window_hours = 72         # candidates stay on the radar (and get re-t
 max_short_seconds = 180             # Shorts may be up to 3 minutes
 min_baseline_videos = 3             # fewer -> outlier ratio is not computed
 baseline_min_age_hours = 48         # very new uploads are excluded from the channel median
+min_baseline_median_views = 1000    # outlier ratio uses max(channel median, this): tiny channels are not 100x outliers
 freshness_half_life_hours = 48
 
 [scoring]

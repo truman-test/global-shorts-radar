@@ -171,7 +171,7 @@ def compute_metrics(db, settings, now: datetime, since: str | None = None) -> in
             "channel_median_views": baseline,
             "baseline_size": size,
             "baseline_kind": kind,
-            "outlier_ratio": m.outlier_ratio(snap["view_count"], baseline),
+            "outlier_ratio": m.outlier_ratio(snap["view_count"], baseline, settings.min_baseline_median_views),
             "engagement_rate": m.engagement_rate(snap["view_count"], snap["like_count"], snap["comment_count"]),
             "freshness": m.freshness(m.hours_since(video["published_at"], now), settings.freshness_half_life_hours),
             **_trend_columns(db.snapshots(vid), video["published_at"]),

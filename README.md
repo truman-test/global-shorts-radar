@@ -60,6 +60,7 @@ Collectors → Raw Storage → Metrics → Scoring → Analysis(heuristic/manual
 - 기준선은 **Shorts끼리 비교**를 우선합니다 (Shorts를 롱폼 중앙값과 비교하면 왜곡됨). Shorts가 부족하면 전체 포맷으로 대체.
 - 게시 48시간 미만 업로드는 조회수가 쌓이지 않았으므로 기준선에서 제외.
 - 기준선 영상이 3개 미만이면 ratio를 계산하지 않음 (`n/a`, 점수에서 누락 처리).
+- 기준선 중앙값 하한 `min_baseline_median_views`(기본 1,000, metric `m3`): `outlier = views ÷ max(중앙값, 하한)`. 평소 10회 보는 채널의 1,164회 영상이 137배 outlier로 11위에 오른 live run 사례 때문입니다. 관측 중앙값은 그대로 저장하고 리포트에 "floored to 1,000"으로 표시합니다.
 - views/hour·기준선은 **관측(snapshot) 시점** 기준으로 계산합니다. 나중에 `compute`를 다시 돌려도 값이 변하지 않습니다.
 - Shorts 판정: 길이 ≤ 180초 (API에는 Shorts 여부 필드가 없음).
 

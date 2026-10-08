@@ -208,8 +208,11 @@ def render_markdown(rows: list[dict], *, generated_at: datetime, mode: str, sett
         out.append(f"views {_fmt_int(r['view_count'])} · likes {_fmt_int(r['like_count'])} · comments "
                    f"{_fmt_int(r['comment_count'])} · channel subscribers {_fmt_int(r['subscriber_count'])} · "
                    f"published {r['published_at']} · duration {r['duration_seconds']}s\n")
+        floor = settings.min_baseline_median_views
+        floored = r["channel_median_views"] is not None and r["channel_median_views"] < floor
         baseline = (f"{_fmt(r['channel_median_views'], ',.0f')} median over {r['baseline_size']} recent "
                     f"{'Shorts' if r['baseline_kind'] == 'shorts' else 'uploads'}"
+                    + (f", floored to {floor:,.0f}" if floored else "")
                     if r["channel_median_views"] is not None else
                     f"not enough channel history ({r['baseline_size']} eligible uploads)")
         out.append("**Derived** (deterministic)\n")

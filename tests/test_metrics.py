@@ -111,3 +111,10 @@ def test_velocity_trend_downward_correction_and_hidden_counts():
 def test_velocity_trend_zero_prior_average():
     t = m.velocity_trend([_s("2026-10-03T00:00:00Z", 0), _s("2026-10-03T02:00:00Z", 500)], PUB)
     assert t["recent_views_per_hour"] == 250 and t["velocity_ratio"] is None
+
+
+def test_outlier_ratio_floors_tiny_baselines():
+    assert m.outlier_ratio(1_164, 8.5, min_baseline=1_000) == 1.164      # floored: not a 137x outlier
+    assert m.outlier_ratio(50_000, 8.5, min_baseline=1_000) == 50.0      # a real breakout still shows
+    assert m.outlier_ratio(1_000_000, 50_000, min_baseline=1_000) == 20.0  # floor is inert above it
+    assert m.outlier_ratio(100, 0, min_baseline=1_000) is None            # no baseline stays no baseline

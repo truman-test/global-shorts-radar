@@ -30,6 +30,7 @@ class Settings:
     max_short_seconds: int
     min_baseline_videos: int
     baseline_min_age_hours: float
+    min_baseline_median_views: float
     freshness_half_life_hours: float
     weights_version: str
     weights: dict[str, float]
@@ -99,6 +100,7 @@ def load_settings(
             max_short_seconds=int(metrics["max_short_seconds"]),
             min_baseline_videos=int(metrics["min_baseline_videos"]),
             baseline_min_age_hours=float(metrics["baseline_min_age_hours"]),
+            min_baseline_median_views=float(metrics.get("min_baseline_median_views", 0)),
             freshness_half_life_hours=float(metrics["freshness_half_life_hours"]),
             weights_version=str(scoring["weights_version"]),
             weights={k: float(v) for k, v in scoring["weights"].items()},
