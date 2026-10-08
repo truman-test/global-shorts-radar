@@ -1,4 +1,8 @@
-"""Import human judgments from CSV: video_id,dimension,value,rationale,author"""
+"""Import judgments from CSV: video_id,dimension,value,rationale,author
+
+Source defaults to "manual" (a human). An LLM's judgments must be imported with source
+"llm:<model>" so they rank below human ones and are never shown as human.
+"""
 from __future__ import annotations
 
 import csv
@@ -9,8 +13,14 @@ from radar.scoring.radar import JUDGMENT_DIMENSIONS
 REQUIRED_COLUMNS = {"video_id", "dimension", "value"}
 
 
-def import_manual_csv(db, path: str | Path, now: str) -> tuple[int, list[str]]:
+def valid_source(source: str) -> bool:
+    return source == "manual" or (source.startswith("llm:") and len(source) > 4)
+
+
+def import_manual_csv(db, path: str | Path, now: str, source: str = "manual") -> tuple[int, list[str]]:
     """Returns (imported_count, errors). Invalid rows are skipped and reported, never half-written."""
+    if not valid_source(source):
+        return 0, [f"source must be 'manual' or 'llm:<model>', got {source!r}"]
     path = Path(path)
     if not path.is_file():
         return 0, [f"file not found: {path}"]
@@ -39,7 +49,7 @@ def import_manual_csv(db, path: str | Path, now: str) -> tuple[int, list[str]]:
             if db.video(video_id) is None:
                 errors.append(f"line {lineno}: unknown video_id '{video_id}'")
                 continue
-            db.add_judgment(video_id, dimension, value, "manual", now,
+            db.add_judgment(video_id, dimension, value, source, now,
                             rationale=(row.get("rationale") or "").strip(), author=(row.get("author") or "").strip() or None)
             imported += 1
     return imported, errors

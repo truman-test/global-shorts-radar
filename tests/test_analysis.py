@@ -78,3 +78,18 @@ def test_manual_import_missing_columns(db, tmp_path):
     p.write_text("video,score\nv1,1\n", encoding="utf-8")
     n, errors = import_manual_csv(db, p, "x")
     assert n == 0 and "missing columns" in errors[0]
+
+
+def test_import_with_llm_source_ranks_below_manual(db, tmp_path):
+    from radar.analysis.judgments import resolve
+    db.upsert_video({"id": "v9", "snippet": {"channelId": "c", "publishedAt": "2026-10-01T00:00:00Z", "title": "t"},
+                     "contentDetails": {"duration": "PT30S"}, "statistics": {"viewCount": "1"}}, "2026-10-03T00:00:00Z")
+    p = tmp_path / "llm.csv"
+    p.write_text("video_id,dimension,value,rationale,author\nv9,story_strength,0.8,hook,claude\n", encoding="utf-8")
+    n, errors = import_manual_csv(db, p, "2026-10-03T00:00:00Z", source="llm:claude-fable-5-1")
+    assert (n, errors) == (1, [])
+    assert import_manual_csv(db, p, "2026-10-03T00:00:00Z", source="bot")[1][0].startswith("source must be")
+    p.write_text("video_id,dimension,value\nv9,story_strength,0.2\n", encoding="utf-8")
+    assert import_manual_csv(db, p, "2026-10-03T00:00:01Z")[0] == 1  # manual, later
+    best = resolve(db.judgments("v9"))["story_strength"]
+    assert best["source"] == "manual" and best["value"] == 0.2

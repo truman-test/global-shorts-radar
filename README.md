@@ -35,6 +35,8 @@ Collectors → Raw Storage → Metrics → Scoring → Analysis(heuristic/manual
 | Fact check | `verification` | 기본값 `unverified` |
 
 `judgments.source` 우선순위: `manual` > `llm:*` > `derived:*` > `heuristic_v0`.
+AI(LLM)가 내린 판단은 `radar judge --import x.csv --source llm:<모델명>`으로 넣습니다. 사람 판단(`manual`)보다 낮은 우선순위로 저장되고 리포트에 출처가 그대로 표시됩니다.
+지금까지 들어간 판단 파일은 `judgments/`에 날짜·출처별로 보관합니다 (예: `judgments/2026-10-08_llm_claude-fable-5-1.csv`, 제목·설명·지표만 보고 내린 AI 판단, 영상 미시청).
 판단 값은 절대 observed 테이블에 섞이지 않으며, 리포트에서도 출처와 함께 표시됩니다.
 
 ### Radar Score

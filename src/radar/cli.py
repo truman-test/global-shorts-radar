@@ -72,6 +72,8 @@ def build_parser() -> argparse.ArgumentParser:
         sp.add_argument("--now")
     j = sub.add_parser("judge", help="heuristic judgments and/or manual CSV import")
     j.add_argument("--import", dest="import_csv", help="CSV: video_id,dimension,value,rationale,author")
+    j.add_argument("--source", default="manual",
+                   help="judgment source for --import: manual (default, a human) or llm:<model> for AI judgments")
     j.add_argument("--now")
     k = sub.add_parser("korea-gap", help="opt-in: measure KR saturation for top candidates (~101 units each)")
     add_source_args(k)
@@ -135,8 +137,8 @@ def _dispatch(args, settings, db) -> int:
     if cmd == "judge":
         now = _now(args)
         if args.import_csv:
-            n, errors = import_manual_csv(db, args.import_csv, to_iso(now))
-            print(f"imported {n} manual judgments")
+            n, errors = import_manual_csv(db, args.import_csv, to_iso(now), args.source)
+            print(f"imported {n} {args.source} judgments")
             for e in errors:
                 print(f"  rejected: {e}")
             return 1 if errors and n == 0 else 0
