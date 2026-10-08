@@ -95,12 +95,39 @@ const Sfx: React.FC<{name: string; at: number; volume: number; until?: number}> 
   </Sequence>
 );
 
+/** Background music: fades in/out, ducks under narration with short ramps so lines stay clear. */
+const MusicBed: React.FC<{props: ShortProps}> = ({props}) => {
+  const {fps, durationInFrames} = useVideoConfig();
+  const music = props.music;
+  if (!music) return null;
+  const spans = sceneFrames(props, fps);
+  const windows = props.scenes.map((s, i) => {
+    const a = spans[i].from + Math.round((s.leadInMs / 1000) * fps);
+    return [a, a + Math.round((s.speechMs / 1000) * fps)] as const;
+  });
+  const RAMP = 6;
+  const volume = (f: number) => {
+    let duck = 0;
+    for (const [a, b] of windows) {
+      if (f >= a - RAMP && f <= b + RAMP) {
+        const d = f < a ? (a - f) / RAMP : f > b ? (f - b) / RAMP : 0;
+        duck = Math.max(duck, 1 - d);
+      }
+    }
+    const fadeIn = Math.min(1, f / 12);
+    const fadeOut = Math.min(1, Math.max(0, (durationInFrames - f) / 30));
+    return (music.volume + (music.duckVolume - music.volume) * duck) * fadeIn * fadeOut;
+  };
+  return <Audio src={staticFile(music.src)} volume={volume} />;
+};
+
 export const Short: React.FC<ShortProps> = (props) => {
   const {fps} = useVideoConfig();
   const spans = sceneFrames(props, fps);
   return (
     <AbsoluteFill style={{fontFamily: FONT, color: "#fff", wordBreak: "keep-all"}}>
       <Background props={props} />
+      <MusicBed props={props} />
       {props.scenes.map((scene, i) => {
         const {from, frames} = spans[i];
         const lead = Math.round((scene.leadInMs / 1000) * fps);

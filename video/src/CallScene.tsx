@@ -30,7 +30,7 @@ export const CallScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   return (
     <div style={{position: "absolute", inset: 0, opacity: exit * enter}}>
       <div style={{position: "absolute", top: 300, width: "100%", textAlign: "center"}}>
-        <div style={{fontSize: 40, fontWeight: 700, color: "rgba(214,224,240,0.8)"}}>수신 전화</div>
+        <div style={{fontSize: 40, fontWeight: 700, color: "rgba(214,224,240,0.8)"}}>{scene.callLabel ?? "수신 전화"}</div>
         <div style={{fontSize: 150, fontWeight: 900, letterSpacing: -3, marginTop: 6,
           textShadow: "0 10px 40px rgba(0,0,0,0.6)"}}>{caller}</div>
         <div style={{fontSize: 44, fontWeight: 700, color: "rgba(214,224,240,0.75)"}}>{scene.callerSub ?? "휴대전화"}</div>

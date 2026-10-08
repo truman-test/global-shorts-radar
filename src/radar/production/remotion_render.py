@@ -142,8 +142,24 @@ def _npx() -> str:
     return exe
 
 
-def build_props(script: Script, scenes: list[dict], channel_name: str, sfx: bool = True) -> dict:
-    return {"channel": channel_name, "disclaimer": script.disclaimer, "sfx": sfx, "scenes": scenes}
+MUSIC_VOLUME, MUSIC_DUCK = 0.22, 0.09   # ~ -13 dB / -21 dB relative to the track; voice stays on top
+
+
+def music_props(script: Script) -> tuple[dict | None, dict | None]:
+    """(props entry for the music bed, manifest item) or (None, None) when the script has no music."""
+    if not script.music:
+        return None, None
+    from radar.production.assets import music_for
+    item = music_for(script.music)
+    if item is None:
+        raise ProductionError(f"music '{script.music}' is not downloaded: run `radar assets fetch`")
+    src = item["file"].split("public/", 1)[1]
+    return {"src": src, "volume": MUSIC_VOLUME, "duckVolume": MUSIC_DUCK}, item
+
+
+def build_props(script: Script, scenes: list[dict], channel_name: str, sfx: bool = True,
+                music: dict | None = None) -> dict:
+    return {"channel": channel_name, "disclaimer": script.disclaimer, "sfx": sfx, "music": music, "scenes": scenes}
 
 
 def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name: str, sfx: bool = True,
@@ -173,13 +189,16 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
         timed = [(w, a + lead, b + lead) for w, a, b in words]
         scenes.append({
             "layout": scene.layout, "audio": f"jobs/{script.id}/{wav.name}", "leadInMs": round(lead * 1000),
-            "durationMs": round(length * 1000), "pages": caption_pages(scene.narration, timed, length),
+            "speechMs": round(speech * 1000), "durationMs": round(length * 1000),
+            "pages": caption_pages(scene.narration, timed, length),
             "headline": scene.headline, "sub": scene.sub, "icon": scene.icon, "accent": scene.accent,
-            **({"caller": scene.caller, "callerSub": scene.caller_sub or "휴대전화"} if scene.layout == "call" else {}),
+            **({"caller": scene.caller, "callerSub": scene.caller_sub or "휴대전화",
+                "callLabel": scene.call_label or "수신 전화"} if scene.layout == "call" else {}),
         })
         total += round(length * 1000) / 1000
+    music, music_item = music_props(script)
     props_path = out_dir / "props.json"
-    props_path.write_text(json.dumps(build_props(script, scenes, channel_name, sfx), ensure_ascii=False, indent=1),
+    props_path.write_text(json.dumps(build_props(script, scenes, channel_name, sfx, music), ensure_ascii=False, indent=1),
                           encoding="utf-8")
 
     video = out_dir / "video.mp4"
@@ -191,6 +210,13 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
     if proc.returncode != 0:
         raise ProductionError(f"remotion render failed ({proc.returncode}): {(proc.stderr or proc.stdout).strip()[-1500:]}")
 
+    # one loudness pass on the final mix (voice + music + SFX), video stream copied untouched
+    raw_video = out_dir / "video_raw.mp4"
+    video.replace(raw_video)
+    run_ffmpeg(["-i", raw_video.name, "-c:v", "copy", "-af", "loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000",
+                "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", video.name], cwd=out_dir)
+    raw_video.unlink()
+
     duration, size = media_info(video)
     if size != "1080x1920":
         raise ProductionError(f"output is {size or 'unknown size'}, expected 1080x1920")
@@ -201,7 +227,10 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
         warnings.append(f"voice backend '{tts.name}' is for local preview only; re-produce with --backend google to publish")
     subprocess.run([ffmpeg_exe(), "-hide_banner", "-loglevel", "error", "-y", "-ss", "1.2",
                     "-i", str(video), "-frames:v", "1", str(out_dir / "thumb.png")], capture_output=True)
-    meta = write_meta(out_dir, script, duration, size, tts, warnings,
-                      extra={"engine": "remotion", "render_seconds": round(render_seconds, 1)})
+    extra = {"engine": "remotion", "render_seconds": round(render_seconds, 1)}
+    if music_item:
+        extra["music"] = {k: music_item[k] for k in ("id", "title", "artist", "license", "license_url",
+                                                       "attribution_required", "sha256")}
+    meta = write_meta(out_dir, script, duration, size, tts, warnings, extra=extra)
     return ProductionResult(video, out_dir / "thumb.png", meta, round(duration, 2), size, bool(tts.publishable), warnings)
 

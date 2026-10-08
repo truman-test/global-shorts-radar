@@ -125,6 +125,8 @@ def build_parser() -> argparse.ArgumentParser:
     sd.add_argument("--out", default="reports/story_dna_bundle.json")
     sd.add_argument("--now")
     sd.add_argument("--since")
+    ast = sub.add_parser("assets", help="third-party asset ledger: fetch (download + verify) or list")
+    ast.add_argument("action", choices=["fetch", "list"])
     ss = sub.add_parser("suggest-seeds", help="channels that produced well-scored on-topic candidates -> TOML snippet")
     ss.add_argument("--min-score", type=float, default=DEFAULT_MIN_SCORE, dest="seed_min_score")
     ss.add_argument("--min-fit", type=float, default=DEFAULT_MIN_FIT, dest="seed_min_fit")
@@ -305,6 +307,21 @@ def _dispatch(args, settings, db) -> int:
             return 0
         print("story-dna: use --export N or --import FILE")
         return 2
+    if cmd == "assets":
+        from radar.production.assets import AssetError, fetch, load_manifest
+        if args.action == "list":
+            for kind, items in load_manifest().items():
+                for it in items:
+                    print(f"{kind}/{it['id']}: {it.get('mood', '')} \"{it['title']}\" by {it['artist']} [{it['license']}]"
+                          f" attribution={'yes' if it['attribution_required'] else 'no'}")
+            return 0
+        try:
+            for line in fetch():
+                print(line)
+        except AssetError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
+        return 0
     if cmd == "suggest-seeds":
         found = suggest_seed_channels(db, settings, args.seed_min_score, args.seed_min_fit, args.top)
         print(f"{len(found)} channels with a candidate scoring >= {args.seed_min_score:g} and channel_fit >= {args.seed_min_fit:g}:")

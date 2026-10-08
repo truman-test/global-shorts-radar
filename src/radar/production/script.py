@@ -47,6 +47,7 @@ class Scene:
     layout: str = "card"        # card | call (incoming-call mockup; needs caller)
     caller: str = ""
     caller_sub: str = ""
+    call_label: str = ""        # call layout: "수신 전화" (default) or e.g. "영상통화"
 
     def tts_text(self) -> str:
         return self.tts.strip() or normalize_for_tts(self.narration)
@@ -63,6 +64,7 @@ class Script:
     scenes: list[Scene]
     sources: list[dict]
     author: str = ""
+    music: str = ""             # mood key from assets/manifest.json (tense, explainer, uplifting, tech, suspense)
     path: str = ""
     extra: dict = field(default_factory=dict)
 
@@ -78,12 +80,14 @@ def load_script(path: str | Path) -> Script:
                         icon=str(s.get("icon", "warning")), sub=str(s.get("sub", "")).strip(),
                         accent=str(s.get("accent", "yellow")), tts=str(s.get("tts", "")),
                         layout=str(s.get("layout", "card")), caller=str(s.get("caller", "")).strip(),
-                        caller_sub=str(s.get("caller_sub", "")).strip())
+                        caller_sub=str(s.get("caller_sub", "")).strip(),
+                        call_label=str(s.get("call_label", "")).strip())
                   for s in data["scenes"]]
         return Script(id=str(data["id"]), source_video_id=str(data["source_video_id"]), title=str(data["title"]).strip(),
                       description=str(data.get("description", "")).strip(), tags=[str(t) for t in data.get("tags", [])],
                       disclaimer=str(data.get("disclaimer", "")).strip(), scenes=scenes,
                       sources=[dict(s) for s in data.get("sources", [])], author=str(data.get("author", "")),
+                      music=str(data.get("music", "")).strip(),
                       path=str(path))
     except (KeyError, TypeError, AttributeError) as exc:
         raise ScriptError(f"{path}: missing or malformed field {exc}") from exc
@@ -160,6 +164,11 @@ def validate(script: Script, db=None, allow_unverified: bool = False) -> tuple[l
         errors.append(f"estimated length {seconds:.1f}s outside {MIN_SECONDS:.0f}-{MAX_SECONDS:.0f}s")
     elif not TARGET_SECONDS[0] <= seconds <= TARGET_SECONDS[1]:
         warnings.append(f"estimated length {seconds:.1f}s outside the {TARGET_SECONDS[0]:.0f}-{TARGET_SECONDS[1]:.0f}s target")
+    if script.music:
+        from radar.production.assets import moods
+        known = moods()
+        if known and script.music not in known:
+            errors.append(f"music mood '{script.music}' not in assets/manifest.json ({', '.join(known)})")
     if len(", ".join(script.tags)) > 450:
         errors.append("tags exceed YouTube's ~500 character limit")
     if len(build_description(script)) > 4800:

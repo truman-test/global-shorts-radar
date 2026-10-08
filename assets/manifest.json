@@ -1,0 +1,79 @@
+{
+ "music": [
+  {
+   "id": "mixkit-671",
+   "mood": "tense",
+   "title": "Piano Horror",
+   "artist": "Francisco Alvear",
+   "source_page": "https://mixkit.co/free-stock-music/mood/suspenseful/",
+   "url": "https://assets.mixkit.co/music/671/671.mp3",
+   "license": "Mixkit Stock Music Free License",
+   "license_url": "https://mixkit.co/license/modal/musicFree/",
+   "license_snapshot": "assets/licenses/mixkit_music_free_license.txt",
+   "attribution_required": false,
+   "file": "video/public/music/mixkit-671.mp3",
+   "retrieved_at": "2026-10-08T16:06:21Z",
+   "sha256": "f7ce9f4c051feacd95b1fd429a1852f4ac1ed81eb51b43c61b432d6ccdc607fd"
+  },
+  {
+   "id": "mixkit-480",
+   "mood": "explainer",
+   "title": "Curiosity",
+   "artist": "Diego Nava",
+   "source_page": "https://mixkit.co/free-stock-music/corporate-music/",
+   "url": "https://assets.mixkit.co/music/480/480.mp3",
+   "license": "Mixkit Stock Music Free License",
+   "license_url": "https://mixkit.co/license/modal/musicFree/",
+   "license_snapshot": "assets/licenses/mixkit_music_free_license.txt",
+   "attribution_required": false,
+   "file": "video/public/music/mixkit-480.mp3",
+   "retrieved_at": "2026-10-08T16:06:21Z",
+   "sha256": "181e91737f341ca61a1641b2955cc794fa6276ca0854d06266d55841d655a24b"
+  },
+  {
+   "id": "mixkit-587",
+   "mood": "uplifting",
+   "title": "Discover",
+   "artist": "Eugenio Mininni",
+   "source_page": "https://mixkit.co/free-stock-music/mood/hopeful/",
+   "url": "https://assets.mixkit.co/music/587/587.mp3",
+   "license": "Mixkit Stock Music Free License",
+   "license_url": "https://mixkit.co/license/modal/musicFree/",
+   "license_snapshot": "assets/licenses/mixkit_music_free_license.txt",
+   "attribution_required": false,
+   "file": "video/public/music/mixkit-587.mp3",
+   "retrieved_at": "2026-10-08T16:06:22Z",
+   "sha256": "cc92050b8e2e3a1c8a13d4ee85bc74cd95799c2088096e680167a73b2b390560"
+  },
+  {
+   "id": "mixkit-134",
+   "mood": "tech",
+   "title": "Deep Techno Ambience",
+   "artist": "Alejandro Magaña (A. M.)",
+   "source_page": "https://mixkit.co/free-stock-music/mood/futuristic/",
+   "url": "https://assets.mixkit.co/music/134/134.mp3",
+   "license": "Mixkit Stock Music Free License",
+   "license_url": "https://mixkit.co/license/modal/musicFree/",
+   "license_snapshot": "assets/licenses/mixkit_music_free_license.txt",
+   "attribution_required": false,
+   "file": "video/public/music/mixkit-134.mp3",
+   "retrieved_at": "2026-10-08T16:06:22Z",
+   "sha256": "b873f8373c4d1cf134f358105ff5914e601d60dd518a7a5c0ad04398f47c0fad"
+  },
+  {
+   "id": "mixkit-188",
+   "mood": "suspense",
+   "title": "Echoes",
+   "artist": "Andrew Ev",
+   "source_page": "https://mixkit.co/free-stock-music/mood/suspenseful/",
+   "url": "https://assets.mixkit.co/music/188/188.mp3",
+   "license": "Mixkit Stock Music Free License",
+   "license_url": "https://mixkit.co/license/modal/musicFree/",
+   "license_snapshot": "assets/licenses/mixkit_music_free_license.txt",
+   "attribution_required": false,
+   "file": "video/public/music/mixkit-188.mp3",
+   "retrieved_at": "2026-10-08T16:06:23Z",
+   "sha256": "49842074dc06f05a40690c2b3af42bd32be76a5f6505a65cfe952b2fe1ccb5de"
+  }
+ ]
+}

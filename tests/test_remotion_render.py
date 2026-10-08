@@ -48,8 +48,41 @@ def test_family_script_uses_the_call_layout():
 def test_build_props_shape():
     s = load_script("content/scripts/2026-10-08-family-password.json")
     props = build_props(s, [{"layout": "card"}], "채널")
-    assert props == {"channel": "채널", "disclaimer": s.disclaimer, "sfx": True, "scenes": [{"layout": "card"}]}
+    assert props == {"channel": "채널", "disclaimer": s.disclaimer, "sfx": True, "music": None,
+                     "scenes": [{"layout": "card"}]}
     json.dumps(props, ensure_ascii=False)
+
+
+def test_music_props_resolve_from_manifest(tmp_path, monkeypatch):
+    from radar.production import assets
+    from radar.production.assemble import ProductionError
+    from radar.production.remotion_render import MUSIC_DUCK, music_props
+    s = load_script("content/scripts/2026-10-08-family-password.json")
+    assert s.music == "tense"
+    fake = tmp_path / "video" / "public" / "music" / "t.mp3"
+    fake.parent.mkdir(parents=True)
+    fake.write_bytes(b"x" * 20)
+    manifest = tmp_path / "manifest.json"
+    manifest.write_text(json.dumps({"music": [{"id": "t", "mood": "tense", "title": "T", "artist": "A",
+                                               "file": "video/public/music/t.mp3", "license": "L",
+                                               "license_url": "u", "attribution_required": False}]}), encoding="utf-8")
+    monkeypatch.setattr(assets, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(assets, "MANIFEST", manifest)
+    monkeypatch.setattr(assets, "music_for", lambda mood, path=manifest: assets.__dict__["load_manifest"](manifest)["music"][0])
+    props, item = music_props(s)
+    assert props == {"src": "music/t.mp3", "volume": 0.22, "duckVolume": MUSIC_DUCK} and item["id"] == "t"
+    s.music = ""
+    assert music_props(s) == (None, None)
+    monkeypatch.setattr(assets, "music_for", lambda mood, path=manifest: None)
+    s.music = "tense"
+    with pytest.raises(ProductionError):
+        music_props(s)
+
+
+def test_unknown_music_mood_is_a_script_error():
+    s = load_script("content/scripts/2026-10-08-family-password.json")
+    s.music = "polka"
+    assert any("music mood" in e for e in validate(s)[0])
 
 
 def test_ensure_sfx_generates_our_own_sounds(tmp_path):

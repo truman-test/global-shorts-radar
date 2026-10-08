@@ -11,6 +11,7 @@ export type SceneProps = {
   layout: "card" | "call";
   audio: string; // path under public/, "" for silent previews
   leadInMs: number; // time before narration starts (e.g. the phone rings first)
+  speechMs: number; // narration length (music is ducked while it plays)
   durationMs: number; // full scene length: lead-in + speech + tail gap
   pages: CaptionPage[];
   headline: string;
@@ -19,12 +20,20 @@ export type SceneProps = {
   accent: Accent;
   caller?: string;
   callerSub?: string;
+  callLabel?: string; // e.g. "수신 전화" or "영상통화"
+};
+
+export type Music = {
+  src: string; // path under public/
+  volume: number; // level between lines
+  duckVolume: number; // level under narration
 };
 
 export type ShortProps = {
   channel: string;
   disclaimer: string;
   sfx: boolean;
+  music?: Music | null;
   scenes: SceneProps[];
 };
 
