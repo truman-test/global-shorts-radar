@@ -15,6 +15,7 @@ from radar.collectors.fixture import DEFAULT_FIXTURE, FixtureClient
 from radar.collectors.youtube import QuotaTracker, YouTubeAPIError, YouTubeClient
 from radar.config import ConfigError, load_settings
 from radar.metrics.compute import parse_ts, to_iso
+from radar.reports.brief import brief_rows, render_brief
 from radar.reports.build import build_rows, render_markdown, write_csv
 from radar.reports.seeds import DEFAULT_MIN_FIT, DEFAULT_MIN_SCORE, suggest_seed_channels, toml_snippet
 from radar.reports.worksheet import render_worksheet_markdown, worksheet_rows, write_worksheet_csv
@@ -96,6 +97,17 @@ def build_parser() -> argparse.ArgumentParser:
     ws.add_argument("--out", default="reports")
     ws.add_argument("--now")
     ws.add_argument("--since", help="only candidates discovered at/after this ISO time")
+    b = sub.add_parser("brief", help="production brief: verified-first top stories with Story DNA (Korean, one page)")
+    b.add_argument("--top", type=int, default=3)
+    b.add_argument("--out", default="reports")
+    b.add_argument("--now")
+    b.add_argument("--since")
+    pl = sub.add_parser("publish-log", help="record that a story was produced from a candidate (excluded from later briefs)")
+    pl.add_argument("video_id", help="the radar candidate id the story was built from")
+    pl.add_argument("--url", required=True, help="URL of OUR published video")
+    pl.add_argument("--title", default="")
+    pl.add_argument("--note", default="")
+    pl.add_argument("--now")
     sd = sub.add_parser("story-dna", help="export an analysis bundle for analysts / import their Story DNA JSON")
     sd.add_argument("--export", type=int, metavar="N", help="write the top N stories' public metadata as JSON (--out)")
     sd.add_argument("--import", dest="import_json", metavar="FILE", help="JSON list of analyses to import")
@@ -196,6 +208,28 @@ def _dispatch(args, settings, db) -> int:
         md = out_dir / f"worksheet_{stamp}.md"
         md.write_text(render_worksheet_markdown(rows, generated_at=now, csv_name=csv_path.as_posix()), encoding="utf-8")
         print(f"{len(rows)} stories -> {md} , {csv_path}")
+        return 0
+    if cmd == "brief":
+        now = _now(args)
+        since = to_iso(parse_ts(args.since)) if args.since else None
+        rows = build_rows(db, settings, since)
+        leaders = [r for r in rows if r.get("cluster_leader", True)]
+        picked = brief_rows(rows, args.top, db.published_ids())
+        skipped = sum(1 for r in leaders[:args.top] if not r.get("story_dna"))
+        out_dir = Path(args.out)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        md = out_dir / f"brief_{now:%Y%m%d_%H%M}.md"
+        md.write_text(render_brief(picked, generated_at=now, settings=settings, skipped_unanalyzed=skipped), encoding="utf-8")
+        print(f"{len(picked)} stories -> {md}" + (f" ({skipped} top candidates have no Story DNA yet)" if skipped else ""))
+        return 0
+    if cmd == "publish-log":
+        now = _now(args)
+        try:
+            db.add_published(args.video_id, args.url, to_iso(now), args.title, args.note)
+        except ValueError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return 2
+        print(f"logged: {args.video_id} -> {args.url}")
         return 0
     if cmd == "story-dna":
         now = _now(args)

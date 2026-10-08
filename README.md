@@ -180,6 +180,12 @@ radar verify <video_id> --status verified --source https://police.example/notice
 
 첫 실행 결과(2026-10-08, 상위 10개, 에이전트 5개 병렬): `judgments/2026-10-08_story_dna_llm_claude-agents.json`. 출처 58건 중 55건이 실제 응답했고(3건은 봇 차단 403), 원본 사건을 특정할 수 없는 2건(리액션 클립, 설명 없는 영상)은 출처 0건으로 정직하게 남겼습니다. **주의**: 이 1차 실행의 번들에는 오케스트레이터의 이전 LLM 판단이 포함돼 있어 에이전트 판단이 그 값에 앵커링됐습니다(평균 차이 0.03). 이후 `--export`는 휴리스틱·파생 값만 노출하므로 다음 실행부터는 독립적인 2차 의견이 됩니다.
 
+### 제작 브리프와 제작 기록
+
+- `radar brief --top 3` → `reports/brief_*.md`: Story DNA가 채워진 사건 중 **검증된 것 우선, 점수순**으로 한국어 한 페이지. 왜 지금(관측 지표), 사실 확인 상태와 출처, 한국형 각도, Story DNA에서 뽑은 30초 구조 템플릿. 원본 대본은 포함되지 않습니다. 검증되지 않은 소재에는 "제작 전 확인" 경고가 붙습니다.
+- `radar publish-log <video_id> --url <내 영상 URL> --title ...`: 어떤 후보에서 어떤 영상을 만들었는지 기록(`published` 테이블). 다음 브리프에서 제외되고, 성과 피드백(로드맵 6)의 기준이 됩니다.
+- 30일 실행 계획: [`docs/plan_1k_subscribers.md`](docs/plan_1k_subscribers.md)
+
 ### 정기 실행 예시 (Windows 작업 스케줄러)
 
 ```powershell
@@ -247,6 +253,7 @@ SQLite 파일 하나(`data/radar.db`, 기본값). 테이블은 데이터 성격�
 | `judgments` | judgment | id | 차원, 값(0~1), **출처**(manual / llm:* / derived:* / heuristic_v0), 근거, 작성자 |
 | `story_dna` | judgment | id | Story DNA 11개 필드(텍스트), 독립 출처 목록, **출처**(manual / llm:*), 작성자 |
 | `verification` | judgment | video_id | 팩트체크 상태, 출처 URL, 메모 |
+| `published` | 메타 | id | 후보 → 우리 영상 URL 매핑 (제작 기록, 성과 피드백 기준) |
 
 스키마 변경은 `ALTER TABLE ADD COLUMN`만 사용하는 마이그레이션으로 기존 DB에 그대로 적용됩니다 (`storage/db.py`의 `MIGRATIONS`).
 

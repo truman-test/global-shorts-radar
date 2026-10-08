@@ -130,6 +130,14 @@ CREATE TABLE IF NOT EXISTS story_dna (
     fields_json TEXT NOT NULL,       -- topic, hook, ... korean_angle (text, never a transcript)
     sources_json TEXT NOT NULL       -- [{url, type, note}] independent sources found by the analyst
 );
+CREATE TABLE IF NOT EXISTS published (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    video_id TEXT NOT NULL,          -- the radar candidate the story was built from (idea signal)
+    published_url TEXT NOT NULL,     -- our own upload
+    title TEXT,
+    published_at TEXT NOT NULL,
+    note TEXT
+);
 CREATE TABLE IF NOT EXISTS verification (
     video_id TEXT PRIMARY KEY,
     status TEXT NOT NULL DEFAULT 'unverified'
@@ -420,6 +428,16 @@ class Database:
         from radar.analysis.judgments import source_rank  # judgment-layer policy lives there
         rows = self.query("SELECT * FROM story_dna WHERE video_id = ? ORDER BY created_at DESC, id DESC", (video_id,))
         return max(rows, key=lambda r: (source_rank(r["source"]), r["created_at"], r["id"]), default=None)
+
+    def add_published(self, video_id: str, url: str, published_at: str, title: str = "", note: str = "") -> None:
+        if self.video(video_id) is None:
+            raise ValueError(f"unknown video_id: {video_id}")
+        self.conn.execute("INSERT INTO published (video_id, published_url, title, published_at, note) VALUES (?, ?, ?, ?, ?)",
+                          (video_id, url, title, published_at, note))
+        self.conn.commit()
+
+    def published_ids(self) -> set[str]:
+        return {r["video_id"] for r in self.query("SELECT DISTINCT video_id FROM published")}
 
     def ensure_verification(self, video_id: str, now: str) -> None:
         self.conn.execute(
