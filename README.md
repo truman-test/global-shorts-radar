@@ -53,6 +53,7 @@ Collectors → Raw Storage → Metrics → Scoring → Analysis(heuristic/manual
 - 가중치는 가설입니다. 바꿀 때는 `weights_version`을 올려 저장된 점수의 추적성을 유지하세요.
 - `v0.1-live` (2026-10-08, 첫 live run 후): velocity 상한 100k → 10k (실측 p90 ≈ 2.3k, 최대 ≈ 35k), 검색에 `relevance_language = "en"` 추가. **효과는 미미했습니다**: 두 번째 live run의 발견 영상 149개 중 124개가 첫 run과 동일했고, 인도 채널 콘텐츠는 대부분 영어(`default_language=en`)라 언어 필터로는 걸러지지 않습니다 (regionCode도 지역 필터가 아님). 채널 국가(`channels.country`, observed 데이터) 기반 필터는 `exclude_channel_countries` 옵션으로 추가(기본 꺼짐), 키워드 `phone hack` → `phone hacked` (게임 치트·모드 APK 영상 유입).
 - 두 번째 보정 (같은 날): 키워드 `cybercrime` → `data breach`, `phone hacked` → `phone spyware`. 두 번째 run에서 `cybercrime` 결과 25개 중 18개, `phone hacked` 13개가 인도 채널이었고 힌디어권 "hack hai ya nahi" 형식 영상이 주를 이뤘습니다. `AI scam`(미국 9, 인도 1)은 유지.
+- 세 번째 보정 (같은 날): `deepfake` 키워드 제거 (사용자 결정). 4회의 run 모두 25개 중 16개가 인도 채널이었고, 그 주의 인도 배우 딥페이크 사건 하나가 결과를 채웠습니다. 딥페이크 소재는 `AI scam` 등 다른 키워드와 lexicon(`ai` 카테고리)을 통해 여전히 잡힙니다. 키워드는 5개, 기본 run 비용 약 520 units.
 
 ### Outlier 계산 세부
 
@@ -122,6 +123,7 @@ radar judge                                  # heuristic_v0
 radar judge --import my_judgments.csv        # 사람 판단 (heuristic보다 우선)
 radar score
 radar report --out reports
+radar report --since 2026-10-08T06:00:00Z   # 그 시각 이후 발견된 후보만 (키워드 변경 직후 깨끗한 비교용)
 
 # 팩트체크 상태 기록
 radar verify <video_id> --status verified --source https://police.example/notice --note "경찰청 보도자료"
@@ -156,7 +158,7 @@ abc123,korea_localization_gap,0.7,"국내 유사 콘텐츠 거의 없음",kim
 
 | 호출 | 비용 | 기본 설정에서 |
 |---|---|---|
-| search.list | 100 | 키워드 6 × 지역 1 = 600 |
+| search.list | 100 | 키워드 5 × 지역 1 = 500 |
 | videos.list (50개 단위) | 1 | 소수 |
 | channels.list | 1 | 소수 |
 | playlistItems.list | 1 | 채널당 1 |

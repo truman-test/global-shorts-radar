@@ -40,8 +40,8 @@ def _now(args, client=None, tracking: bool = False) -> datetime:
     return now
 
 
-def _report(db, settings, now, out_dir: Path, run_info=None) -> tuple[Path, Path, int]:
-    rows = build_rows(db, settings)
+def _report(db, settings, now, out_dir: Path, run_info=None, since: str | None = None) -> tuple[Path, Path, int]:
+    rows = build_rows(db, settings, since)
     last = db.query("SELECT mode FROM runs ORDER BY run_id DESC LIMIT 1")
     mode = "fixture" if last and last[0]["mode"].startswith("fixture") else "live"
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -78,6 +78,8 @@ def build_parser() -> argparse.ArgumentParser:
     r = sub.add_parser("report")
     r.add_argument("--out", default="reports")
     r.add_argument("--now")
+    r.add_argument("--since", help="only candidates discovered at/after this ISO time (e.g. after a keyword change); "
+                                   "default: the candidate window")
     v = sub.add_parser("verify", help="record fact-check status for a candidate")
     v.add_argument("video_id")
     v.add_argument("--status", required=True, choices=["unverified", "in_progress", "verified", "false"])
@@ -146,7 +148,8 @@ def _dispatch(args, settings, db) -> int:
         print(f"scored {pipeline.score_candidates(db, settings, _now(args))} candidates")
         return 0
     if cmd == "report":
-        md, csv_path, n = _report(db, settings, _now(args), Path(args.out))
+        since = to_iso(parse_ts(args.since)) if args.since else None
+        md, csv_path, n = _report(db, settings, _now(args), Path(args.out), since=since)
         print(f"{n} candidates -> {md} , {csv_path}")
         return 0
     if cmd == "verify":

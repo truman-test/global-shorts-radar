@@ -87,24 +87,6 @@
   },
   {
    "match": {
-    "q": "deepfake",
-    "regionCode": "US"
-   },
-   "response": {
-    "kind": "youtube#searchListResponse",
-    "items": [
-     {
-      "kind": "youtube#searchResult",
-      "id": {
-       "kind": "youtube#video",
-       "videoId": "smpl_A1"
-      }
-     }
-    ]
-   }
-  },
-  {
-   "match": {
     "q": "weird technology",
     "regionCode": "US"
    },

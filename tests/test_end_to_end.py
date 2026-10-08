@@ -146,9 +146,9 @@ def test_collect_reobserves_previous_candidates(db, settings, now, tmp_path):
     path.write_text(json.dumps(data), encoding="utf-8")
     later = now + timedelta(hours=6)
     s = pipeline.collect(FixtureClient(path, now=cli.to_iso(later)), db, settings, later, "fixture")
-    # smpl_E1 and smpl_G1 were only found by the removed searches but are still in the window
-    assert s.refreshed == 2
-    assert len(db.snapshots("smpl_E1")) == 2 and len(db.snapshots("smpl_G1")) == 2
+    # smpl_A1, smpl_E1 and smpl_G1 were only found by the removed searches but are still in the window
+    assert s.refreshed == 3
+    assert len(db.snapshots("smpl_E1")) == 2 and len(db.snapshots("smpl_G1")) == 2 and len(db.snapshots("smpl_A1")) == 2
 
 
 def test_cli_track(tmp_path, capsys):
@@ -231,3 +231,16 @@ def test_exclude_channel_countries_rejects_a_bare_string(tmp_path):
     bad.write_text(text, encoding="utf-8")
     with pytest.raises(ConfigError):
         load_settings(bad, env={}, dotenv_path="/nonexistent/.env")
+
+
+def test_cli_report_since_limits_to_new_discoveries(tmp_path):
+    db_path, out = tmp_path / "r.db", tmp_path / "reports"
+    assert cli.main(["--db", str(db_path), "run", "--fixture", "--out", str(out)]) == 0
+    # nothing discovered after the fixture time -> empty report, not an error
+    assert cli.main(["--db", str(db_path), "report", "--out", str(out), "--now", "2026-10-03T01:00:00Z",
+                     "--since", "2026-10-03T00:30:00Z"]) == 0
+    md = (out / "radar_20261003_0100.md").read_text(encoding="utf-8")
+    assert "No Short candidates" in md
+    assert cli.main(["--db", str(db_path), "report", "--out", str(out), "--now", "2026-10-03T02:00:00Z",
+                     "--since", "2026-10-03T00:00:00Z"]) == 0
+    assert "smpl_A1" in (out / "radar_20261003_0200.md").read_text(encoding="utf-8")

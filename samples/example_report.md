@@ -32,7 +32,7 @@ Story = candidates whose titles describe the same event (`derived:title_cluster_
 
 ### 1. My mom got a call from 'me' — but it was an AI voice clone scam
 
-- Link: https://www.youtube.com/shorts/smpl_A1 · Channel: ByteSized Mysteries · Found by: AI scam (US), deepfake (US)
+- Link: https://www.youtube.com/shorts/smpl_A1 · Channel: ByteSized Mysteries · Found by: AI scam (US)
 - Fact status: **UNVERIFIED** — the story's claims have not been checked against official/news sources
 - Radar Score: **85.6** / 100
 
