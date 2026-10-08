@@ -122,10 +122,15 @@ terms = ["phone", "iphone", "android", "ai", "scam", "password", "hacker", "hack
 name = "디지털 생존노트"      # chosen by the orchestrator on 2026-10-08 (user delegated); change freely
 
 [production]
-# edge   = Microsoft Edge voice via edge-tts: LOCAL PREVIEW ONLY (never licensed for commercial use)
-# google = Google Cloud Text-to-Speech (GOOGLE_TTS_API_KEY in .env): publishable, 1M chars/month free
+# supertonic = Supertonic 3, local open weights (OpenRAIL-M: commercial OK, disclose AI voice): publishable, free
+# edge       = Microsoft Edge voice via edge-tts: LOCAL PREVIEW ONLY (never licensed for commercial use)
+# google     = Google Cloud Text-to-Speech (GOOGLE_TTS_API_KEY in .env): publishable, 1M chars/month free
 engine = "remotion"        # remotion = animated scenes (video/ project, Node.js); ffmpeg = static cards fallback
-backend = "edge"
+backend = "supertonic"
+supertonic_voice = "F1"        # F1-F5, M1-M5 (built-in voices; no cloning)
+supertonic_speed = 1.15
+supertonic_steps = 16
+tts_python = ".venv-tts/Scripts/python.exe"   # Python 3.12 venv with `supertonic` installed
 edge_voice = "ko-KR-SunHiNeural"
 edge_rate = "+15%"
 google_voice = "ko-KR-Neural2-A"

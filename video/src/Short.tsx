@@ -58,7 +58,7 @@ const Background: React.FC<{props: ShortProps}> = ({props}) => {
   );
 };
 
-const TopBar: React.FC<{channel: string}> = ({channel}) => {
+const TopBar: React.FC<{channel: string; voiceLabel?: string}> = ({channel, voiceLabel}) => {
   const frame = useCurrentFrame();
   const {durationInFrames} = useVideoConfig();
   return (
@@ -68,6 +68,12 @@ const TopBar: React.FC<{channel: string}> = ({channel}) => {
       <div style={{position: "absolute", top: 96, width: "100%", textAlign: "center", fontSize: 36, fontWeight: 700,
         color: "rgba(214,224,240,0.75)", letterSpacing: 1}}>
         {channel}
+        {voiceLabel ? (
+          <span style={{marginLeft: 18, padding: "4px 14px", borderRadius: 10, fontSize: 28, fontWeight: 700,
+            border: "2px solid rgba(214,224,240,0.45)", verticalAlign: "middle"}}>
+            {voiceLabel}
+          </span>
+        ) : null}
       </div>
     </>
   );
@@ -157,7 +163,7 @@ export const Short: React.FC<ShortProps> = (props) => {
           </Sequence>
         );
       })}
-      <TopBar channel={props.channel} />
+      <TopBar channel={props.channel} voiceLabel={props.voiceLabel} />
       <Sequence durationInFrames={spans[0]?.frames ?? fps * 3}>
         <DisclaimerBadge text={props.disclaimer} />
       </Sequence>

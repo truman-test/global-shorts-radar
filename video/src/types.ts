@@ -31,6 +31,7 @@ export type Music = {
 
 export type ShortProps = {
   channel: string;
+  voiceLabel?: string; // e.g. "AI 음성": the narration is machine generated (shown on screen the whole time)
   disclaimer: string;
   sfx: boolean;
   music?: Music | null;

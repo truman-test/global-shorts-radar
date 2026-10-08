@@ -103,7 +103,8 @@ def build_parser() -> argparse.ArgumentParser:
     scc.add_argument("--allow-unverified", action="store_true")
     prd = sub.add_parser("produce", help="script -> TTS -> captions -> scene cards -> vertical mp4")
     prd.add_argument("script")
-    prd.add_argument("--backend", choices=["google", "edge", "tone"], help="default: [production] backend")
+    prd.add_argument("--backend", choices=["supertonic", "google", "edge", "tone"], help="default: [production] backend")
+    prd.add_argument("--voice", help="override the voice for this run (e.g. supertonic F2 / M1)")
     prd.add_argument("--engine", choices=["remotion", "ffmpeg"], help="default: [production] engine")
     prd.add_argument("--out", help="default: [production] out_dir")
     prd.add_argument("--allow-unverified", action="store_true")
@@ -190,6 +191,9 @@ def _script_command(cmd, args, db) -> int:
 
     pcfg = load_production_config(args.config)
     try:
+        if args.voice:
+            pcfg.supertonic_voice = args.voice
+            pcfg.edge_voice = args.voice if args.voice.startswith("ko-KR") else pcfg.edge_voice
         backend = make_backend(args.backend or pcfg.backend, pcfg)
         if (args.engine or pcfg.engine) == "remotion":
             from radar.production.remotion_render import produce_remotion

@@ -21,6 +21,10 @@ class ProductionConfig:
     google_rate: float = 1.15
     font_file: str | None = None
     out_dir: str = "media"
+    supertonic_voice: str = "F1"
+    supertonic_speed: float = 1.15
+    supertonic_steps: int = 16
+    tts_python: str = ".venv-tts/Scripts/python.exe"
     google_api_key: str | None = field(default=None, repr=False)  # never printed
 
 
@@ -45,5 +49,9 @@ def load_production_config(config_path: str | Path | None = None, env: Mapping[s
         google_rate=float(pr.get("google_rate", d.google_rate)),
         font_file=pr.get("font_file") or None,
         out_dir=str(pr.get("out_dir", d.out_dir)),
+        supertonic_voice=str(pr.get("supertonic_voice", d.supertonic_voice)),
+        supertonic_speed=float(pr.get("supertonic_speed", d.supertonic_speed)),
+        supertonic_steps=int(pr.get("supertonic_steps", d.supertonic_steps)),
+        tts_python=str(pr.get("tts_python", d.tts_python)),
         google_api_key=merged.get("GOOGLE_TTS_API_KEY") or None,
     )

@@ -193,14 +193,23 @@ radar verify <video_id> --status verified --source https://police.example/notice
 ```bash
 pip install -e ".[produce]"                          # Pillow, imageio-ffmpeg(ffmpeg 바이너리 포함), edge-tts
 radar script-check content/scripts/2026-10-08-family-password.json   # QA 게이트 + 실제로 읽힐 문장 출력
-radar produce content/scripts/2026-10-08-family-password.json --backend edge   # 로컬 미리보기
-radar produce content/scripts/2026-10-08-family-password.json --backend google # 게시용 (GOOGLE_TTS_API_KEY)
+radar produce content/scripts/2026-10-08-family-password.json                    # 게시용: Supertonic 3 (로컬, 무료, 기본값)
+radar produce content/scripts/2026-10-08-family-password.json --backend edge   # 로컬 미리보기 전용
+radar produce content/scripts/2026-10-08-family-password.json --backend google # 게시용 대안 (GOOGLE_TTS_API_KEY, 유료 구간 있음)
 ```
 
 - **대본 형식**: `content/scripts/*.json` — 장면별 `narration`(자막·음성), `headline`·`sub`(카드 문구), `icon`(phone, voice, shield, lock, family, warning, money, check, video, update), `accent`, 그리고 `disclaimer`, `sources`, `title`, `description`, `tags`. 형식 설명은 `radar/production/script.py` 상단.
 - **QA 게이트** (`radar script-check`, `produce`가 먼저 실행): 출처 URL 필수, 재연 고지문 필수, 원본 신호가 `verified`가 아니면 거부(`--allow-unverified`로 경고만), `false` 판정 소재 거부, 화면·내레이션에 URL 금지, TTS가 잘못 읽을 숫자·영문 잔존 시 거부, 한국어 비율, 예상 길이 12~50초.
 - **읽기 정규화**: 자막에는 "2024년 · 340억 원 · FBI"를 그대로 쓰고, 음성에는 "이천이십사년 · 삼백사십억 원 · 에프비아이"로 바꿔 넣습니다 (`textnorm.py`, 세 명·두 시간처럼 고유어 수사 처리 포함).
-- **음성**: `google`(Google Cloud TTS, 상업 이용 가능, 월 100만 자 무료)만 게시용입니다. `edge`(edge-tts)는 Microsoft가 상업 이용을 허가한 적이 없어 **로컬 미리보기 전용**이며, 그렇게 만든 영상은 `meta.json`에 `publishable: false`로 기록됩니다. 장면마다 앞뒤 무음을 잘라 템포를 유지합니다 (실측 초당 약 6자, 대본 5장면 ≈ 27~31초).
+- **음성 (기본: Supertonic 3, 로컬·무료)**: 내 PC CPU에서 돌아가는 오픈 가중치 한국어 음성입니다 (약 385MB, 실시간보다 약 3배 빠름, 인터넷·과금 없음). 라이선스는 OpenRAIL-M으로 **상업 이용 가능**하지만 두 가지를 지켜야 합니다: ① AI로 만든 음성임을 분명히 밝힐 것 → 화면 상단에 항상 "AI 음성" 배지, 설명란에 "AI 합성 음성 (실제 인물의 목소리가 아닙니다)"를 자동으로 넣습니다. ② 실제 인물 흉내 금지. 라이선스 원문 스냅샷: `assets/licenses/supertonic3_openrail_m.txt`. 문장마다 따로 합성해 문장 경계 시간을 정확히 얻고, 문장 안의 단어는 글자 수 비례로 나눕니다. 목소리는 `--voice F1`(기본)·F2·F3·M1·M2·M3, 속도는 `[production] supertonic_speed`.
+  - 설치 (최초 1회, Python 3.12 별도 가상환경 — supertonic이 3.14를 아직 지원하지 않음):
+    ```bash
+    pip install uv
+    uv venv .venv-tts --python 3.12
+    uv pip install --python .venv-tts/Scripts/python.exe supertonic==1.3.1 soundfile
+    ```
+    첫 실행 때 모델을 `~/.cache/supertonic3`에 자동으로 받습니다. 메인 프로그램은 `tools/supertonic_worker.py`를 이 가상환경으로 실행합니다 (`[production] tts_python`).
+  - 그 밖의 음성: `google`(Google Cloud TTS, 상업 이용 가능, Neural2 월 100만 자 무료 후 유료, 결제 등록 필요). `edge`(edge-tts)는 Microsoft가 상업 이용을 허가한 적이 없어 **로컬 미리보기 전용**이며 `meta.json`에 `publishable: false`로 기록됩니다. 후보 비교: [`docs/research_로컬_한국어_TTS.md`](docs/research_로컬_한국어_TTS.md).
 - **화면**: 1080×1920, 상단 채널명과 첫 장면 재연 배지, 아이콘, 두 줄로 균형 있게 나눈 헤드라인, 화면 66~78% 높이에 굵은 자막(10자 단위, 자동 줄바꿈), 상단 진행 바. 하단 20%와 오른쪽 버튼 영역은 비워 둡니다.
 - **산출물**: `media/<script id>/video.mp4`, `thumb.png`, `meta.json`(제목, 고지·출처·해시태그가 들어간 설명, 태그, 길이, 음성 백엔드, `publishable`). `media/`는 git에 포함되지 않습니다.
 
@@ -214,10 +223,10 @@ radar produce content/scripts/2026-10-08-family-password.json          # [produc
 ```
 
 - **화면**: 장면 색에 따라 바뀌는 은은한 배경 빛과 흐르는 격자, 맥박 치듯 떠 있는 아이콘 배지(lucide, ISC), 단어가 하나씩 튀어나오는 굵은 제목(Pretendard Black, OFL), 자라나는 강조선, 장면 진입 슬라이드, 상단 진행 바. `"layout": "call"` 장면은 실제 제조사 UI를 베끼지 않은 가상의 **전화 수신 화면**(발신자 이름, 진동하는 아바타, 수락·거절 버튼)입니다.
-- **자막**: 음성 엔진이 주는 어절 단위 시간으로, 지금 말하는 단어만 노랗게 강조합니다 (edge-tts는 어절마다 정확한 시간을 줌, 단어 경계가 없는 음성은 글자 수 비례로 배분).
+- **자막**: 음성 엔진이 주는 어절 단위 시간으로, 지금 말하는 단어만 노랗게 강조합니다 (edge-tts는 어절마다 정확한 시간을 줌, Supertonic은 문장 경계가 정확하고 문장 안 단어는 글자 수 비례).
 - **배경음악**: 대본의 `"music"`(tense, explainer, uplifting, tech, suspense)에 맞는 곡을 `assets/manifest.json`에서 고릅니다. 대사 중에는 자동으로 약 −21 dB로 낮추고(덕킹) 대사 사이에는 약 −13 dB, 시작·끝은 페이드합니다. 렌더 후 전체를 −14 LUFS로 맞춥니다. 곡 파일은 git에 올리지 않고 `radar assets fetch`로 받습니다 (출처·라이선스·원문 스냅샷·SHA-256을 장부에 기록, 현재 Mixkit 무료 라이선스 5곡, 출처 표기 불필요).
 - **효과음**: 전화벨·진동·휙·팝·딩을 ffmpeg로 **직접 합성**합니다 (내려받은 소재 없음 → 라이선스 문제 없음). 전화 장면은 벨이 0.9초 먼저 울린 뒤 대사가 시작됩니다.
-- **속도**: 이 PC(Ryzen 5 5600X)에서 33초 영상 렌더 약 3.5분.
+- **속도**: 이 PC(Ryzen 5 5600X)에서 35초 영상 렌더 약 3.5분 (음성 합성 포함).
 - 소재 라이선스 근거: [`docs/research_무료_소재_라이선스.md`](docs/research_무료_소재_라이선스.md), 엔진 선택 근거: [`docs/research_Shorts_영상_화질_개선.md`](docs/research_Shorts_영상_화질_개선.md)
 
 ### 정기 실행 예시 (Windows 작업 스케줄러)

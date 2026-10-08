@@ -48,8 +48,8 @@ def test_family_script_uses_the_call_layout():
 def test_build_props_shape():
     s = load_script("content/scripts/2026-10-08-family-password.json")
     props = build_props(s, [{"layout": "card"}], "채널")
-    assert props == {"channel": "채널", "disclaimer": s.disclaimer, "sfx": True, "music": None,
-                     "scenes": [{"layout": "card"}]}
+    assert props == {"channel": "채널", "voiceLabel": "AI 음성", "disclaimer": s.disclaimer, "sfx": True,
+                     "music": None, "scenes": [{"layout": "card"}]}
     json.dumps(props, ensure_ascii=False)
 
 

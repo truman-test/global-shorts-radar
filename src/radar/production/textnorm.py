@@ -85,6 +85,14 @@ def tts_problems(text: str) -> list[str]:
     return sorted(set(re.findall(r"[A-Za-z]{2,}|\d+", text)))
 
 
+_SENTENCE_END = re.compile(r"(?<=[.?!…])\s+")
+
+
+def split_sentences(text: str) -> list[str]:
+    """Split on sentence-ending punctuation followed by whitespace; keeps the punctuation."""
+    return [s for s in (p.strip() for p in _SENTENCE_END.split(text.strip())) if s]
+
+
 def speakable_length(text: str) -> int:
     """Characters that take speaking time (letters/digits), used to estimate duration and caption timing."""
     return len(re.sub(r"[^\w]", "", text))

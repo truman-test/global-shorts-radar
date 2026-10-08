@@ -89,7 +89,7 @@ def test_qa_gate_catches_each_problem(db, settings, now):
 
 def test_description_has_disclaimer_sources_and_hashtags():
     d = build_description(_script())
-    assert "※ 재연입니다" in d and "https://www.ic3.gov/PSA/2024/PSA241203" in d and "음성: AI 합성 음성" in d
+    assert "※ 재연입니다" in d and "https://www.ic3.gov/PSA/2024/PSA241203" in d and "음성: AI 합성 음성 (실제 인물의 목소리가 아닙니다)" in d
     assert d.rstrip().endswith("#Shorts #보이스피싱 #AI음성복제")
 
 

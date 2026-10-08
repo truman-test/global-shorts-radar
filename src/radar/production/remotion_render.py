@@ -16,7 +16,7 @@ from radar.config import PROJECT_ROOT
 from radar.production.assemble import (TRIM, ProductionError, ProductionResult, ffmpeg_exe, media_info, run_ffmpeg,
                                        write_meta)
 from radar.production.script import Script, caption_chunks
-from radar.production.textnorm import speakable_length
+from radar.production.textnorm import speakable_length, split_sentences
 from radar.production.tts import TTSError
 
 VIDEO_DIR = PROJECT_ROOT / "video"
@@ -129,10 +129,27 @@ def _speech(scene, i: int, tts, work: Path) -> tuple[Path, float, list[tuple[str
         shifted = [(a - cut_a, b - cut_a, t) for a, b, t in marks]
         seconds, _ = media_info(wav)
         return wav, seconds, word_timings(display, shifted, 0.0, seconds)
+    if tts.name == "supertonic":
+        spans = tts.synthesize_sentences(scene.tts_text(), raw)
+        run_ffmpeg(["-i", raw.name, "-ar", "44100", "-ac", "1", wav.name], cwd=work)
+        seconds, _ = media_info(wav)
+        return wav, seconds, sentence_word_timings(scene.narration, spans, seconds)
     tts.synthesize(scene.tts_text(), raw)
     run_ffmpeg(["-i", raw.name, "-af", TRIM, "-ac", "1", wav.name], cwd=work)
     seconds, _ = media_info(wav)
     return wav, seconds, word_timings(display, None, 0.0, seconds)
+
+
+def sentence_word_timings(narration: str, spans: list[tuple[float, float, str]], total: float
+                          ) -> list[tuple[str, float, float]]:
+    """Exact sentence boundaries from the voice, character-weighted word timing inside each sentence."""
+    display_sentences = split_sentences(narration)
+    if len(display_sentences) != len(spans):
+        return word_timings(narration.split(), None, 0.0, total)
+    out = []
+    for sentence, (a, b, _) in zip(display_sentences, spans):
+        out += word_timings(sentence.split(), None, a, b)
+    return out
 
 
 def _npx() -> str:
@@ -157,9 +174,13 @@ def music_props(script: Script) -> tuple[dict | None, dict | None]:
     return {"src": src, "volume": MUSIC_VOLUME, "duckVolume": MUSIC_DUCK}, item
 
 
+VOICE_LABEL = "AI 음성"   # every narration is synthetic; OpenRAIL-M (Supertonic) requires an explicit disclaimer
+
+
 def build_props(script: Script, scenes: list[dict], channel_name: str, sfx: bool = True,
-                music: dict | None = None) -> dict:
-    return {"channel": channel_name, "disclaimer": script.disclaimer, "sfx": sfx, "music": music, "scenes": scenes}
+                music: dict | None = None, voice_label: str | None = VOICE_LABEL) -> dict:
+    return {"channel": channel_name, "voiceLabel": voice_label, "disclaimer": script.disclaimer, "sfx": sfx,
+            "music": music, "scenes": scenes}
 
 
 def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name: str, sfx: bool = True,

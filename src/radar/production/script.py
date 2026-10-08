@@ -119,7 +119,7 @@ def _hangul_ratio(text: str) -> float:
     return sum(1 for c in letters if "가" <= c <= "힣") / len(letters) if letters else 0.0
 
 
-def build_description(script: Script, voice_note: str = "AI 합성 음성") -> str:
+def build_description(script: Script, voice_note: str = "AI 합성 음성 (실제 인물의 목소리가 아닙니다)") -> str:
     lines = [script.description, "", script.disclaimer, f"음성: {voice_note}", "", "출처:"]
     lines += [f"- {s.get('title') or s['url']}: {s['url']}" for s in script.sources]
     hashtags = ["#Shorts"] + ["#" + t.replace(" ", "") for t in script.tags[:2]]
