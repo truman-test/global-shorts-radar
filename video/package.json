@@ -1,0 +1,25 @@
+{
+  "name": "radar-video",
+  "private": true,
+  "description": "Remotion renderer for Global Shorts Radar (our own Shorts only). Remotion is free for individuals and companies of up to 3 people: https://www.remotion.dev/license",
+  "scripts": {
+    "studio": "remotion studio",
+    "render": "remotion render",
+    "benchmark": "remotion benchmark"
+  },
+  "dependencies": {
+    "@remotion/captions": "4.0.534",
+    "@remotion/cli": "4.0.534",
+    "@remotion/fonts": "4.0.534",
+    "@remotion/transitions": "4.0.534",
+    "lucide-react": "0.544.0",
+    "pretendard": "1.3.9",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "remotion": "4.0.534"
+  },
+  "devDependencies": {
+    "@types/react": "19.1.8",
+    "typescript": "5.8.3"
+  }
+}

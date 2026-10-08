@@ -28,6 +28,7 @@ SYLLABLES_PER_SECOND = 6.0   # measured 6.01 chars/s on edge-tts SunHi at +15% a
 SCENE_GAP = 0.2              # seconds of silence after each scene
 MIN_SECONDS, MAX_SECONDS = 12.0, 50.0
 TARGET_SECONDS = (15.0, 45.0)
+LAYOUTS = ("card", "call")
 _ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{2,80}$")
 
 
@@ -43,6 +44,9 @@ class Scene:
     sub: str = ""
     accent: str = "yellow"
     tts: str = ""
+    layout: str = "card"        # card | call (incoming-call mockup; needs caller)
+    caller: str = ""
+    caller_sub: str = ""
 
     def tts_text(self) -> str:
         return self.tts.strip() or normalize_for_tts(self.narration)
@@ -72,7 +76,9 @@ def load_script(path: str | Path) -> Script:
     try:
         scenes = [Scene(narration=str(s["narration"]).strip(), headline=str(s["headline"]).strip(),
                         icon=str(s.get("icon", "warning")), sub=str(s.get("sub", "")).strip(),
-                        accent=str(s.get("accent", "yellow")), tts=str(s.get("tts", "")))
+                        accent=str(s.get("accent", "yellow")), tts=str(s.get("tts", "")),
+                        layout=str(s.get("layout", "card")), caller=str(s.get("caller", "")).strip(),
+                        caller_sub=str(s.get("caller_sub", "")).strip())
                   for s in data["scenes"]]
         return Script(id=str(data["id"]), source_video_id=str(data["source_video_id"]), title=str(data["title"]).strip(),
                       description=str(data.get("description", "")).strip(), tags=[str(t) for t in data.get("tags", [])],
@@ -136,6 +142,10 @@ def validate(script: Script, db=None, allow_unverified: bool = False) -> tuple[l
             errors.append(f"scene {i}: narration and headline are required")
         if sc.icon not in ICONS:
             errors.append(f"scene {i}: unknown icon '{sc.icon}' (use {', '.join(ICONS)})")
+        if sc.layout not in LAYOUTS:
+            errors.append(f"scene {i}: unknown layout '{sc.layout}' (use {', '.join(LAYOUTS)})")
+        elif sc.layout == "call" and not sc.caller:
+            errors.append(f"scene {i}: layout 'call' needs a caller name")
         if sc.accent not in ACCENTS:
             errors.append(f"scene {i}: unknown accent '{sc.accent}' (use {', '.join(ACCENTS)})")
         if re.search(r"https?://|www\.", sc.narration + sc.headline + sc.sub):

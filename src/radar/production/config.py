@@ -13,6 +13,7 @@ from radar.config import DEFAULT_CONFIG_PATH, PROJECT_ROOT, ConfigError, read_do
 @dataclass
 class ProductionConfig:
     channel_name: str = "디지털 생존노트"
+    engine: str = "remotion"
     backend: str = "edge"
     edge_voice: str = "ko-KR-SunHiNeural"
     edge_rate: str = "+15%"
@@ -36,6 +37,7 @@ def load_production_config(config_path: str | Path | None = None, env: Mapping[s
     d = ProductionConfig()
     return ProductionConfig(
         channel_name=str(ch.get("name", d.channel_name)),
+        engine=str(pr.get("engine", d.engine)),
         backend=str(pr.get("backend", d.backend)),
         edge_voice=str(pr.get("edge_voice", d.edge_voice)),
         edge_rate=str(pr.get("edge_rate", d.edge_rate)),

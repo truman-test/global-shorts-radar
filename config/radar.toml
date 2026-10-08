@@ -124,6 +124,7 @@ name = "디지털 생존노트"      # chosen by the orchestrator on 2026-10-08 
 [production]
 # edge   = Microsoft Edge voice via edge-tts: LOCAL PREVIEW ONLY (never licensed for commercial use)
 # google = Google Cloud Text-to-Speech (GOOGLE_TTS_API_KEY in .env): publishable, 1M chars/month free
+engine = "remotion"        # remotion = animated scenes (video/ project, Node.js); ffmpeg = static cards fallback
 backend = "edge"
 edge_voice = "ko-KR-SunHiNeural"
 edge_rate = "+15%"

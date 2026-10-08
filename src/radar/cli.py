@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import subprocess
 import json
 import logging
 import sys
@@ -103,6 +104,7 @@ def build_parser() -> argparse.ArgumentParser:
     prd = sub.add_parser("produce", help="script -> TTS -> captions -> scene cards -> vertical mp4")
     prd.add_argument("script")
     prd.add_argument("--backend", choices=["google", "edge", "tone"], help="default: [production] backend")
+    prd.add_argument("--engine", choices=["remotion", "ffmpeg"], help="default: [production] engine")
     prd.add_argument("--out", help="default: [production] out_dir")
     prd.add_argument("--allow-unverified", action="store_true")
     b = sub.add_parser("brief", help="production brief: verified-first top stories with Story DNA (Korean, one page)")
@@ -187,9 +189,13 @@ def _script_command(cmd, args, db) -> int:
     pcfg = load_production_config(args.config)
     try:
         backend = make_backend(args.backend or pcfg.backend, pcfg)
-        result = produce(script, args.out or pcfg.out_dir, tts=backend, channel_name=pcfg.channel_name,
-                         font_path=find_font(pcfg.font_file))
-    except (TTSError, ProductionError, FileNotFoundError) as exc:
+        if (args.engine or pcfg.engine) == "remotion":
+            from radar.production.remotion_render import produce_remotion
+            result = produce_remotion(script, args.out or pcfg.out_dir, tts=backend, channel_name=pcfg.channel_name)
+        else:
+            result = produce(script, args.out or pcfg.out_dir, tts=backend, channel_name=pcfg.channel_name,
+                             font_path=find_font(pcfg.font_file))
+    except (TTSError, ProductionError, FileNotFoundError, subprocess.TimeoutExpired) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     print(f"video: {result.video} ({result.duration:.1f}s, {result.size}) publishable={result.publishable}")

@@ -204,6 +204,21 @@ radar produce content/scripts/2026-10-08-family-password.json --backend google #
 - **화면**: 1080×1920, 상단 채널명과 첫 장면 재연 배지, 아이콘, 두 줄로 균형 있게 나눈 헤드라인, 화면 66~78% 높이에 굵은 자막(10자 단위, 자동 줄바꿈), 상단 진행 바. 하단 20%와 오른쪽 버튼 영역은 비워 둡니다.
 - **산출물**: `media/<script id>/video.mp4`, `thumb.png`, `meta.json`(제목, 고지·출처·해시태그가 들어간 설명, 태그, 길이, 음성 백엔드, `publishable`). `media/`는 git에 포함되지 않습니다.
 
+### 움직이는 영상 엔진 (Remotion, 기본값)
+
+정지 카드(ffmpeg 엔진)는 "슬라이드쇼"처럼 보여서, 기본 엔진을 Remotion(React로 프레임을 그리는 영상 엔진, 개인·3인 이하 회사 무료)으로 바꿨습니다. ffmpeg 엔진은 `--engine ffmpeg`로 계속 쓸 수 있습니다.
+
+```bash
+cd video && npm install && node scripts/prepare-assets.mjs && cd ..   # 최초 1회 (Node.js 20+)
+radar produce content/scripts/2026-10-08-family-password.json          # [production] engine = "remotion"
+```
+
+- **화면**: 장면 색에 따라 바뀌는 은은한 배경 빛과 흐르는 격자, 맥박 치듯 떠 있는 아이콘 배지(lucide, ISC), 단어가 하나씩 튀어나오는 굵은 제목(Pretendard Black, OFL), 자라나는 강조선, 장면 진입 슬라이드, 상단 진행 바. `"layout": "call"` 장면은 실제 제조사 UI를 베끼지 않은 가상의 **전화 수신 화면**(발신자 이름, 진동하는 아바타, 수락·거절 버튼)입니다.
+- **자막**: 음성 엔진이 주는 어절 단위 시간으로, 지금 말하는 단어만 노랗게 강조합니다 (edge-tts는 어절마다 정확한 시간을 줌, 단어 경계가 없는 음성은 글자 수 비례로 배분).
+- **효과음**: 전화벨·진동·휙·팝·딩을 ffmpeg로 **직접 합성**합니다 (내려받은 소재 없음 → 라이선스 문제 없음). 전화 장면은 벨이 0.9초 먼저 울린 뒤 대사가 시작됩니다.
+- **속도**: 이 PC(Ryzen 5 5600X)에서 33초 영상 렌더 약 3.5분.
+- 소재 라이선스 근거: [`docs/research_무료_소재_라이선스.md`](docs/research_무료_소재_라이선스.md), 엔진 선택 근거: [`docs/research_Shorts_영상_화질_개선.md`](docs/research_Shorts_영상_화질_개선.md)
+
 ### 정기 실행 예시 (Windows 작업 스케줄러)
 
 ```powershell

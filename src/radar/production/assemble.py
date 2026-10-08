@@ -168,6 +168,13 @@ def produce(script: Script, out_root: str | Path, *, tts, channel_name: str, fon
 
     thumb = out_dir / "thumb.png"
     shutil.copy(work / "s0.png", thumb)
+    meta = write_meta(out_dir, script, duration, size, tts, warnings, extra={"engine": "ffmpeg"})
+    return ProductionResult(video, thumb, meta, round(duration, 2), size, bool(tts.publishable), warnings)
+
+
+def write_meta(out_dir: Path, script: Script, duration: float, size: str, tts, warnings: list[str],
+               extra: dict | None = None) -> Path:
+    """meta.json next to the video: everything an uploader needs, plus provenance."""
     meta = out_dir / "meta.json"
     meta.write_text(json.dumps({
         "script_id": script.id, "source_video_id": script.source_video_id, "script_path": script.path,
@@ -176,6 +183,6 @@ def produce(script: Script, out_root: str | Path, *, tts, channel_name: str, fon
         "voice": getattr(tts, "voice", None), "publishable": bool(tts.publishable),
         "contains_synthetic_media": False, "made_for_kids": False, "category_id": "27",
         "default_language": "ko", "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "warnings": warnings,
+        "warnings": warnings, **(extra or {}),
     }, ensure_ascii=False, indent=1), encoding="utf-8")
-    return ProductionResult(video, thumb, meta, round(duration, 2), size, bool(tts.publishable), warnings)
+    return meta
