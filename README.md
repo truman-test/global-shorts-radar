@@ -167,6 +167,16 @@ pytest -q
 metrics · scoring · collector(모킹된 HTTP) · storage · analysis · end-to-end(fixture → DB → 리포트 → CLI)를 다룹니다.
 샘플 데이터 재생성: `python samples/build_sample.py`.
 
+예시 리포트(`samples/example_report.{md,csv}`)는 fixture로 `run` 뒤 `track`을 한 번 실행한 상태를 결정적으로 재생성합니다.
+리포트 포맷이나 metric을 바꾼 뒤에는 다음으로 골든 파일과 비교하세요 (`--strip-trailing-cr`는 Windows 줄바꿈 무시용):
+
+```bash
+radar --db /tmp/golden.db run --fixture --check-korea 5 --out /tmp/golden
+radar --db /tmp/golden.db track --fixture --out /tmp/golden
+diff --strip-trailing-cr samples/example_report.md /tmp/golden/radar_20261003_0600.md
+diff --strip-trailing-cr samples/example_report.csv /tmp/golden/radar_20261003_0600.csv
+```
+
 ## 보안
 
 - API 키는 환경 변수 또는 `.env`(gitignore)에서만 읽습니다.
