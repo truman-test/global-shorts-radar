@@ -13,15 +13,32 @@ DEFAULT_FIXTURE = Path(__file__).resolve().parents[3] / "samples" / "youtube_sam
 
 
 class FixtureClient:
-    def __init__(self, path: str | Path = DEFAULT_FIXTURE, raw_sink: RawSink | None = None, quota: QuotaTracker | None = None):
+    def __init__(self, path: str | Path = DEFAULT_FIXTURE, raw_sink: RawSink | None = None,
+                 quota: QuotaTracker | None = None, now: str | None = None):
         self.path = Path(path)
         self.data = json.loads(self.path.read_text(encoding="utf-8"))
         self.raw_sink = raw_sink
         self.quota = quota or QuotaTracker(budget=10_000)
+        self.now = now  # ISO time used to pick statistics from `stats_timeline`
 
     @property
     def fixture_now(self) -> str | None:
         return self.data.get("fixture_now")
+
+    @property
+    def fixture_track_now(self) -> str | None:
+        """Suggested time for a follow-up `track` run in the sample data."""
+        return self.data.get("fixture_track_now")
+
+    def _video_at_now(self, vid: str) -> dict:
+        item = self.data["videos"][vid]
+        timeline = self.data.get("stats_timeline", {}).get(vid)
+        if not timeline or not self.now:
+            return item
+        past = [e for e in timeline if e["at"] <= self.now]  # ISO-8601 UTC strings sort chronologically
+        if not past:
+            return item
+        return {**item, "statistics": max(past, key=lambda e: e["at"])["statistics"]}
 
     def _emit(self, endpoint: str, params: dict, data: dict) -> dict:
         self.quota.charge(endpoint)
@@ -42,7 +59,7 @@ class FixtureClient:
 
     def videos(self, video_ids):
         ids = list(dict.fromkeys(video_ids))
-        items = [self.data["videos"][v] for v in ids if v in self.data["videos"]]
+        items = [self._video_at_now(v) for v in ids if v in self.data["videos"]]
         self._emit("videos", {"id": ",".join(ids)}, {"items": items})
         return items
 

@@ -17,6 +17,7 @@ max_results_per_query = 25
 published_within_hours = 168        # only discover videos from the last 7 days
 recent_uploads_per_channel = 15     # size of channel baseline sample
 quota_budget = 2000                 # hard stop for estimated units per run
+candidate_window_hours = 72         # candidates stay on the radar (and get re-tracked) this long after discovery
 
 [metrics]
 max_short_seconds = 180             # Shorts may be up to 3 minutes

@@ -74,3 +74,40 @@ def test_engagement_rate():
     assert m.engagement_rate(1000, 40, 10) == 0.05
     assert m.engagement_rate(1000, None, None) is None
     assert m.engagement_rate(0, 1, 1) is None
+
+
+def _s(at, views):
+    return {"fetched_at": at, "view_count": views}
+
+
+PUB = "2026-10-02T00:00:00Z"  # 24h before the first snapshot below
+
+
+def test_velocity_trend_needs_two_snapshots():
+    assert m.velocity_trend([], PUB) is None
+    assert m.velocity_trend([_s("2026-10-03T00:00:00Z", 100)], PUB) is None
+
+
+def test_velocity_trend_ratio():
+    # 24k views in 24h = 1k/h average; then 6k views in 3h = 2k/h -> 2x
+    t = m.velocity_trend([_s("2026-10-03T00:00:00Z", 24_000), _s("2026-10-03T03:00:00Z", 30_000)], PUB)
+    assert t["recent_views_per_hour"] == 2000 and t["velocity_ratio"] == 2.0
+    assert t["trend_window_hours"] == 3 and t["snapshot_count"] == 2
+
+
+def test_velocity_trend_skips_too_close_snapshot():
+    snaps = [_s("2026-10-03T00:00:00Z", 24_000), _s("2026-10-03T05:30:00Z", 29_000), _s("2026-10-03T06:00:00Z", 30_000)]
+    t = m.velocity_trend(snaps, PUB, min_interval_hours=1.0)
+    assert t["trend_window_hours"] == 6 and t["recent_views_per_hour"] == 1000
+    assert m.velocity_trend(snaps[1:], PUB, min_interval_hours=1.0) is None  # only 30 minutes apart
+
+
+def test_velocity_trend_downward_correction_and_hidden_counts():
+    t = m.velocity_trend([_s("2026-10-03T00:00:00Z", 24_000), _s("2026-10-03T02:00:00Z", 23_000)], PUB)
+    assert t["recent_views_per_hour"] == 0 and t["velocity_ratio"] == 0
+    assert m.velocity_trend([_s("2026-10-03T00:00:00Z", None), _s("2026-10-03T02:00:00Z", 5)], PUB) is None
+
+
+def test_velocity_trend_zero_prior_average():
+    t = m.velocity_trend([_s("2026-10-03T00:00:00Z", 0), _s("2026-10-03T02:00:00Z", 500)], PUB)
+    assert t["recent_views_per_hour"] == 250 and t["velocity_ratio"] is None

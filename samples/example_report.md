@@ -1,26 +1,28 @@
-# Global Shorts Radar — 2026-10-03 00:00 UTC
+# Global Shorts Radar — 2026-10-03 06:00 UTC
 
 > **FIXTURE MODE** — synthetic sample data, not real YouTube videos. Use for pipeline validation only.
 
 > Viral videos are **idea signals, not information sources**. Every candidate below is **UNVERIFIED** until independent fact research is recorded. Do not copy, translate or re-upload source content — extract Story DNA and build an original Korean story.
 
-Run #1 · searches: 6 · candidates: 8 · estimated quota used: 1022
+Run #2 · searches: 0 · candidates: 8 · estimated quota used: 1
 
 Weights `v0-spec`: Outlier Ratio 25 · View Velocity 20 · Freshness 10 · Story Strength 15 · Korea Localization Gap 15 · Localization Potential 10 · Channel Fit 5
 
 Score legend: metric dimensions are computed from observed API data; judgment dimensions show their source (`heuristic_v0` = keyword guess, low confidence · `manual` = human · `derived:kr_search_v0` = Korean YouTube search proxy). Missing dimensions score 0 (score is a lower bound, marked *provisional*).
 
+Trend = views/hour between the last two observations ÷ the video's average views/hour before that (↑ ≥1.2x accelerating · → steady · ↓ ≤0.8x cooling · — needs `radar track`). Derived data shown for context; it is **not** part of the Radar Score.
+
 ## Ranking
 
-| # | Score | Outlier | Views/h | Age (h) | Views | Topic fit | Title | Channel | Verified |
-|---|---|---|---|---|---|---|---|---|---|
-| 1 | 82.6 | 20.0x | 50,000 | 20 | 1,000,000 | core | [My mom got a call from 'me' — but it was an AI voice clone scam](https://www.youtube.com/shorts/smpl_A1) | ByteSized Mysteries | UNVERIFIED |
-| 2 | 69.3 | 8.3x | 41,667 | 6 | 250,000 | partial | [Hackers can open your car with a $30 gadget?](https://www.youtube.com/shorts/smpl_H1) | Signal Noise | UNVERIFIED |
-| 3 | 53.6* | 15.0x | 100,000 | 30 | 3,000,000 | off-topic? | [15-second garlic peeling trick](https://www.youtube.com/shorts/smpl_F1) | Kitchen Speedruns | UNVERIFIED |
-| 4 | 51.3 | 8.0x | 12,000 | 50 | 600,000 | partial | [Zelle scammers stole $2,000 from my grandma — here's how](https://www.youtube.com/shorts/smpl_E1) | MoneySafe USA | UNVERIFIED |
-| 5 | 50.5 | 10.0x | 5,714 | 70 | 400,000 | partial | [Why your phone battery dies at 20% (it's not what you think)](https://www.youtube.com/shorts/smpl_D1) | PhoneFixLab | UNVERIFIED |
-| 6 | 42.9* | 1.2x | 83,333 | 30 | 2,500,000 | partial | [iPhone 18 unboxing in 60 seconds](https://www.youtube.com/shorts/smpl_B1) | TechGiant Daily | UNVERIFIED |
-| 7 | 41.5* | n/a | 7,500 | 40 | 300,000 | core | [This app tracked my location for 3 years and I never noticed](https://www.youtube.com/shorts/smpl_C1) | NewChannel Lab | UNVERIFIED |
+| # | Score | Outlier | Views/h | Trend | Age (h) | Views | Topic fit | Title | Channel | Verified |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | 84.6 | 29.0x | 55,769 | ↑1.5x/6h | 26 | 1,450,000 | core | [My mom got a call from 'me' — but it was an AI voice clone scam](https://www.youtube.com/shorts/smpl_A1) | ByteSized Mysteries | UNVERIFIED |
+| 2 | 75.1 | 21.7x | 54,167 | ↑1.6x/6h | 12 | 650,000 | partial | [Hackers can open your car with a $30 gadget?](https://www.youtube.com/shorts/smpl_H1) | Signal Noise | UNVERIFIED |
+| 3 | 53.5* | 16.5x | 91,667 | ↓0.5x/6h | 36 | 3,300,000 | off-topic? | [15-second garlic peeling trick](https://www.youtube.com/shorts/smpl_F1) | Kitchen Speedruns | UNVERIFIED |
+| 4 | 51.6 | 9.0x | 12,000 | →1.0x/6h | 56 | 672,000 | partial | [Zelle scammers stole $2,000 from my grandma — here's how](https://www.youtube.com/shorts/smpl_E1) | MoneySafe USA | UNVERIFIED |
+| 5 | 50.2 | 10.2x | 5,395 | ↓0.3x/6h | 76 | 410,000 | partial | [Why your phone battery dies at 20% (it's not what you think)](https://www.youtube.com/shorts/smpl_D1) | PhoneFixLab | UNVERIFIED |
+| 6 | 42.4* | 1.3x | 72,778 | ↓0.2x/6h | 36 | 2,620,000 | partial | [iPhone 18 unboxing in 60 seconds](https://www.youtube.com/shorts/smpl_B1) | TechGiant Daily | UNVERIFIED |
+| 7 | 41.0* | n/a | 7,500 | →1.0x/6h | 46 | 345,000 | core | [This app tracked my location for 3 years and I never noticed](https://www.youtube.com/shorts/smpl_C1) | NewChannel Lab | UNVERIFIED |
 
 `*` = provisional (some dimensions missing).
 
@@ -30,23 +32,25 @@ Score legend: metric dimensions are computed from observed API data; judgment di
 
 - Link: https://www.youtube.com/shorts/smpl_A1 · Channel: ByteSized Mysteries · Found by: AI scam (US), deepfake (US)
 - Fact status: **UNVERIFIED** — the story's claims have not been checked against official/news sources
-- Radar Score: **82.6** / 100
+- Radar Score: **84.6** / 100
 
-**Observed** (YouTube Data API, as of 2026-10-03T00:00:00Z)
+**Observed** (YouTube Data API, as of 2026-10-03T06:00:00Z)
 
-views 1,000,000 · likes 40,000 · comments 2,000 · channel subscribers 82,000 · published 2026-10-02T04:00:00Z · duration 45s
+views 1,450,000 · likes 58,000 · comments 2,900 · channel subscribers 82,000 · published 2026-10-02T04:00:00Z · duration 45s
 
 **Derived** (deterministic)
 
-outlier ratio 20.0x (baseline: 50,000 median over 10 recent Shorts) · views/hour 50,000 · age 20h · freshness 0.75 · engagement 4.2%
+outlier ratio 29.0x (baseline: 50,000 median over 10 recent Shorts) · views/hour 55,769 · age 26h · freshness 0.69 · engagement 4.2%
+
+trend ↑1.5x/6h: 75,000 views/hour over the last 6h (2 observations)
 
 **Score breakdown**
 
 | Dimension | Type | Value | Points | Source / rationale |
 |---|---|---|---|---|
-| Outlier Ratio | metric | 0.77 | 19.1/25 | derived:metrics |
-| View Velocity | metric | 0.94 | 18.8/20 | derived:metrics |
-| Freshness | metric | 0.75 | 7.5/10 | derived:metrics |
+| Outlier Ratio | metric | 0.86 | 21.5/25 | derived:metrics |
+| View Velocity | metric | 0.95 | 19.0/20 | derived:metrics |
+| Freshness | metric | 0.69 | 6.9/10 | derived:metrics |
 | Story Strength | judgment | 0.68 | 10.2/15 | heuristic_v0: title hook cues: number, curiosity, conflict, personal |
 | Korea Localization Gap | judgment | 1.00 | 15.0/15 | derived:kr_search_v0: KR search '목소리 복제 사기 AI': 2 results, 20,000 total views |
 | Localization Potential | judgment | 0.75 | 7.5/10 | heuristic_v0: universal: ai, scam, voice |
@@ -71,23 +75,25 @@ outlier ratio 20.0x (baseline: 50,000 median over 10 recent Shorts) · views/hou
 
 - Link: https://www.youtube.com/shorts/smpl_H1 · Channel: Signal Noise · Found by: phone hack (US)
 - Fact status: **UNVERIFIED** — the story's claims have not been checked against official/news sources
-- Radar Score: **69.3** / 100
+- Radar Score: **75.1** / 100
 
-**Observed** (YouTube Data API, as of 2026-10-03T00:00:00Z)
+**Observed** (YouTube Data API, as of 2026-10-03T06:00:00Z)
 
-views 250,000 · likes 10,000 · comments 500 · channel subscribers 60,000 · published 2026-10-02T18:00:00Z · duration 45s
+views 650,000 · likes 26,000 · comments 1,300 · channel subscribers 60,000 · published 2026-10-02T18:00:00Z · duration 45s
 
 **Derived** (deterministic)
 
-outlier ratio 8.3x (baseline: 30,000 median over 6 recent Shorts) · views/hour 41,667 · age 6h · freshness 0.92 · engagement 4.2%
+outlier ratio 21.7x (baseline: 30,000 median over 6 recent Shorts) · views/hour 54,167 · age 12h · freshness 0.84 · engagement 4.2%
+
+trend ↑1.6x/6h: 66,667 views/hour over the last 6h (2 observations)
 
 **Score breakdown**
 
 | Dimension | Type | Value | Points | Source / rationale |
 |---|---|---|---|---|
-| Outlier Ratio | metric | 0.54 | 13.6/25 | derived:metrics |
-| View Velocity | metric | 0.92 | 18.5/20 | derived:metrics |
-| Freshness | metric | 0.92 | 9.2/10 | derived:metrics |
+| Outlier Ratio | metric | 0.79 | 19.7/25 | derived:metrics |
+| View Velocity | metric | 0.95 | 18.9/20 | derived:metrics |
+| Freshness | metric | 0.84 | 8.4/10 | derived:metrics |
 | Story Strength | judgment | 0.56 | 8.4/15 | heuristic_v0: title hook cues: question, number, conflict |
 | Korea Localization Gap | judgment | 0.61 | 9.2/15 | derived:kr_search_v0: KR search '해커': 3 results, 300,000 total views |
 | Localization Potential | judgment | 0.75 | 7.5/10 | heuristic_v0: universal: hacker |
@@ -112,23 +118,25 @@ outlier ratio 8.3x (baseline: 30,000 median over 6 recent Shorts) · views/hour 
 
 - Link: https://www.youtube.com/shorts/smpl_F1 · Channel: Kitchen Speedruns · Found by: weird technology (US)
 - Fact status: **UNVERIFIED** — the story's claims have not been checked against official/news sources
-- Radar Score: **53.6** / 100 — provisional, missing: Korea Localization Gap
+- Radar Score: **53.5** / 100 — provisional, missing: Korea Localization Gap
 
-**Observed** (YouTube Data API, as of 2026-10-03T00:00:00Z)
+**Observed** (YouTube Data API, as of 2026-10-03T06:00:00Z)
 
-views 3,000,000 · likes hidden · comments 6,000 · channel subscribers 900,000 · published 2026-10-01T18:00:00Z · duration 45s
+views 3,300,000 · likes hidden · comments 6,600 · channel subscribers 900,000 · published 2026-10-01T18:00:00Z · duration 45s
 
 **Derived** (deterministic)
 
-outlier ratio 15.0x (baseline: 200,000 median over 6 recent Shorts) · views/hour 100,000 · age 30h · freshness 0.65 · engagement 0.2%
+outlier ratio 16.5x (baseline: 200,000 median over 6 recent Shorts) · views/hour 91,667 · age 36h · freshness 0.59 · engagement 0.2%
+
+trend ↓0.5x/6h: 50,000 views/hour over the last 6h (2 observations)
 
 **Score breakdown**
 
 | Dimension | Type | Value | Points | Source / rationale |
 |---|---|---|---|---|
-| Outlier Ratio | metric | 0.69 | 17.3/25 | derived:metrics |
-| View Velocity | metric | 1.00 | 20.0/20 | derived:metrics |
-| Freshness | metric | 0.65 | 6.5/10 | derived:metrics |
+| Outlier Ratio | metric | 0.72 | 17.9/25 | derived:metrics |
+| View Velocity | metric | 0.99 | 19.9/20 | derived:metrics |
+| Freshness | metric | 0.59 | 6.0/10 | derived:metrics |
 | Story Strength | judgment | 0.32 | 4.8/15 | heuristic_v0: title hook cues: number |
 | Korea Localization Gap | judgment | — | 0.0/15 | missing |
 | Localization Potential | judgment | 0.45 | 4.5/10 | heuristic_v0: no localization cues |
@@ -153,23 +161,25 @@ outlier ratio 15.0x (baseline: 200,000 median over 6 recent Shorts) · views/hou
 
 - Link: https://www.youtube.com/shorts/smpl_E1 · Channel: MoneySafe USA · Found by: AI scam (US), cybercrime (US)
 - Fact status: **UNVERIFIED** — the story's claims have not been checked against official/news sources
-- Radar Score: **51.3** / 100
+- Radar Score: **51.6** / 100
 
-**Observed** (YouTube Data API, as of 2026-10-03T00:00:00Z)
+**Observed** (YouTube Data API, as of 2026-10-03T06:00:00Z)
 
-views 600,000 · likes 24,000 · comments 1,200 · channel subscribers 150,000 · published 2026-09-30T22:00:00Z · duration 45s
+views 672,000 · likes 26,880 · comments 1,344 · channel subscribers 150,000 · published 2026-09-30T22:00:00Z · duration 45s
 
 **Derived** (deterministic)
 
-outlier ratio 8.0x (baseline: 75,000 median over 6 recent Shorts) · views/hour 12,000 · age 50h · freshness 0.49 · engagement 4.2%
+outlier ratio 9.0x (baseline: 75,000 median over 6 recent Shorts) · views/hour 12,000 · age 56h · freshness 0.45 · engagement 4.2%
+
+trend →1.0x/6h: 12,000 views/hour over the last 6h (2 observations)
 
 **Score breakdown**
 
 | Dimension | Type | Value | Points | Source / rationale |
 |---|---|---|---|---|
-| Outlier Ratio | metric | 0.53 | 13.3/25 | derived:metrics |
+| Outlier Ratio | metric | 0.56 | 14.0/25 | derived:metrics |
 | View Velocity | metric | 0.82 | 16.3/20 | derived:metrics |
-| Freshness | metric | 0.49 | 4.9/10 | derived:metrics |
+| Freshness | metric | 0.45 | 4.5/10 | derived:metrics |
 | Story Strength | judgment | 0.68 | 10.2/15 | heuristic_v0: title hook cues: number, curiosity, conflict, personal |
 | Korea Localization Gap | judgment | 0.17 | 2.6/15 | derived:kr_search_v0: KR search '사기꾼': 4 results, 2,250,000 total views |
 | Localization Potential | judgment | 0.10 | 1.0/10 | heuristic_v0: region-specific (hard to localize): zelle |
@@ -194,23 +204,25 @@ outlier ratio 8.0x (baseline: 75,000 median over 6 recent Shorts) · views/hour 
 
 - Link: https://www.youtube.com/shorts/smpl_D1 · Channel: PhoneFixLab · Found by: phone hack (US)
 - Fact status: **UNVERIFIED** — the story's claims have not been checked against official/news sources
-- Radar Score: **50.5** / 100
+- Radar Score: **50.2** / 100
 
-**Observed** (YouTube Data API, as of 2026-10-03T00:00:00Z)
+**Observed** (YouTube Data API, as of 2026-10-03T06:00:00Z)
 
-views 400,000 · likes 16,000 · comments 800 · channel subscribers 410,000 · published 2026-09-30T02:00:00Z · duration 45s
+views 410,000 · likes 16,400 · comments 820 · channel subscribers 410,000 · published 2026-09-30T02:00:00Z · duration 45s
 
 **Derived** (deterministic)
 
-outlier ratio 10.0x (baseline: 40,000 median over 7 recent Shorts) · views/hour 5,714 · age 70h · freshness 0.36 · engagement 4.2%
+outlier ratio 10.2x (baseline: 40,000 median over 7 recent Shorts) · views/hour 5,395 · age 76h · freshness 0.33 · engagement 4.2%
+
+trend ↓0.3x/6h: 1,667 views/hour over the last 6h (2 observations)
 
 **Score breakdown**
 
 | Dimension | Type | Value | Points | Source / rationale |
 |---|---|---|---|---|
-| Outlier Ratio | metric | 0.59 | 14.7/25 | derived:metrics |
-| View Velocity | metric | 0.75 | 15.0/20 | derived:metrics |
-| Freshness | metric | 0.36 | 3.6/10 | derived:metrics |
+| Outlier Ratio | metric | 0.59 | 14.9/25 | derived:metrics |
+| View Velocity | metric | 0.75 | 14.9/20 | derived:metrics |
+| Freshness | metric | 0.33 | 3.3/10 | derived:metrics |
 | Story Strength | judgment | 0.44 | 6.6/15 | heuristic_v0: title hook cues: number, curiosity |
 | Korea Localization Gap | judgment | 0.00 | 0.0/15 | derived:kr_search_v0: KR search '배터리 휴대폰': 6 results, 7,100,000 total views |
 | Localization Potential | judgment | 0.75 | 7.5/10 | heuristic_v0: universal: phone, battery |
@@ -235,23 +247,25 @@ outlier ratio 10.0x (baseline: 40,000 median over 7 recent Shorts) · views/hour
 
 - Link: https://www.youtube.com/shorts/smpl_B1 · Channel: TechGiant Daily · Found by: phone hack (US)
 - Fact status: **UNVERIFIED** — the story's claims have not been checked against official/news sources
-- Radar Score: **42.9** / 100 — provisional, missing: Korea Localization Gap
+- Radar Score: **42.4** / 100 — provisional, missing: Korea Localization Gap
 
-**Observed** (YouTube Data API, as of 2026-10-03T00:00:00Z)
+**Observed** (YouTube Data API, as of 2026-10-03T06:00:00Z)
 
-views 2,500,000 · likes 100,000 · comments 5,000 · channel subscribers 5,200,000 · published 2026-10-01T18:00:00Z · duration 45s
+views 2,620,000 · likes 104,800 · comments 5,240 · channel subscribers 5,200,000 · published 2026-10-01T18:00:00Z · duration 45s
 
 **Derived** (deterministic)
 
-outlier ratio 1.2x (baseline: 2,000,000 median over 6 recent Shorts) · views/hour 83,333 · age 30h · freshness 0.65 · engagement 4.2%
+outlier ratio 1.3x (baseline: 2,000,000 median over 6 recent Shorts) · views/hour 72,778 · age 36h · freshness 0.59 · engagement 4.2%
+
+trend ↓0.2x/6h: 20,000 views/hour over the last 6h (2 observations)
 
 **Score breakdown**
 
 | Dimension | Type | Value | Points | Source / rationale |
 |---|---|---|---|---|
-| Outlier Ratio | metric | 0.06 | 1.4/25 | derived:metrics |
-| View Velocity | metric | 0.98 | 19.7/20 | derived:metrics |
-| Freshness | metric | 0.65 | 6.5/10 | derived:metrics |
+| Outlier Ratio | metric | 0.07 | 1.7/25 | derived:metrics |
+| View Velocity | metric | 0.97 | 19.4/20 | derived:metrics |
+| Freshness | metric | 0.59 | 6.0/10 | derived:metrics |
 | Story Strength | judgment | 0.32 | 4.8/15 | heuristic_v0: title hook cues: number |
 | Korea Localization Gap | judgment | — | 0.0/15 | missing |
 | Localization Potential | judgment | 0.75 | 7.5/10 | heuristic_v0: universal: iphone |
@@ -276,15 +290,17 @@ outlier ratio 1.2x (baseline: 2,000,000 median over 6 recent Shorts) · views/ho
 
 - Link: https://www.youtube.com/shorts/smpl_C1 · Channel: NewChannel Lab · Found by: internet mystery (US), weird technology (US)
 - Fact status: **UNVERIFIED** — the story's claims have not been checked against official/news sources
-- Radar Score: **41.5** / 100 — provisional, missing: Outlier Ratio, Korea Localization Gap
+- Radar Score: **41.0** / 100 — provisional, missing: Outlier Ratio, Korea Localization Gap
 
-**Observed** (YouTube Data API, as of 2026-10-03T00:00:00Z)
+**Observed** (YouTube Data API, as of 2026-10-03T06:00:00Z)
 
-views 300,000 · likes 12,000 · comments 600 · channel subscribers 1,200 · published 2026-10-01T08:00:00Z · duration 45s
+views 345,000 · likes 13,800 · comments 690 · channel subscribers 1,200 · published 2026-10-01T08:00:00Z · duration 45s
 
 **Derived** (deterministic)
 
-outlier ratio n/a (baseline: not enough channel history (2 eligible uploads)) · views/hour 7,500 · age 40h · freshness 0.56 · engagement 4.2%
+outlier ratio n/a (baseline: not enough channel history (2 eligible uploads)) · views/hour 7,500 · age 46h · freshness 0.51 · engagement 4.2%
+
+trend →1.0x/6h: 7,500 views/hour over the last 6h (2 observations)
 
 **Score breakdown**
 
@@ -292,7 +308,7 @@ outlier ratio n/a (baseline: not enough channel history (2 eligible uploads)) ·
 |---|---|---|---|---|
 | Outlier Ratio | metric | — | 0.0/25 | derived:metrics |
 | View Velocity | metric | 0.78 | 15.5/20 | derived:metrics |
-| Freshness | metric | 0.56 | 5.6/10 | derived:metrics |
+| Freshness | metric | 0.51 | 5.2/10 | derived:metrics |
 | Story Strength | judgment | 0.56 | 8.4/15 | heuristic_v0: title hook cues: number, negation/warning, personal |
 | Korea Localization Gap | judgment | — | 0.0/15 | missing |
 | Localization Potential | judgment | 0.75 | 7.5/10 | heuristic_v0: universal: app |

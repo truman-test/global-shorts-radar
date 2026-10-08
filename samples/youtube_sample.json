@@ -1,6 +1,7 @@
 {
  "_note": "SYNTHETIC fixture for offline pipeline validation. Not real YouTube data.",
  "fixture_now": "2026-10-03T00:00:00Z",
+ "fixture_track_now": "2026-10-03T06:00:00Z",
  "search": [
   {
    "match": {
@@ -2005,5 +2006,86 @@
    "H_b05"
   ],
   "UUkrsample": []
+ },
+ "stats_timeline": {
+  "smpl_A1": [
+   {
+    "at": "2026-10-03T06:00:00Z",
+    "statistics": {
+     "viewCount": "1450000",
+     "commentCount": "2900",
+     "likeCount": "58000"
+    }
+   }
+  ],
+  "smpl_H1": [
+   {
+    "at": "2026-10-03T06:00:00Z",
+    "statistics": {
+     "viewCount": "650000",
+     "commentCount": "1300",
+     "likeCount": "26000"
+    }
+   }
+  ],
+  "smpl_E1": [
+   {
+    "at": "2026-10-03T06:00:00Z",
+    "statistics": {
+     "viewCount": "672000",
+     "commentCount": "1344",
+     "likeCount": "26880"
+    }
+   }
+  ],
+  "smpl_C1": [
+   {
+    "at": "2026-10-03T06:00:00Z",
+    "statistics": {
+     "viewCount": "345000",
+     "commentCount": "690",
+     "likeCount": "13800"
+    }
+   }
+  ],
+  "smpl_B1": [
+   {
+    "at": "2026-10-03T06:00:00Z",
+    "statistics": {
+     "viewCount": "2620000",
+     "commentCount": "5240",
+     "likeCount": "104800"
+    }
+   }
+  ],
+  "smpl_D1": [
+   {
+    "at": "2026-10-03T06:00:00Z",
+    "statistics": {
+     "viewCount": "410000",
+     "commentCount": "820",
+     "likeCount": "16400"
+    }
+   }
+  ],
+  "smpl_F1": [
+   {
+    "at": "2026-10-03T06:00:00Z",
+    "statistics": {
+     "viewCount": "3300000",
+     "commentCount": "6600"
+    }
+   }
+  ],
+  "smpl_G1": [
+   {
+    "at": "2026-10-03T06:00:00Z",
+    "statistics": {
+     "viewCount": "830000",
+     "commentCount": "1660",
+     "likeCount": "33200"
+    }
+   }
+  ]
  }
 }

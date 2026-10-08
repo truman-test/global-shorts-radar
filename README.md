@@ -7,10 +7,11 @@
 > 다운로드 · 재업로드 · 대본 추출/번역 · 워터마크 제거 기능은 **의도적으로 존재하지 않습니다**.
 > 수집기는 YouTube Data API의 메타데이터 엔드포인트(search, videos, channels, playlistItems)만 호출합니다.
 
-## 현재 범위 (MVP v0.1)
+## 현재 범위 (v0.2)
 
 ```
 Collectors → Raw Storage → Metrics → Scoring → Analysis(heuristic/manual) → Reports
+     ↑ track (반복 관측, 저비용) ─┘
 ```
 
 | 계층 | 모듈 | 내용 |
@@ -60,6 +61,21 @@ Collectors → Raw Storage → Metrics → Scoring → Analysis(heuristic/manual
 - views/hour·기준선은 **관측(snapshot) 시점** 기준으로 계산합니다. 나중에 `compute`를 다시 돌려도 값이 변하지 않습니다.
 - Shorts 판정: 길이 ≤ 180초 (API에는 Shorts 여부 필드가 없음).
 
+### 반복 관측과 Velocity Trend (v0.2)
+
+views/hour(게시 후 평균)만으로는 "지금 가속 중인 영상"과 "어제 정점을 찍고 식는 영상"을 구분할 수 없습니다.
+같은 후보를 다시 관측(`radar track`)하면 snapshot이 쌓이고 추세를 계산합니다.
+
+- `recent_views_per_hour` = 최근 두 관측 사이 증가 조회수 ÷ 경과 시간 (최소 간격 1h)
+- `velocity_ratio` = recent ÷ 직전 관측까지의 평균 views/hour → `↑` ≥1.2x 가속 · `→` 유지 · `↓` ≤0.8x 감속
+- 조회수가 하향 보정된 경우(스팸 필터링 등)는 증가 0으로 처리
+- **Radar Score에는 포함하지 않습니다.** 스펙의 View Velocity 정의(게시 후 평균)를 유지하고, 추세는 derived 데이터로 리포트에만 표시합니다. 실제 추적 데이터가 쌓인 뒤 점수 반영 여부를 결정하세요.
+
+후보 window: 검색으로 발견된 후 `candidate_window_hours`(기본 72h) 동안 레이더에 남고, 이후 `run`/`track` 때마다 재관측됩니다.
+window 기준 시각은 **마지막 관측 시각**이라서, 며칠 뒤에 `radar report`를 실행해도 마지막 수집 결과가 그대로 나옵니다.
+
+기존 DB는 실행 시 자동으로 마이그레이션됩니다 (컬럼 추가만 하며, 데이터는 삭제하지 않음).
+
 ## 설치
 
 ```bash
@@ -76,10 +92,12 @@ API 키: Google Cloud Console → YouTube Data API v3 활성화 → API 키 생�
 # 오프라인 검증 (API 키 불필요, 합성 데이터)
 radar --db data/sample.db run --fixture
 radar --db data/sample.db run --fixture --check-korea 5
+radar --db data/sample.db track --fixture     # 샘플 기준 6시간 뒤 재관측 → Trend 표시
 
 # 실제 수집
 radar run                      # collect → compute → judge(heuristic) → score → report
 radar run --check-korea 5      # + 상위 5개 한국 포화도 체크 (후보당 ~101 units)
+radar track                    # window 내 후보만 재관측 (검색 없음, 50개당 1 unit) → 리포트
 
 # 단계별 실행 (API 호출 없이 재계산 가능)
 radar collect
@@ -91,6 +109,17 @@ radar report --out reports
 
 # 팩트체크 상태 기록
 radar verify <video_id> --status verified --source https://police.example/notice --note "경찰청 보도자료"
+```
+
+### 정기 실행 예시 (cron)
+
+이 저장소는 스케줄을 자동으로 등록하지 않습니다. 필요하면 직접 crontab에 추가하세요 (UTC 기준 예시):
+
+```cron
+# 매일 1회 전체 수집 (~620 units)
+10 0 * * *    cd /path/to/global-shorts-radar && .venv/bin/radar run   >> data/cron.log 2>&1
+# 6시간마다 재관측 (~1–4 units)
+40 */6 * * *  cd /path/to/global-shorts-radar && .venv/bin/radar track >> data/cron.log 2>&1
 ```
 
 `python -m radar ...`로도 실행 가능합니다. 리포트는 `reports/radar_YYYYMMDD_HHMM.{md,csv}`로 생성됩니다.
@@ -116,6 +145,7 @@ abc123,korea_localization_gap,0.7,"국내 유사 콘텐츠 거의 없음",kim
 | channels.list | 1 | 소수 |
 | playlistItems.list | 1 | 채널당 1 |
 | `--check-korea N` | ~101 × N | **기본 꺼짐** |
+| `radar track` | 1 / 50개 | window 내 후보 수에 비례, 검색 없음 |
 
 `collect.quota_budget`(기본 2,000)에 도달하면 호출 전에 중단하고, 그때까지의 데이터는 보존합니다.
 키워드·지역을 늘리면 비용이 선형으로 증가합니다.
@@ -123,7 +153,7 @@ abc123,korea_localization_gap,0.7,"국내 유사 콘텐츠 거의 없음",kim
 ## 리포트 읽는 법
 
 - 상단: FIXTURE 여부, "UNVERIFIED / 복제 금지" 원칙, 가중치 버전
-- Ranking 표: Score(`*`=provisional), Outlier, Views/h, Age, Topic fit(`core`/`partial`/`off-topic?`), 검증 상태
+- Ranking 표: Score(`*`=provisional), Outlier, Views/h, Trend(`↑`/`→`/`↓`, 재관측 전에는 `—`), Age, Topic fit(`core`/`partial`/`off-topic?`), 검증 상태
 - 후보별: Observed / Derived / Score breakdown(차원별 출처·근거) / **Story DNA 체크리스트**(분석가 또는 향후 LLM이 채움) / 독립 출처 / 독창적 한국 각도
 
 예시: [`samples/example_report.md`](samples/example_report.md) (합성 데이터로 생성).
@@ -148,14 +178,15 @@ metrics · scoring · collector(모킹된 HTTP) · storage · analysis · end-to
 - `heuristic_v0`는 제목 키워드 매칭일 뿐입니다. Story Strength를 실제로 판단하지 못하며 최대 0.9로 제한됩니다.
 - Korea gap은 소규모 EN→KO 용어 사전 기반 검색 프록시입니다. 고유명사(예: Zelle)는 번역되지 않아 일반 주제("사기꾼")로 검색됩니다.
 - YouTube search는 표본이지 전수 조사가 아닙니다. `order=viewCount` 검색은 큰 채널에 치우칠 수 있습니다.
-- Views/hour는 게시 이후 평균입니다. 시간대별 가속도는 같은 영상을 여러 번 수집해 snapshot이 쌓여야 계산할 수 있습니다.
+- Trend는 최근 두 관측만 비교합니다. 관측 간격이 길면 그 사이의 급등·급락이 평균으로 묻힙니다.
+- `track`은 후보 영상만 재관측합니다. 채널 기준선 영상은 발견 시점 값이라, 시간이 지나면 outlier ratio가 다소 높게 나올 수 있습니다.
 - 스펙 가중치(Channel Fit 5점)에서는 주제 밖이지만 강한 outlier(예: 요리 Short)가 상위에 올 수 있습니다. 필터링 대신 `off-topic?`로 표시합니다.
 
 ## 로드맵
 
 1. 실제 API 키로 소규모 live run → 키워드/정규화 상한 보정
 2. LLM 기반 Story DNA 추출 (`judgments.source = llm:<model>`, 제목·설명·공개 메타데이터만 사용, 대본 미사용)
-3. 반복 수집 snapshot으로 velocity 가속도 계산, 스케줄 실행
+3. ~~반복 수집 snapshot으로 velocity 추세 계산~~ (v0.2 완료) → 실제 데이터로 Trend를 점수에 반영할지 결정
 4. Fact verification 워크플로우 (출처 우선순위: 공식 → 정부/경찰/기업 → 주요 언론 → 전문가 → 2차 → SNS)
 5. Reddit / Google Trends / News RSS 수집기
 6. YouTube Analytics 피드백 → Winner/Loser 분류 → 가중치 학습

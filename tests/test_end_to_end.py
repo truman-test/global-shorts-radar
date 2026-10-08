@@ -11,19 +11,19 @@ FAKE_KEY = "AIzaFAKE-e2e-key-should-never-appear"
 def run_fixture(db, settings, now, korea=0, budget=10_000):
     client = FixtureClient(quota=QuotaTracker(budget))
     s = pipeline.collect(client, db, settings, now, "fixture")
-    pipeline.compute_metrics(db, settings, now, s.run_id)
-    pipeline.run_heuristics(db, settings, now, s.run_id)
-    pipeline.score_candidates(db, settings, now, s.run_id)
+    pipeline.compute_metrics(db, settings, now)
+    pipeline.run_heuristics(db, settings, now)
+    pipeline.score_candidates(db, settings, now)
     if korea:
-        pipeline.run_korea_gap(client, db, settings, now, korea, s.run_id)
-        pipeline.score_candidates(db, settings, now, s.run_id)
+        pipeline.run_korea_gap(client, db, settings, now, korea)
+        pipeline.score_candidates(db, settings, now)
     return s
 
 
 def test_fixture_ranking(db, settings, now):
     s = run_fixture(db, settings, now)
     assert s.searches == len(settings.keywords) and not s.errors
-    rows = build_rows(db)
+    rows = build_rows(db, settings)
     ids = [r["video_id"] for r in rows]
     assert ids[0] == "smpl_A1"                       # 20x outlier first
     assert "smpl_G1" not in ids                      # 3m40s is not a Short
@@ -39,13 +39,13 @@ def test_fixture_ranking(db, settings, now):
 def test_rerunning_steps_is_idempotent_for_heuristics(db, settings, now):
     s = run_fixture(db, settings, now)
     before = len(db.query("SELECT * FROM judgments"))
-    pipeline.run_heuristics(db, settings, now, s.run_id)
+    pipeline.run_heuristics(db, settings, now)
     assert len(db.query("SELECT * FROM judgments")) == before
 
 
 def test_korea_gap_changes_ranking(db, settings, now):
     run_fixture(db, settings, now, korea=5)
-    rows = {r["video_id"]: r for r in build_rows(db)}
+    rows = {r["video_id"]: r for r in build_rows(db, settings)}
     assert rows["smpl_A1"]["judgments"]["korea_localization_gap"]["value"] == 1.0
     assert rows["smpl_D1"]["judgments"]["korea_localization_gap"]["value"] == 0.0
     assert rows["smpl_A1"]["components"]["korea_localization_gap"]["source"] == "derived:kr_search_v0"
@@ -60,7 +60,7 @@ def test_budget_stop_keeps_partial_data(db, settings, now):
 def test_report_content(db, settings, now, tmp_path):
     settings.api_key = FAKE_KEY
     run_fixture(db, settings, now)
-    rows = build_rows(db)
+    rows = build_rows(db, settings)
     md = render_markdown(rows, generated_at=now, mode="fixture", settings=settings)
     assert "FIXTURE MODE" in md and "UNVERIFIED" in md and "Story DNA" in md
     assert "heuristic_v0" in md and FAKE_KEY not in md
@@ -87,3 +87,78 @@ def test_cli_live_without_key_fails_cleanly(tmp_path, capsys, monkeypatch):
     monkeypatch.setattr("radar.config.PROJECT_ROOT", tmp_path)  # ignore any local .env
     assert cli.main(["--db", str(tmp_path / "r.db"), "run"]) == 2
     assert "YOUTUBE_API_KEY" in capsys.readouterr().err
+
+
+def _rows(db, settings):
+    return {r["video_id"]: r for r in build_rows(db, settings)}
+
+
+def test_track_measures_trend_cheaply(db, settings, now):
+    from datetime import timedelta
+
+    run_fixture(db, settings, now)
+    assert _rows(db, settings)["smpl_A1"]["velocity_ratio"] is None  # one observation only
+    later = now + timedelta(hours=6)
+    client = FixtureClient(quota=QuotaTracker(10_000), now=cli.to_iso(later))
+    s = pipeline.track(client, db, settings, later, "fixture")
+    assert s.refreshed == 8 and client.quota.used == 1  # one videos.list call, no searches
+    pipeline.compute_metrics(db, settings, later)
+    pipeline.score_candidates(db, settings, later)
+    rows = _rows(db, settings)
+    assert len(db.snapshots("smpl_A1")) == 2
+    assert rows["smpl_A1"]["velocity_ratio"] == 1.5 and rows["smpl_A1"]["view_count"] == 1_450_000
+    assert rows["smpl_H1"]["velocity_ratio"] > 1.2
+    assert rows["smpl_B1"]["velocity_ratio"] < 0.8 and rows["smpl_D1"]["velocity_ratio"] < 0.8
+    md = render_markdown(list(rows.values()), generated_at=later, mode="fixture", settings=settings)
+    assert "↑1.5x/6h" in md and "↓" in md and "not** part of the Radar Score" in md
+
+
+def test_trend_does_not_change_score_formula(db, settings, now):
+    from datetime import timedelta
+
+    run_fixture(db, settings, now)
+    later = now + timedelta(hours=6)
+    pipeline.track(FixtureClient(now=cli.to_iso(later)), db, settings, later, "fixture")
+    pipeline.compute_metrics(db, settings, later)
+    pipeline.score_candidates(db, settings, later)
+    comps = _rows(db, settings)["smpl_A1"]["components"]
+    assert set(comps) == {"outlier_ratio", "view_velocity", "freshness", "story_strength",
+                          "korea_localization_gap", "localization_potential", "channel_fit"}
+
+
+def test_candidates_leave_window(db, settings, now):
+    from datetime import timedelta
+
+    run_fixture(db, settings, now)
+    much_later = now + timedelta(hours=settings.candidate_window_hours + 1)
+    s = pipeline.track(FixtureClient(now=cli.to_iso(much_later)), db, settings, much_later, "fixture")
+    assert s.refreshed == 0
+
+
+def test_collect_reobserves_previous_candidates(db, settings, now, tmp_path):
+    import json
+    from datetime import timedelta
+
+    run_fixture(db, settings, now)
+    data = json.loads(FixtureClient().path.read_text(encoding="utf-8"))
+    data["search"] = [e for e in data["search"] if e["match"]["q"] not in ("AI scam", "cybercrime")]
+    path = tmp_path / "fixture.json"
+    path.write_text(json.dumps(data), encoding="utf-8")
+    later = now + timedelta(hours=6)
+    s = pipeline.collect(FixtureClient(path, now=cli.to_iso(later)), db, settings, later, "fixture")
+    # smpl_E1 and smpl_G1 were only found by the removed searches but are still in the window
+    assert s.refreshed == 2
+    assert len(db.snapshots("smpl_E1")) == 2 and len(db.snapshots("smpl_G1")) == 2
+
+
+def test_cli_track(tmp_path, capsys):
+    db_path, out = tmp_path / "r.db", tmp_path / "reports"
+    assert cli.main(["--db", str(db_path), "track", "--fixture", "--out", str(out)]) == 0
+    assert "no candidates" in capsys.readouterr().out
+    assert cli.main(["--db", str(db_path), "run", "--fixture", "--out", str(out)]) == 0
+    assert cli.main(["--db", str(db_path), "track", "--fixture", "--out", str(out)]) == 0
+    md = (out / "radar_20261003_0600.md").read_text(encoding="utf-8")
+    assert "FIXTURE MODE" in md and "↑1.5x/6h" in md
+    # standalone report days later still shows the last observation's candidates
+    assert cli.main(["--db", str(db_path), "report", "--out", str(out), "--now", "2026-10-08T00:00:00Z"]) == 0
+    assert "smpl_A1" in (out / "radar_20261008_0000.md").read_text(encoding="utf-8")

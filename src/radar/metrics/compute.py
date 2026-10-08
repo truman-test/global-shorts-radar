@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from statistics import median
 from typing import Iterable, Sequence
 
-METRIC_VERSION = "m1"
+METRIC_VERSION = "m2"
 
 _DURATION = re.compile(r"^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?)?$")
 
@@ -91,6 +91,36 @@ def engagement_rate(views: int | None, likes: int | None, comments: int | None) 
 def freshness(hours: float, half_life_hours: float) -> float:
     """Exponential decay in [0, 1]: 1.0 at publish, 0.5 after one half-life."""
     return 0.5 ** (max(hours, 0.0) / half_life_hours)
+
+
+def velocity_trend(snapshots: Iterable[dict], published_at: str, min_interval_hours: float = 1.0) -> dict | None:
+    """Momentum from repeated observations of the same video.
+
+    Compares views gained between the latest snapshot and the most recent earlier snapshot at
+    least `min_interval_hours` older, against the video's average views/hour up to that earlier
+    snapshot. velocity_ratio > 1 means it is accelerating; < 1 means it is cooling down (normal
+    for most Shorts). Returns None when fewer than two usable snapshots exist.
+    """
+    snaps = sorted((s for s in snapshots if s.get("view_count") is not None), key=lambda s: s["fetched_at"])
+    if len(snaps) < 2:
+        return None
+    latest = snaps[-1]
+    t1 = parse_ts(latest["fetched_at"])
+    prev = next((s for s in reversed(snaps[:-1])
+                 if (t1 - parse_ts(s["fetched_at"])).total_seconds() / 3600.0 >= min_interval_hours), None)
+    if prev is None:
+        return None
+    t0 = parse_ts(prev["fetched_at"])
+    window = (t1 - t0).total_seconds() / 3600.0
+    # Counts are occasionally corrected downward (spam filtering); treat as no growth.
+    recent = max(latest["view_count"] - prev["view_count"], 0) / window
+    prior_avg = views_per_hour(prev["view_count"], hours_since(published_at, t0))
+    return {
+        "recent_views_per_hour": recent,
+        "velocity_ratio": recent / prior_avg if prior_avg else None,
+        "trend_window_hours": round(window, 2),
+        "snapshot_count": len(snaps),
+    }
 
 
 def safe_median(values: Sequence[float]) -> float | None:

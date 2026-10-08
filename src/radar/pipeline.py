@@ -12,12 +12,26 @@ from datetime import datetime, timedelta
 from radar.analysis import heuristic, korea_gap
 from radar.analysis.judgments import resolve
 from radar.collectors.youtube import QuotaBudgetError, QuotaExceededError, YouTubeAPIError
-
-QUOTA_ERRORS = (QuotaBudgetError, QuotaExceededError)
 from radar.metrics import compute as m
 from radar.scoring.radar import compute_score, normalize_outlier, normalize_velocity
 
 log = logging.getLogger("radar")
+
+QUOTA_ERRORS = (QuotaBudgetError, QuotaExceededError)
+
+
+def window_start(db, settings, anchor: datetime | None = None) -> str | None:
+    """Start of the candidate window: `candidate_window_hours` before the anchor.
+
+    The anchor defaults to the latest run's observation time (not the wall clock), so a report
+    generated days after the last collection still shows that collection's candidates.
+    """
+    if anchor is None:
+        latest = db.latest_run_started_at()
+        if latest is None:
+            return None
+        anchor = m.parse_ts(latest)
+    return m.to_iso(anchor - timedelta(hours=settings.candidate_window_hours))
 
 
 @dataclass
@@ -27,6 +41,7 @@ class CollectSummary:
     candidates: int = 0
     channels: int = 0
     baseline_videos: int = 0
+    refreshed: int = 0
     quota_used: int = 0
     errors: list[str] = field(default_factory=list)
 
@@ -59,14 +74,19 @@ def collect(client, db, settings, now: datetime, mode: str) -> CollectSummary:
                         discovered.append(vid)
         discovered = list(dict.fromkeys(discovered))
 
-        # 2. Observed stats for candidates.
-        items = client.videos(discovered) if discovered else []
+        # 2. Observed stats for new hits plus earlier candidates still in the window, so every
+        #    tracked candidate gets a fresh snapshot (videos.list: 1 unit per 50 ids).
+        previous = [v for v in db.candidate_ids(window_start(db, settings, now)) if v not in discovered]
+        items = client.videos(discovered + previous) if (discovered or previous) else []
         for item in items:
             db.upsert_video(item, now_iso)
-        summary.candidates = len(items)
+        new_items = [i for i in items if i["id"] not in previous]
+        summary.candidates = len(new_items)
+        summary.refreshed = len(items) - len(new_items)
 
-        # 3. Channels + recent uploads for the outlier baseline.
-        channel_ids = list(dict.fromkeys(i["snippet"]["channelId"] for i in items))
+        # 3. Channels + recent uploads for the outlier baseline (new hits only; earlier
+        #    candidates' channels were sampled when they were discovered).
+        channel_ids = list(dict.fromkeys(i["snippet"]["channelId"] for i in new_items))
         for ch in client.channels(channel_ids) if channel_ids else []:
             db.upsert_channel(ch, now_iso)
             summary.channels += 1
@@ -93,10 +113,36 @@ def collect(client, db, settings, now: datetime, mode: str) -> CollectSummary:
     return summary
 
 
-def compute_metrics(db, settings, now: datetime, run_id: int | None = None) -> int:
+def track(client, db, settings, now: datetime, mode: str) -> CollectSummary:
+    """Re-observe candidates in the window without searching (no 100-unit calls).
+
+    Each call appends a snapshot per video; repeated tracking enables velocity_trend.
+    """
+    now_iso = m.to_iso(now)
+    ids = db.candidate_ids(window_start(db, settings, now))
+    run_id = db.start_run(now_iso, f"{mode}-track")
+    client.raw_sink = lambda endpoint, params, data: db.save_raw(run_id, endpoint, params, now_iso, data)
+    summary = CollectSummary(run_id=run_id)
+    try:
+        for item in client.videos(ids) if ids else []:
+            db.upsert_video(item, now_iso)
+            summary.refreshed += 1
+    except QUOTA_ERRORS as exc:
+        summary.errors.append(f"stopped early, partial data kept: {exc}")
+    finally:
+        summary.quota_used = client.quota.used
+        db.finish_run(run_id, summary.quota_used, "; ".join(summary.errors))
+    return summary
+
+
+def _candidates(db, settings, since: str | None) -> list[str]:
+    return db.candidate_ids(since if since is not None else window_start(db, settings))
+
+
+def compute_metrics(db, settings, now: datetime, since: str | None = None) -> int:
     now_iso = m.to_iso(now)
     count = 0
-    for vid in db.candidate_ids(run_id):
+    for vid in _candidates(db, settings, since):
         video = db.video(vid)
         snap = db.latest_snapshot(vid)
         if video is None or snap is None:
@@ -126,25 +172,36 @@ def compute_metrics(db, settings, now: datetime, run_id: int | None = None) -> i
             "outlier_ratio": m.outlier_ratio(snap["view_count"], baseline),
             "engagement_rate": m.engagement_rate(snap["view_count"], snap["like_count"], snap["comment_count"]),
             "freshness": m.freshness(m.hours_since(video["published_at"], now), settings.freshness_half_life_hours),
+            **_trend_columns(db.snapshots(vid), video["published_at"]),
         })
         db.ensure_verification(vid, now_iso)
         count += 1
     return count
 
 
-def short_candidates(db, run_id: int | None = None) -> list[str]:
+def _trend_columns(snapshots, published_at: str) -> dict:
+    trend = m.velocity_trend([dict(r) for r in snapshots], published_at) or {}
+    return {
+        "recent_views_per_hour": trend.get("recent_views_per_hour"),
+        "velocity_ratio": trend.get("velocity_ratio"),
+        "trend_window_hours": trend.get("trend_window_hours"),
+        "snapshot_count": len(snapshots),
+    }
+
+
+def short_candidates(db, settings, since: str | None = None) -> list[str]:
     out = []
-    for vid in db.candidate_ids(run_id):
+    for vid in _candidates(db, settings, since):
         met = db.latest_metrics(vid)
         if met is not None and met["is_short"]:
             out.append(vid)
     return out
 
 
-def run_heuristics(db, settings, now: datetime, run_id: int | None = None) -> int:
+def run_heuristics(db, settings, now: datetime, since: str | None = None) -> int:
     now_iso = m.to_iso(now)
     n = 0
-    for vid in short_candidates(db, run_id):
+    for vid in short_candidates(db, settings, since):
         video = db.video(vid)
         existing = {(j["dimension"], j["source"]) for j in db.judgments(vid)}
         for j in heuristic.heuristic_judgments(video["title"] or "", video["description"] or "", settings):
@@ -155,11 +212,11 @@ def run_heuristics(db, settings, now: datetime, run_id: int | None = None) -> in
     return n
 
 
-def run_korea_gap(client, db, settings, now: datetime, top_n: int, run_id: int | None = None) -> list[str]:
+def run_korea_gap(client, db, settings, now: datetime, top_n: int, since: str | None = None) -> list[str]:
     """Measure KR saturation for the current top-N candidates. Returns log lines."""
     now_iso = m.to_iso(now)
     published_after = m.to_iso(now - timedelta(days=30))
-    ranked = ranked_candidates(db, run_id)[:top_n]
+    ranked = ranked_candidates(db, settings, since)[:top_n]
     lines = []
     for row in ranked:
         vid = row["video_id"]
@@ -176,10 +233,10 @@ def run_korea_gap(client, db, settings, now: datetime, top_n: int, run_id: int |
     return lines
 
 
-def score_candidates(db, settings, now: datetime, run_id: int | None = None) -> int:
+def score_candidates(db, settings, now: datetime, since: str | None = None) -> int:
     now_iso = m.to_iso(now)
     n = 0
-    for vid in short_candidates(db, run_id):
+    for vid in short_candidates(db, settings, since):
         met = db.latest_metrics(vid)
         signals = {
             "outlier_ratio": (normalize_outlier(met["outlier_ratio"], settings.outlier_cap), "derived:metrics"),
@@ -195,9 +252,9 @@ def score_candidates(db, settings, now: datetime, run_id: int | None = None) -> 
     return n
 
 
-def ranked_candidates(db, run_id: int | None = None) -> list[dict]:
+def ranked_candidates(db, settings, since: str | None = None) -> list[dict]:
     rows = []
-    for vid in short_candidates(db, run_id):
+    for vid in short_candidates(db, settings, since):
         score = db.latest_score(vid)
         if score is not None:
             rows.append({"video_id": vid, "radar_score": score["radar_score"]})

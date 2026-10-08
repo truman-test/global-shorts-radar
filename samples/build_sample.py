@@ -9,6 +9,8 @@ Scenarios covered:
   F1  15x outlier, off-topic (cooking)                         -> low channel fit
   G1  3m40s video returned by search                           -> excluded (not a Short)
   H1  very fresh (6h), 8x outlier, high velocity
+Second observation 6h later (stats_timeline, used by `radar track`):
+  A1, H1 accelerating · E1, C1 steady · B1, D1, F1 cooling down
 Run: python samples/build_sample.py
 """
 import json
@@ -140,10 +142,25 @@ for vid, view_list in kr_plan.items():
         ids.append(kid)
     search.append({"match": {"q": q, "regionCode": "KR"}, "response": search_response(ids)})
 
+# Views 6 hours after NOW. Lifetime average at NOW -> views gained in the next 6h:
+#   A1 50k/h -> 75k/h (1.5x)   H1 41.7k/h -> 66.7k/h (1.6x)   E1 12k/h -> 12k/h   C1 7.5k/h -> 7.5k/h
+#   B1 83k/h -> 20k/h (0.24x)  D1 5.7k/h -> 1.7k/h (0.29x)    F1 100k/h -> 50k/h (0.5x)
+TRACK_NOW = NOW + timedelta(hours=6)
+later_views = {"smpl_A1": 1_450_000, "smpl_H1": 650_000, "smpl_E1": 672_000, "smpl_C1": 345_000,
+               "smpl_B1": 2_620_000, "smpl_D1": 410_000, "smpl_F1": 3_300_000, "smpl_G1": 830_000}
+stats_timeline = {}
+for vid, views in later_views.items():
+    later = dict(videos[vid]["statistics"], viewCount=str(views), commentCount=str(int(views * 0.002)))
+    if "likeCount" in later:
+        later["likeCount"] = str(int(views * 0.04))
+    stats_timeline[vid] = [{"at": TRACK_NOW.strftime("%Y-%m-%dT%H:%M:%SZ"), "statistics": later}]
+
 out = {
     "_note": "SYNTHETIC fixture for offline pipeline validation. Not real YouTube data.",
     "fixture_now": NOW.strftime("%Y-%m-%dT%H:%M:%SZ"),
+    "fixture_track_now": TRACK_NOW.strftime("%Y-%m-%dT%H:%M:%SZ"),
     "search": search, "videos": videos, "channels": channels, "playlists": playlists,
+    "stats_timeline": stats_timeline,
 }
 # Newest uploads first, like the real uploads playlist.
 for pl, ids in playlists.items():

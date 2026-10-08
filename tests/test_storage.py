@@ -52,3 +52,32 @@ def test_verification_lifecycle(db):
         db.set_verification("v1", "probably", "2026-10-04T00:00:00Z")
     with pytest.raises(ValueError):
         db.set_verification("nope", "verified", "2026-10-04T00:00:00Z")
+
+
+def test_migration_adds_columns_and_keeps_rows(tmp_path):
+    import sqlite3
+
+    from radar.storage.db import Database
+
+    path = tmp_path / "old.db"
+    conn = sqlite3.connect(path)  # MVP-era metrics table without trend columns
+    conn.execute("""CREATE TABLE metrics (video_id TEXT NOT NULL, computed_at TEXT NOT NULL,
+                    metric_version TEXT NOT NULL, outlier_ratio REAL, PRIMARY KEY (video_id, computed_at))""")
+    conn.execute("INSERT INTO metrics VALUES ('v1', '2026-10-01T00:00:00Z', 'm1', 20.0)")
+    conn.commit()
+    conn.close()
+    db = Database(path)
+    db.init_schema()
+    db.init_schema()  # idempotent
+    cols = {r["name"] for r in db.query("PRAGMA table_info(metrics)")}
+    assert {"recent_views_per_hour", "velocity_ratio", "trend_window_hours", "snapshot_count"} <= cols
+    row = db.query("SELECT * FROM metrics")[0]
+    assert row["outlier_ratio"] == 20.0 and row["velocity_ratio"] is None
+    db.close()
+
+
+def test_candidate_window(db):
+    db.add_discovery("old", 1, "q", "US", "2026-09-28T00:00:00Z")
+    db.add_discovery("new", 1, "q", "US", "2026-10-02T00:00:00Z")
+    assert db.candidate_ids("2026-10-01T00:00:00Z") == ["new"]
+    assert db.candidate_ids() == ["new", "old"]

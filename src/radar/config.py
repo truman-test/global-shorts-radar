@@ -24,6 +24,7 @@ class Settings:
     published_within_hours: int
     recent_uploads_per_channel: int
     quota_budget: int
+    candidate_window_hours: float
     max_short_seconds: int
     min_baseline_videos: int
     baseline_min_age_hours: float
@@ -83,6 +84,7 @@ def load_settings(
             published_within_hours=int(collect["published_within_hours"]),
             recent_uploads_per_channel=int(collect["recent_uploads_per_channel"]),
             quota_budget=int(collect["quota_budget"]),
+            candidate_window_hours=float(collect.get("candidate_window_hours", 72)),
             max_short_seconds=int(metrics["max_short_seconds"]),
             min_baseline_videos=int(metrics["min_baseline_videos"]),
             baseline_min_age_hours=float(metrics["baseline_min_age_hours"]),

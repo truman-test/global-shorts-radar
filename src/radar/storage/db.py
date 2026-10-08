@@ -92,6 +92,10 @@ CREATE TABLE IF NOT EXISTS metrics (
     outlier_ratio REAL,
     engagement_rate REAL,
     freshness REAL,
+    recent_views_per_hour REAL,      -- from snapshot deltas (repeated tracking)
+    velocity_ratio REAL,             -- recent vph / average vph before the previous snapshot
+    trend_window_hours REAL,
+    snapshot_count INTEGER,
     PRIMARY KEY (video_id, computed_at)
 );
 CREATE TABLE IF NOT EXISTS scores (
@@ -128,6 +132,15 @@ CREATE TABLE IF NOT EXISTS verification (
 
 VERIFICATION_STATUSES = ("unverified", "in_progress", "verified", "false")
 
+# Columns added after the first release: (table, column, type). Applied with ALTER TABLE so
+# existing databases are upgraded in place without losing rows.
+MIGRATIONS = [
+    ("metrics", "recent_views_per_hour", "REAL"),
+    ("metrics", "velocity_ratio", "REAL"),
+    ("metrics", "trend_window_hours", "REAL"),
+    ("metrics", "snapshot_count", "INTEGER"),
+]
+
 
 def _int(value: Any) -> int | None:
     try:
@@ -147,7 +160,14 @@ class Database:
 
     def init_schema(self) -> None:
         self.conn.executescript(SCHEMA)
+        self._migrate()
         self.conn.commit()
+
+    def _migrate(self) -> None:
+        for table, column, col_type in MIGRATIONS:
+            existing = {r["name"] for r in self.conn.execute(f"PRAGMA table_info({table})")}
+            if column not in existing:
+                self.conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {col_type}")
 
     def close(self) -> None:
         self.conn.close()
@@ -224,15 +244,17 @@ class Database:
         )
         self.conn.commit()
 
-    def latest_run_id(self) -> int | None:
-        row = self.conn.execute("SELECT MAX(run_id) AS r FROM runs").fetchone()
-        return row["r"] if row and row["r"] is not None else None
+    def latest_run_started_at(self) -> str | None:
+        row = self.conn.execute("SELECT MAX(started_at) AS t FROM runs").fetchone()
+        return row["t"] if row else None
 
-    def candidate_ids(self, run_id: int | None = None) -> list[str]:
-        run_id = run_id if run_id is not None else self.latest_run_id()
-        if run_id is None:
-            return []
-        rows = self.query("SELECT DISTINCT video_id FROM discoveries WHERE run_id = ? ORDER BY video_id", (run_id,))
+    def candidate_ids(self, since: str | None = None) -> list[str]:
+        """Videos discovered by search at or after `since` (ISO); all discoveries if None."""
+        if since is None:
+            rows = self.query("SELECT DISTINCT video_id FROM discoveries ORDER BY video_id")
+        else:
+            rows = self.query("SELECT DISTINCT video_id FROM discoveries WHERE discovered_at >= ? ORDER BY video_id",
+                              (since,))
         return [r["video_id"] for r in rows]
 
     def video(self, video_id: str) -> sqlite3.Row | None:
@@ -250,6 +272,9 @@ class Database:
         return self.conn.execute(
             "SELECT * FROM video_snapshots WHERE video_id = ? ORDER BY fetched_at DESC LIMIT 1", (video_id,)
         ).fetchone()
+
+    def snapshots(self, video_id: str) -> list[sqlite3.Row]:
+        return self.query("SELECT * FROM video_snapshots WHERE video_id = ? ORDER BY fetched_at", (video_id,))
 
     def channel_videos_with_latest_views(self, channel_id: str) -> list[sqlite3.Row]:
         return self.query(

@@ -26,18 +26,24 @@ def _make_client(args, settings):
     return YouTubeClient(settings.api_key, quota=quota), "live"
 
 
-def _now(args, client=None) -> datetime:
+def _now(args, client=None, tracking: bool = False) -> datetime:
     if getattr(args, "now", None):
-        return parse_ts(args.now)
-    if client is not None and getattr(client, "fixture_now", None):
-        return parse_ts(client.fixture_now)
-    return datetime.now(timezone.utc)
+        now = parse_ts(args.now)
+    elif tracking and getattr(client, "fixture_track_now", None):
+        now = parse_ts(client.fixture_track_now)
+    elif getattr(client, "fixture_now", None):
+        now = parse_ts(client.fixture_now)
+    else:
+        now = datetime.now(timezone.utc)
+    if isinstance(client, FixtureClient):
+        client.now = to_iso(now)  # fixture serves statistics as of this time
+    return now
 
 
 def _report(db, settings, now, out_dir: Path, run_info=None) -> tuple[Path, Path, int]:
-    rows = build_rows(db)
+    rows = build_rows(db, settings)
     last = db.query("SELECT mode FROM runs ORDER BY run_id DESC LIMIT 1")
-    mode = last[0]["mode"] if last else "live"
+    mode = "fixture" if last and last[0]["mode"].startswith("fixture") else "live"
     out_dir.mkdir(parents=True, exist_ok=True)
     stamp = f"{now:%Y%m%d_%H%M}"
     md = out_dir / f"radar_{stamp}.md"
@@ -77,6 +83,9 @@ def build_parser() -> argparse.ArgumentParser:
     v.add_argument("--status", required=True, choices=["unverified", "in_progress", "verified", "false"])
     v.add_argument("--source", action="append", default=[], help="source URL (repeatable)")
     v.add_argument("--note", default="")
+    t = sub.add_parser("track", help="re-observe candidates in the window (videos.list only, cheap) -> report")
+    add_source_args(t)
+    t.add_argument("--out", default="reports")
     run = sub.add_parser("run", help="collect -> compute -> judge -> score -> report")
     add_source_args(run)
     run.add_argument("--check-korea", type=int, default=0, metavar="N",
@@ -144,20 +153,39 @@ def _dispatch(args, settings, db) -> int:
         db.set_verification(args.video_id, args.status, to_iso(datetime.now(timezone.utc)), args.source, args.note)
         print(f"{args.video_id}: {args.status}")
         return 0
+    if cmd == "track":
+        client, mode = _make_client(args, settings)
+        now = _now(args, client, tracking=True)
+        s = pipeline.track(client, db, settings, now, mode)
+        if not s.refreshed:
+            print("no candidates in the window to track; run `radar run` first")
+            for e in s.errors:
+                print(f"  warning: {e}")
+            return 0
+        pipeline.compute_metrics(db, settings, now)
+        pipeline.score_candidates(db, settings, now)
+        info = {"run_id": s.run_id, "searches": 0, "candidates": s.refreshed, "quota_used": client.quota.used}
+        md, csv_path, n = _report(db, settings, now, Path(args.out), info)
+        print(f"track #{s.run_id} ({mode}): {s.refreshed} candidates re-observed, ~{client.quota.used} quota units")
+        for e in s.errors:
+            print(f"  warning: {e}")
+        print(f"report: {md}\ncsv:    {csv_path}")
+        return 0
     if cmd == "run":
         client, mode = _make_client(args, settings)
         now = _now(args, client)
         s = pipeline.collect(client, db, settings, now, mode)
-        pipeline.compute_metrics(db, settings, now, s.run_id)
-        pipeline.run_heuristics(db, settings, now, s.run_id)
-        pipeline.score_candidates(db, settings, now, s.run_id)
+        pipeline.compute_metrics(db, settings, now)
+        pipeline.run_heuristics(db, settings, now)
+        pipeline.score_candidates(db, settings, now)
         if args.check_korea:
-            for line in pipeline.run_korea_gap(client, db, settings, now, args.check_korea, s.run_id):
+            for line in pipeline.run_korea_gap(client, db, settings, now, args.check_korea):
                 print(f"  korea-gap {line}")
-            pipeline.score_candidates(db, settings, now, s.run_id)
+            pipeline.score_candidates(db, settings, now)
         info = {"run_id": s.run_id, "searches": s.searches, "candidates": s.candidates, "quota_used": client.quota.used}
         md, csv_path, n = _report(db, settings, now, Path(args.out), info)
-        print(f"run #{s.run_id} ({mode}): {s.candidates} candidates, {n} Shorts ranked, ~{client.quota.used} quota units")
+        print(f"run #{s.run_id} ({mode}): {s.candidates} new candidates, {s.refreshed} re-observed, "
+              f"{n} Shorts ranked, ~{client.quota.used} quota units")
         for e in s.errors:
             print(f"  warning: {e}")
         print(f"report: {md}\ncsv:    {csv_path}")
