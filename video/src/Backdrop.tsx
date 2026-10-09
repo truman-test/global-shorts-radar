@@ -3,8 +3,8 @@
 import React, {useMemo} from "react";
 import {AbsoluteFill, interpolateColors, useCurrentFrame, useVideoConfig} from "remotion";
 import {fade} from "./motion";
-import {Pattern, Theme, useTheme} from "./themes";
-import {ShortProps} from "./types";
+import {Pattern, Theme, toneOf, useCategory, useTheme} from "./themes";
+import {Accent, ShortProps} from "./types";
 
 const W = 1080;
 const H = 1920;
@@ -61,8 +61,6 @@ const Rings: React.FC<{frame: number; theme: Theme; color: string}> = ({frame, t
       <svg width={W} height={H} style={{position: "absolute", inset: 0}}>
         {rings}
         {ticks}
-        <line x1={0} y1={RING_C.y} x2={W} y2={RING_C.y} stroke={ink(theme, 0.04)} strokeWidth={2} />
-        <line x1={RING_C.x} y1={0} x2={RING_C.x} y2={H} stroke={ink(theme, 0.04)} strokeWidth={2} />
       </svg>
       <AbsoluteFill style={{
         background: `conic-gradient(from ${sweep}deg at ${RING_C.x}px ${RING_C.y}px, transparent 0deg, ${color}${hex2(0.16)} 58deg, transparent 58.5deg)`,
@@ -245,7 +243,7 @@ const Topo: React.FC<{frame: number; theme: Theme}> = ({frame, theme}) => {
   );
 };
 
-/* ---------------------------------------------------------------- notebook: ruled lines + paper grain */
+/* ---------------------------------------------------------------- notebook (dark, re-renders only): ruled lines + grain */
 const GRAIN = "data:image/svg+xml;utf8," + encodeURIComponent(
   "<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'>"
   + "<filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' seed='7' stitchTiles='stitch'/>"
@@ -269,6 +267,82 @@ const Ruled: React.FC<{frame: number; theme: Theme}> = ({frame, theme}) => {
       <AbsoluteFill style={{backgroundImage: `url("${GRAIN}")`, backgroundSize: "240px 240px", opacity: 0.55}} />
     </>
   );
+};
+
+/* ---------------------------------------------------------------- paper stages (종이 노트): cream page + grain */
+
+// fine fibres (dark specks, multiplied) and a slow blotchy tone, both from feTurbulence: no image assets
+const PAPER_FIBRES = "data:image/svg+xml;utf8," + encodeURIComponent(
+  "<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'>"
+  + "<filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' seed='3' stitchTiles='stitch'/>"
+  + "<feColorMatrix values='0 0 0 0 0.42  0 0 0 0 0.36  0 0 0 0 0.26  0 0 0 -1.25 0.72'/></filter>"
+  + "<rect width='300' height='300' filter='url(#n)'/></svg>");
+const PAPER_TONE = "data:image/svg+xml;utf8," + encodeURIComponent(
+  "<svg xmlns='http://www.w3.org/2000/svg' width='1080' height='1920'>"
+  + "<filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.004 0.006' numOctaves='3' seed='21'/>"
+  + "<feColorMatrix values='0 0 0 0 0.78  0 0 0 0 0.68  0 0 0 0 0.50  0 0 0 -1.6 0.95'/></filter>"
+  + "<rect width='1080' height='1920' filter='url(#n)'/></svg>");
+
+const PaperGrain: React.FC = () => (
+  <>
+    <AbsoluteFill style={{backgroundImage: `url("${PAPER_TONE}")`, backgroundSize: "1080px 1920px",
+      mixBlendMode: "multiply", opacity: 0.3}} />
+    <AbsoluteFill style={{backgroundImage: `url("${PAPER_FIBRES}")`, backgroundSize: "300px 300px",
+      mixBlendMode: "multiply", opacity: 0.45}} />
+  </>
+);
+
+/** Punched holes down the left edge: the page is torn from the channel's notebook. */
+const Holes: React.FC = () => (
+  <svg width={W} height={H} style={{position: "absolute", inset: 0}}>
+    <defs>
+      <radialGradient id="hole" cx="45%" cy="40%" r="60%">
+        <stop offset="0" stopColor="#c9bfa9" />
+        <stop offset="0.7" stopColor="#ddd3bf" />
+        <stop offset="1" stopColor="#efe8da" />
+      </radialGradient>
+    </defs>
+    {[300, 760, 1220, 1680].map((y) => (
+      <g key={y}>
+        <circle cx={44} cy={y + 2} r={19} fill="rgba(80,60,30,0.10)" />
+        <circle cx={44} cy={y} r={18} fill="url(#hole)" stroke="rgba(120,100,70,0.35)" strokeWidth={1.5} />
+      </g>
+    ))}
+  </svg>
+);
+
+/** 줄노트: blue rules every 68 px under a blank head band, a red double margin line. */
+const PaperRuled: React.FC<{theme: Theme}> = ({theme}) => {
+  const P = 68;
+  const a = theme.patternInk;
+  return (
+    <>
+      <svg width={W} height={H} style={{position: "absolute", inset: 0}}>
+        {Array.from({length: Math.floor((H - 150) / P)}, (_, k) => (
+          <rect key={k} x={0} y={150 + (k + 1) * P} width={W} height={2} fill={`rgba(64,110,180,${a})`} />
+        ))}
+        <rect x={112} y={0} width={2.5} height={H} fill="rgba(214,72,72,0.36)" />
+        <rect x={120} y={0} width={2} height={H} fill="rgba(214,72,72,0.22)" />
+      </svg>
+      <Holes />
+    </>
+  );
+};
+
+/** 모눈: a fine square grid, every fifth line a little stronger. */
+const PaperGraph: React.FC<{theme: Theme}> = ({theme}) => {
+  const P = 54;
+  const a = theme.patternInk;
+  const lines: React.ReactNode[] = [];
+  for (let k = 0; k * P <= W; k++) {
+    lines.push(<rect key={`v${k}`} x={k * P} y={0} width={k % 5 === 0 ? 2.4 : 1.4} height={H}
+      fill={`rgba(52,96,120,${k % 5 === 0 ? a : a * 0.6})`} />);
+  }
+  for (let k = 0; k * P <= H; k++) {
+    lines.push(<rect key={`h${k}`} x={0} y={k * P} width={W} height={k % 5 === 0 ? 2.4 : 1.4}
+      fill={`rgba(52,96,120,${k % 5 === 0 ? a : a * 0.6})`} />);
+  }
+  return <svg width={W} height={H} style={{position: "absolute", inset: 0}}>{lines}</svg>;
 };
 
 /* ---------------------------------------------------------------- dots: dot matrix with a passing light wave */
@@ -313,8 +387,10 @@ const GLOWS: Record<Pattern, [number, number, number, number]> = {
   diagonal: [-200, 260, -340, 60],
   ribbons: [-300, 700, -300, 260],
   topo: [-260, 160, -260, 120],
-  ruled: [-220, 300, -300, 160],
+  ruledDark: [-220, 300, -300, 160],
   matrix: [-280, 200, -260, 120],
+  ruled: [0, 0, 0, 0],
+  graph: [0, 0, 0, 0],
 };
 
 const PatternLayer: React.FC<{pattern: Pattern; frame: number; theme: Theme; color: string}> = ({
@@ -326,35 +402,57 @@ const PatternLayer: React.FC<{pattern: Pattern; frame: number; theme: Theme; col
     case "diagonal": return <Diagonal frame={frame} theme={theme} color={color} />;
     case "ribbons": return <Ribbons frame={frame} theme={theme} />;
     case "topo": return <Topo frame={frame} theme={theme} />;
-    case "ruled": return <Ruled frame={frame} theme={theme} />;
+    case "ruledDark": return <Ruled frame={frame} theme={theme} />;
     case "matrix": return <Matrix frame={frame} theme={theme} color={color} />;
+    case "ruled": return <PaperRuled theme={theme} />;
+    case "graph": return <PaperGraph theme={theme} />;
     default: return <Grid frame={frame} />;
   }
 };
 
-/** Theme background: base colours, the theme's pattern, two soft glows following the scene accent, a vignette. */
+// The pattern fades to a third behind the caption band (y ~1250-1560) so it never runs through the words.
+const CAPTION_CALM = "linear-gradient(180deg, #000 0px, #000 1170px, rgba(0,0,0,0.32) 1240px, "
+  + "rgba(0,0,0,0.32) 1570px, #000 1650px)";
+
+/**
+ * Stage background: base colours and the theme's pattern; on dark (경보) stages two soft glows follow the scene
+ * tone (the category colour for "blue" scenes) under a dark vignette, on paper stages the page grain and a warm
+ * vignette.
+ */
 export const Backdrop: React.FC<{props: ShortProps}> = ({props}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const theme = useTheme();
+  const category = useCategory();
   const spans = sceneSpans(props, fps);
   let idx = spans.findIndex((s) => frame < s.from + s.frames);
   if (idx < 0) idx = spans.length - 1;
-  const A = theme.accents;
+  const glowOf = (a: Accent) => (a === "blue" ? toneOf(a, category).fill : theme.accents[a]);
   const prev = props.scenes[Math.max(0, idx - 1)]?.accent ?? "blue";
   const cur = props.scenes[idx]?.accent ?? "blue";
-  const color = idx >= 0 ? interpolateColors(fade(frame, spans[idx].from, 16), [0, 1], [A[prev], A[cur]]) : A.blue;
+  const color = idx >= 0 ? interpolateColors(fade(frame, spans[idx].from, 16), [0, 1], [glowOf(prev), glowOf(cur)])
+    : glowOf("blue");
   const gx = Math.sin(frame / 55) * 80;
   const gy = Math.cos(frame / 70) * 60;
   const [l1, t1, r2, b2] = GLOWS[theme.pattern];
+  const paper = theme.family === "paper";
   return (
     <AbsoluteFill style={{background: theme.base}}>
-      <PatternLayer pattern={theme.pattern} frame={frame} theme={theme} color={color} />
-      <div style={{position: "absolute", width: 900, height: 900, left: l1 + gx, top: t1 + gy, borderRadius: "50%",
-        background: color, opacity: theme.glow, filter: "blur(160px)"}} />
-      <div style={{position: "absolute", width: 800, height: 800, right: r2 - gx, bottom: b2 - gy, borderRadius: "50%",
-        background: color, opacity: theme.glow * 0.64, filter: "blur(170px)"}} />
-      <AbsoluteFill style={{background: "radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.55) 100%)"}} />
+      {paper ? <PaperGrain /> : null}
+      <AbsoluteFill style={{maskImage: CAPTION_CALM, WebkitMaskImage: CAPTION_CALM}}>
+        <PatternLayer pattern={theme.pattern} frame={frame} theme={theme} color={color} />
+      </AbsoluteFill>
+      {theme.glow > 0 ? (
+        <>
+          <div style={{position: "absolute", width: 900, height: 900, left: l1 + gx, top: t1 + gy, borderRadius: "50%",
+            background: color, opacity: theme.glow, filter: "blur(160px)"}} />
+          <div style={{position: "absolute", width: 800, height: 800, right: r2 - gx, bottom: b2 - gy, borderRadius: "50%",
+            background: color, opacity: theme.glow * 0.64, filter: "blur(170px)"}} />
+        </>
+      ) : null}
+      <AbsoluteFill style={{background: paper
+        ? "radial-gradient(ellipse at center, transparent 55%, rgba(110,84,40,0.16) 100%)"
+        : "radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.55) 100%)"}} />
     </AbsoluteFill>
   );
 };

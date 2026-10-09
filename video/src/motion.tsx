@@ -3,7 +3,7 @@
 import React, {createContext, useContext} from "react";
 import {useCurrentFrame} from "remotion";
 import {Icon} from "./icons";
-import {chipRadius, useTheme} from "./themes";
+import {chipRadius, toneOf, useCategory, useTheme} from "./themes";
 import {Accent} from "./types";
 
 export type Transition = "continuity" | "classic";
@@ -62,6 +62,7 @@ export type AnchorSpec = {look: Look; size: number; glow?: number};
 
 export const Face: React.FC<AnchorSpec> = ({look, size, glow}) => {
   const t = useTheme();
+  const category = useCategory();
   if (look.kind === "avatar") {
     return (
       <div style={{width: size, height: size, borderRadius: "50%", background: `linear-gradient(160deg, ${t.avatar[0]}, ${t.avatar[1]})`,
@@ -71,12 +72,16 @@ export const Face: React.FC<AnchorSpec> = ({look, size, glow}) => {
       </div>
     );
   }
-  const c = t.accents[look.accent];
+  // a light "sticker" in the scene's tone: reads the same on the note card, dark stages and paper
+  const tone = toneOf(look.accent, category);
+  // `glow` (the old accent halo) is only kept for card badges on dark stages, softly
+  const halo = glow && t.glow > 0 ? `, 0 0 ${glow}px ${tone.fill}55` : "";
   return (
-    <div style={{width: size, height: size, borderRadius: chipRadius(t, size), background: `${c}22`, border: `3px solid ${c}99`,
-      boxSizing: "border-box", boxShadow: `0 0 ${glow ?? Math.round(size * 0.3)}px ${c}55`, display: "flex",
-      alignItems: "center", justifyContent: "center"}}>
-      <Icon name={look.icon} size={Math.round(size * 0.54)} color={c} />
+    <div style={{width: size, height: size, borderRadius: chipRadius(t, size), background: tone.tint,
+      border: `${Math.max(3, Math.round(size / 26))}px solid ${tone.fill}`, boxSizing: "border-box",
+      boxShadow: `0 ${Math.round(size / 18)}px ${Math.round(size / 7)}px rgba(20,24,35,0.18)${halo}`,
+      display: "flex", alignItems: "center", justifyContent: "center"}}>
+      <Icon name={look.icon} size={Math.round(size * 0.54)} color={tone.ink} />
     </div>
   );
 };

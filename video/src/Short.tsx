@@ -15,13 +15,18 @@ import {BADGE, CardScene} from "./CardScene";
 import {CHIP} from "./kit";
 import {AnchorSpec, MORPH, SceneContext, Transition} from "./motion";
 import {Backdrop} from "./Backdrop";
-import {ThemeContext, themeFor} from "./themes";
+import {BRAND, CATEGORIES, CategoryContext, categoryFor, ThemeContext, themeFor, useCategory, useTheme} from "./themes";
 import {Traveller} from "./Traveller";
 import {Captions} from "./Captions";
 import {AlertScene} from "./AlertScene";
 import {ChatScene} from "./ChatScene";
 import {ChecklistScene} from "./ChecklistScene";
-import {ALERT_LAND, chatBeats, checklistTicks, SMS_ARRIVE, STAT_COUNT, timelineBeats} from "./schedule";
+import {ALERT_LAND, chatBeats, checklistTicks, compareBeats, dotBeats, flowBeats, SMS_ARRIVE, STAT_COUNT, TOGGLE_CIRCLE,
+  timelineBeats, toggleTaps} from "./schedule";
+import {CompareScene} from "./CompareScene";
+import {DotsScene} from "./DotsScene";
+import {FlowScene} from "./FlowScene";
+import {ToggleScene} from "./ToggleScene";
 import {SmsScene} from "./SmsScene";
 import {StatScene} from "./StatScene";
 import {TimelineScene} from "./TimelineScene";
@@ -37,19 +42,29 @@ const sceneFrames = (props: ShortProps, fps: number) => {
   });
 };
 
+/**
+ * Brand line (fixed position on every stage): the topic category tag, the channel name and the "AI 음성" badge.
+ * Only the colours follow the stage (light text on dark stages, dark ink on paper).
+ */
 const TopBar: React.FC<{channel: string; voiceLabel?: string}> = ({channel, voiceLabel}) => {
   const frame = useCurrentFrame();
   const {durationInFrames} = useVideoConfig();
+  const t = useTheme();
+  const cat = CATEGORIES[useCategory()];
+  const paper = t.family === "paper";
+  const ink = `${t.stageInk}${Math.round(BRAND.inkAlpha * 255).toString(16)}`;
   return (
     <>
       <div style={{position: "absolute", top: 0, left: 0, height: 12, width: `${(frame / durationInFrames) * 100}%`,
-        background: ACCENTS.yellow, boxShadow: `0 0 18px ${ACCENTS.yellow}`}} />
-      <div style={{position: "absolute", top: 96, width: "100%", textAlign: "center", fontSize: 36, fontWeight: 700,
-        color: "rgba(214,224,240,0.75)", letterSpacing: 1}}>
+        background: paper ? t.progress : ACCENTS.yellow, boxShadow: paper ? "none" : `0 0 18px ${ACCENTS.yellow}`}} />
+      <div style={{position: "absolute", top: 96, width: "100%", display: "flex", justifyContent: "center",
+        alignItems: "center", fontSize: 36, fontWeight: 700, color: ink, letterSpacing: 1}}>
+        <span style={{marginRight: 18, padding: "5px 16px", borderRadius: 999, fontSize: 26, fontWeight: 800,
+          letterSpacing: 0, background: cat.tint, color: cat.ink}}>{cat.label}</span>
         {channel}
         {voiceLabel ? (
           <span style={{marginLeft: 18, padding: "4px 14px", borderRadius: 10, fontSize: 28, fontWeight: 700,
-            border: "2px solid rgba(214,224,240,0.45)", verticalAlign: "middle"}}>
+            border: `2px solid ${t.stageInk}73`}}>
             {voiceLabel}
           </span>
         ) : null}
@@ -57,7 +72,6 @@ const TopBar: React.FC<{channel: string; voiceLabel?: string}> = ({channel, voic
     </>
   );
 };
-
 /** Frames the first scene's visuals are advanced by (see the poster start in Short). */
 export const POSTER = 24;
 
@@ -68,8 +82,8 @@ const DisclaimerBadge: React.FC<{text: string}> = ({text}) => {
   return (
     <div style={{position: "absolute", top: 160, width: "100%", display: "flex", justifyContent: "center",
       opacity: s, transform: `translateY(${(1 - s) * -20}px)`}}>
-      <div style={{padding: "12px 30px", borderRadius: 999, background: "rgba(0,0,0,0.6)",
-        border: `3px solid ${ACCENTS.red}`, color: "#fff", fontSize: 34, fontWeight: 700}}>
+      <div style={{padding: "12px 30px", borderRadius: 999, background: BRAND.disclaimerBg,
+        border: `3px solid ${ACCENTS.red}`, color: BRAND.disclaimerText, fontSize: 34, fontWeight: 700}}>
         {text}
       </div>
     </div>
@@ -92,6 +106,10 @@ const SceneBody: React.FC<{scene: SceneProps}> = ({scene}) => {
     case "stat": return <StatScene scene={scene} />;
     case "timeline": return <TimelineScene scene={scene} />;
     case "checklist": return <ChecklistScene scene={scene} />;
+    case "compare": return <CompareScene scene={scene} />;
+    case "toggle": return <ToggleScene scene={scene} />;
+    case "flow": return <FlowScene scene={scene} />;
+    case "dots": return <DotsScene scene={scene} />;
     default: return <CardScene scene={scene} />;
   }
 };
@@ -135,6 +153,16 @@ const SceneSfx: React.FC<{scene: SceneProps; first: boolean; last: boolean; lead
       return <>{whoosh}{pops(timelineBeats(scene, fps))}</>;
     case "checklist":
       return <>{whoosh}{pops(checklistTicks(scene, fps))}</>;
+    case "compare":
+      return <>{whoosh}{pops(compareBeats(scene, fps))}</>;
+    case "toggle": {
+      const taps = toggleTaps(scene, fps);
+      return <>{whoosh}{pops([...taps, taps[taps.length - 1] + TOGGLE_CIRCLE])}</>;
+    }
+    case "flow":
+      return <>{whoosh}{pops(flowBeats(scene, fps))}</>;
+    case "dots":
+      return <>{whoosh}{pops(dotBeats(scene, fps), 0.24)}</>;
     default:
       return <>{whoosh}<Sfx name={last ? "ding" : "pop"} at={6 + words * 3} volume={0.3} /></>;
   }
@@ -172,7 +200,7 @@ const anchorSpec = (scene: SceneProps): AnchorSpec => {
     return {look: {kind: "avatar", letter: (scene.caller ?? "알 수 없음").slice(0, 1)}, size: CALL_AVATAR};
   }
   const look = {kind: "chip", icon: scene.icon, accent: scene.accent} as const;
-  return scene.layout === "card" ? {look, size: BADGE, glow: 60} : {look, size: CHIP, glow: 36};
+  return scene.layout === "card" ? {look, size: BADGE, glow: 60} : {look, size: CHIP};
 };
 
 export const Short: React.FC<ShortProps> = (props) => {
@@ -185,6 +213,7 @@ export const Short: React.FC<ShortProps> = (props) => {
   const tail = Math.round(((props.posterTailMs ?? 0) / 1000) * fps);
   return (
     <ThemeContext.Provider value={themeFor(props.theme)}>
+    <CategoryContext.Provider value={categoryFor(props.category)}>
     <AbsoluteFill style={{fontFamily: FONT, color: "#fff", wordBreak: "keep-all"}}>
       <Backdrop props={props} />
       <MusicBed props={props} />
@@ -256,6 +285,7 @@ export const Short: React.FC<ShortProps> = (props) => {
         <DisclaimerBadge text={props.disclaimer} />
       </Sequence>
     </AbsoluteFill>
+    </CategoryContext.Provider>
     </ThemeContext.Provider>
   );
 };

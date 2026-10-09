@@ -7,11 +7,21 @@ export type Word = {text: string; startMs: number; endMs: number};
 
 export type CaptionPage = {startMs: number; endMs: number; words: Word[]};
 
-export type Layout = "card" | "call" | "chat" | "sms" | "alert" | "stat" | "timeline" | "checklist";
+export type Layout = "card" | "call" | "chat" | "sms" | "alert" | "stat" | "timeline" | "checklist" | "compare"
+  | "toggle" | "flow" | "dots";
 
 export type ChatMessage = {from: "them" | "me"; text: string};
 
 export type TimelineStep = {when: string; text: string};
+
+/** compare: one side of the 진짜 vs 가짜 split. */
+export type CompareSide = {label: string; title: string; points: string[]};
+
+/** flow: one node of the decision chart; `yes`/`no` (at most one) branches to the side, the chain goes down. */
+export type FlowNode = {text: string; yes?: string; no?: string};
+
+/** dots: one stage of the dot simulation (a funnel: each count <= the previous one). */
+export type DotStage = {label: string; count: number};
 
 export type SceneProps = {
   layout: Layout;
@@ -37,6 +47,16 @@ export type SceneProps = {
   statLabel?: string; // stat: what the number means
   steps?: TimelineStep[]; // timeline: 2-4 dated steps
   items?: string[]; // checklist: 2-4 actions
+  mark?: string; // the headline's key phrase (a substring) that gets the highlighter / underline
+  real?: CompareSide; // compare: the genuine side (green check)
+  fake?: CompareSide; // compare: the fake side (red cross, its key line circled)
+  path?: string[]; // toggle: 1-3 menu steps tapped through, e.g. ["보안", "결제 인증"]
+  setting?: string; // toggle: the switch's row label
+  toggleTo?: "on" | "off"; // toggle: the state the switch is flipped to
+  nodes?: FlowNode[]; // flow: 3-5 nodes drawn top to bottom
+  total?: number; // dots: how many people the grid stands for
+  stages?: DotStage[]; // dots: 2-4 stages
+  unit?: string; // dots: counter unit, default "명"
 };
 
 export type Music = {
@@ -53,7 +73,8 @@ export type ShortProps = {
   music?: Music | null;
   transition?: "continuity" | "classic"; // scene changes: shared-element morph (default) or slide/fade
   posterTailMs?: number; // the last moment shows the opening poster again (loop + thumbnail frame)
-  theme?: string; // visual theme (themes.ts): background pattern, colours, headline/chip style; default classic
+  theme?: string; // stage theme (themes.ts / tokens.json): background family + pattern; default classic
+  category?: string; // topic category (tokens.json categories): the brand chip label and the one accent colour
   scenes: SceneProps[];
 };
 

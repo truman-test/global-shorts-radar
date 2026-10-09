@@ -1,20 +1,21 @@
 import React from "react";
 import {interpolate, useCurrentFrame} from "remotion";
-import {Anchor, Face, fade, fadeOut, IN_AT, IN_DUR, MORPH, spr, useMorphIn, useScene} from "./motion";
-import {muted, Theme, useTheme} from "./themes";
+import {handLine, markerStyle, seedOf} from "./hand";
+import {Anchor, Face, fade, fadeOut, IN_AT, IN_DUR, spr, useMorphIn, useScene} from "./motion";
+import {BRAND, muted, NOTE, Theme, Tone, TYPE, useTheme, useTone} from "./themes";
 import {SceneProps} from "./types";
 
 export const clamp = {extrapolateLeft: "clamp", extrapolateRight: "clamp"} as const;
 
-// Vertical zones (px) shared by the mockup layouts. The top bar/disclaimer sit above HEADER_TOP,
+// Vertical zones (px) shared by the layouts. The top bar/disclaimer sit above HEADER_TOP,
 // captions start at 1255, and the bottom 20% + right rail belong to YouTube's own buttons.
-export const HEADER_TOP = 248;
-export const HEADER_H = 262;
+export const HEADER_TOP = 246;
+export const HEADER_H = 256;
 export const BODY_TOP = 530;
 export const BODY_BOTTOM = 1200;
 
-export const TEXT = "#F3F6FB";
-// Surface colours (panel, bubbles, muted text, avatar) come from the theme (themes.ts).
+/** Light text inside phone panels (all panels are dark on every stage). */
+export const TEXT = BRAND.panelText;
 
 export const CHIP = 98; // header icon chip (outer size), the shared element of the mockup layouts
 
@@ -45,102 +46,197 @@ export const SceneShell: React.FC<{children: React.ReactNode; style?: ShellStyle
   <div style={{position: "absolute", inset: 0, ...useShell(style)}}>{children}</div>
 );
 
+/* ------------------------------------------------------------------ the note card (fixed brand element) */
+
+// Faint paper fibres inside the card (multiplied, so it only ever darkens the white a touch).
+const CARD_GRAIN = "data:image/svg+xml;utf8," + encodeURIComponent(
+  "<svg xmlns='http://www.w3.org/2000/svg' width='220' height='220'>"
+  + "<filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' seed='11' stitchTiles='stitch'/>"
+  + "<feColorMatrix values='0 0 0 0 0.45  0 0 0 0 0.40  0 0 0 0 0.32  0 0 0 -1.1 0.62'/></filter>"
+  + "<rect width='220' height='220' filter='url(#n)'/></svg>");
+
 /**
- * Corner brackets (a viewfinder frame) around the parent box, used by the "brackets" headline treatment to
- * frame the icon chip/badge (a fixed-size box, so the frame always hugs it). `p` 0..1 draws them in from
- * slightly outside.
+ * The white note card every key text sits on, on every stage: same radius, same soft shadow, the folded top-right
+ * corner and faint paper grain. Absolutely positioned by `box`; children are laid out inside the padding.
  */
-export const Brackets: React.FC<{p: number; color: string; inset?: [number, number]; size?: number; weight?: number}> = ({
-  p, color, inset = [24, 16], size = 38, weight = 5,
-}) => {
-  const out = (1 - Math.min(1, p)) * 18;
-  const [ix, iy] = [inset[0] + out, inset[1] + out];
-  const b = `${weight}px solid ${color}`;
-  const corner = (pos: React.CSSProperties, sides: React.CSSProperties): React.ReactNode => (
-    <div style={{position: "absolute", width: size, height: size, ...pos, ...sides}} />
-  );
-  return (
-    <div style={{position: "absolute", inset: 0, opacity: Math.min(1, p), pointerEvents: "none"}}>
-      {corner({left: -ix, top: -iy}, {borderLeft: b, borderTop: b, borderTopLeftRadius: 8})}
-      {corner({right: -ix, top: -iy}, {borderRight: b, borderTop: b, borderTopRightRadius: 8})}
-      {corner({left: -ix, bottom: -iy}, {borderLeft: b, borderBottom: b, borderBottomLeftRadius: 8})}
-      {corner({right: -ix, bottom: -iy}, {borderRight: b, borderBottom: b, borderBottomRightRadius: 8})}
+export const NoteCard: React.FC<{box: React.CSSProperties; fold?: number; pad?: number | string;
+  children?: React.ReactNode; inner?: React.CSSProperties}> = ({box, fold = 58, pad = 0, children, inner}) => (
+  <div style={{position: "absolute", filter: "drop-shadow(0 16px 26px rgba(10,14,25,0.22)) drop-shadow(0 2px 3px rgba(10,14,25,0.12))",
+    ...box}}>
+    <div style={{position: "relative", width: "100%", height: "100%", boxSizing: "border-box", padding: pad,
+      background: NOTE.paper, color: NOTE.ink, borderRadius: NOTE.radius,
+      clipPath: `polygon(0 0, calc(100% - ${fold}px) 0, 100% ${fold}px, 100% 100%, 0 100%)`, ...inner}}>
+      <div style={{position: "absolute", inset: 0, borderRadius: NOTE.radius, backgroundImage: `url("${CARD_GRAIN}")`,
+        backgroundSize: "220px 220px", mixBlendMode: "multiply", opacity: 0.5, pointerEvents: "none"}} />
+      {/* the folded corner: the flap lies over the card, a shade darker, with a soft crease shadow */}
+      <div style={{position: "absolute", top: 0, right: 0, width: fold, height: fold, borderBottomLeftRadius: 10,
+        background: `linear-gradient(45deg, ${NOTE.fold} 50%, transparent 50%)`,
+        boxShadow: "-3px 3px 6px rgba(10,14,25,0.10)"}} />
+      <div style={{position: "relative", width: "100%", height: "100%"}}>{children}</div>
     </div>
+  </div>
+);
+
+/* ------------------------------------------------------------------ headlines with a marked key phrase */
+
+/**
+ * Indices of the headline words to mark: the scene's own `mark` (a substring of the headline) if given;
+ * otherwise the part after a comma, else the words with a number, else the last word (last two of 4+ words).
+ */
+export const markedWords = (headline: string, mark?: string): Set<number> => {
+  const words = headline.split(" ");
+  const out = new Set<number>();
+  if (mark && headline.includes(mark)) {
+    const start = headline.indexOf(mark);
+    let pos = 0;
+    words.forEach((w, i) => {
+      const a = pos;
+      const b = pos + w.length;
+      if (b > start && a < start + mark.length) out.add(i);
+      pos = b + 1;
+    });
+    return out;
+  }
+  const comma = words.findIndex((w) => w.endsWith(","));
+  if (comma >= 0 && comma < words.length - 1) {
+    for (let i = comma + 1; i < words.length; i++) out.add(i);
+    return out;
+  }
+  // numbers carry the point ("670만 원"): the words with a digit, plus a short unit word right after one
+  words.forEach((w, i) => {
+    if (/\d/.test(w)) {
+      out.add(i);
+      if (i + 1 < words.length && words[i + 1].length <= 2 && !/\d/.test(words[i + 1])) out.add(i + 1);
+    }
+  });
+  if (out.size) return out;
+  out.add(words.length - 1);
+  if (words.length >= 4) out.add(words.length - 2);
+  return out;
+};
+
+const Underline: React.FC<{p: number; color: string; seed: number}> = ({p, color, seed}) => {
+  const s = handLine(6, 12, 994, 8, seed, 6);
+  return (
+    <svg viewBox="0 0 1000 24" preserveAspectRatio="none" style={{position: "absolute", left: -6, bottom: "-0.14em",
+      width: "calc(100% + 12px)", height: "0.22em", overflow: "visible", pointerEvents: "none"}}>
+      <path d={s.d} pathLength={1} strokeDasharray="1 2" strokeDashoffset={1 - Math.min(1, Math.max(0, p))}
+        fill="none" stroke={color} strokeWidth={9} strokeLinecap="round" opacity={p > 0 ? 1 : 0} />
+    </svg>
   );
 };
 
-/**
- * Style of one headline word in the theme's treatment. "marker": a highlighter band sweeps in under the lower
- * part of the word once it has landed (the band sits behind the glyphs, so the text stays white and sharp).
- */
-export const markStyle = (t: Theme, accent: string, p: number): React.CSSProperties => (t.headline !== "marker" ? {} : {
-  backgroundImage: `linear-gradient(${accent}80, ${accent}80)`, backgroundRepeat: "no-repeat",
-  backgroundPosition: "0 94%", backgroundSize: `${Math.min(1, p) * 100}% 22%`, padding: "0 4px", margin: "0 -4px",
-});
+/** Frame (scene-local) by which a headline started at `start` with `step` has its key phrase fully marked. */
+export const headlineDone = (text: string, start: number, step: number) => start + text.split(" ").length * step + 14;
 
-/** Headline with an icon chip, words popping in one by one, and the sub-line under it. */
+/**
+ * Headline words popping in one by one on the note card (dark ink); the key phrase gets the stage's mark
+ * (highlighter band, or a hand-drawn underline under each of its words) in the scene's tone once its words have
+ * landed. The marked phrase stays inline, so balanced line breaks can still split it.
+ */
+export const Headline: React.FC<{text: string; mark?: string; size: number; tone: Tone; theme: Theme;
+  start: number; step: number; rise?: number; align?: "center" | "left"}> = ({
+  text, mark, size, tone, theme, start, step, rise = 28, align = "center",
+}) => {
+  const frame = useCurrentFrame();
+  const words = text.split(" ");
+  const marked = markedWords(text, mark);
+  const keys = [...marked];
+  const markAt = start + (keys.length ? Math.max(...keys) : 0) * step + 5;
+  const p = spr(frame, markAt, 10, 0);
+  const seed = seedOf(text);
+  const underline = theme.headline === "underline";
+  const word = (w: string, i: number) => {
+    const s = spr(frame, start + i * step, 12, 0.03);
+    return (
+      <span key={i} style={{position: "relative", display: "inline-block", opacity: Math.min(1, s),
+        transform: `translateY(${(1 - s) * rise}px)`}}>
+        {w}
+        {underline && marked.has(i) ? <Underline p={p} color={tone.fill} seed={seed + i} /> : null}
+      </span>
+    );
+  };
+  // consecutive marked words share one highlighter band (an inline span, cloned across line breaks)
+  const parts: React.ReactNode[] = [];
+  let i = 0;
+  while (i < words.length) {
+    if (!marked.has(i) || underline) {
+      parts.push(word(words[i], i));
+      i++;
+      continue;
+    }
+    const group: React.ReactNode[] = [];
+    const first = i;
+    while (i < words.length && marked.has(i)) {
+      if (group.length) group.push(" ");
+      group.push(word(words[i], i));
+      i++;
+    }
+    parts.push(<span key={`m${first}`} style={markerStyle(tone.marker, p)}>{group}</span>);
+  }
+  return (
+    <div style={{fontSize: size, fontWeight: TYPE.weights.display, lineHeight: 1.22, letterSpacing: -size * 0.018,
+      wordSpacing: size * 0.06, color: NOTE.ink, textAlign: align,
+      textWrap: "balance" as React.CSSProperties["textWrap"]}}>
+      {parts.flatMap((part, k) => (k ? [" ", part] : [part]))}
+    </div>
+  );
+};
+/** Header font size by headline length (stays within two lines on the header card). */
+export const headerSize = (headline: string) => {
+  const n = headline.replace(/\s/g, "").length;
+  const [a, b, c, d] = TYPE.header;
+  return n <= 12 ? a : n <= 16 ? b : n <= 21 ? c : d;
+};
+
+/** Header note card: icon chip + headline (key phrase marked) + the sub-line under it. */
 export const SceneHeader: React.FC<{scene: SceneProps; top?: number; height?: number}> = ({
   scene, top = HEADER_TOP, height = HEADER_H,
 }) => {
   const frame = useCurrentFrame();
   const t = useTheme();
-  const accent = t.accents[scene.accent];
+  const tone = useTone(scene.accent);
   const morph = useMorphIn();
   const words = scene.headline.split(" ");
-  // keep long headlines to two lines so they never reach the disclaimer badge or the mockup
-  const n = scene.headline.replace(/\s/g, "").length;
-  const size = n <= 13 ? 70 : n <= 18 ? 64 : n <= 24 ? 58 : 50;
+  const size = headerSize(scene.headline);
   // the chip arrives with the traveller when the scene morphs in; otherwise it pops in itself
   const iconIn = morph ? 1 : spr(frame, 1, 12, 0.04);
   // when the chip flies in, the words wait until it has nearly landed so they never appear under it
   const w0 = morph ? 8 : 3;
   const subIn = interpolate(frame, [w0 + 5 + words.length * 2, w0 + 15 + words.length * 2], [0, 1], clamp);
-  // brackets close in with the chip (after the traveller has landed when the scene morphs in)
-  const frameIn = morph ? interpolate(frame, [MORPH - 2, MORPH + 7], [0, 1], clamp) : iconIn;
   return (
-    <div style={{position: "absolute", top, height, left: 70, right: 70, display: "flex", flexDirection: "column",
-      alignItems: "center", justifyContent: "center", gap: 18}}>
-      <div style={{display: "flex", alignItems: "center", gap: 26, maxWidth: 940}}>
-        <div style={{position: "relative", flex: "0 0 auto", opacity: Math.min(1, iconIn),
-          transform: `scale(${0.4 + 0.6 * iconIn})`}}>
-          {t.headline === "brackets" ? (
-            <Brackets p={frameIn} color={`${accent}c0`} inset={[13, 13]} size={26} weight={4} />
-          ) : null}
-          <Anchor size={CHIP}>
-            <Face look={{kind: "chip", icon: scene.icon, accent: scene.accent}} size={CHIP} glow={36} />
-          </Anchor>
+    <NoteCard box={{top, height, left: 56, right: 56}} fold={46}>
+      <div style={{position: "absolute", inset: "0 44px 0 34px", display: "flex", flexDirection: "column",
+        alignItems: "center", justifyContent: "center", gap: 14}}>
+        <div style={{display: "flex", alignItems: "center", gap: 26, maxWidth: 860}}>
+          <div style={{position: "relative", flex: "0 0 auto", opacity: Math.min(1, iconIn),
+            transform: `scale(${0.4 + 0.6 * iconIn})`}}>
+            <Anchor size={CHIP}>
+              <Face look={{kind: "chip", icon: scene.icon, accent: scene.accent}} size={CHIP} />
+            </Anchor>
+          </div>
+          <Headline text={scene.headline} mark={scene.mark} size={size} tone={tone} theme={t} start={w0} step={2}
+            align="left" />
         </div>
-        <div style={{fontSize: size, fontWeight: 900, lineHeight: 1.16, letterSpacing: -1.5,
-          textWrap: "balance" as React.CSSProperties["textWrap"]}}>
-          {words.map((w, i) => {
-            const s = spr(frame, w0 + i * 2, 12);
-            return (
-              <span key={i} style={{display: "inline-block", marginRight: size * 0.24, opacity: Math.min(1, s),
-                transform: `translateY(${(1 - s) * 28}px)`, textShadow: "0 6px 26px rgba(0,0,0,0.6)"}}>
-                <span style={markStyle(t, accent, spr(frame, w0 + 5 + i * 2, 10, 0))}>{w}</span>
-              </span>
-            );
-          })}
-        </div>
+        {scene.sub ? (
+          <div style={{fontSize: 34, fontWeight: TYPE.weights.text, color: NOTE.muted, textAlign: "center",
+            opacity: subIn, transform: `translateY(${(1 - subIn) * 10}px)`, maxWidth: 860, lineHeight: 1.2}}>
+            {scene.sub}
+          </div>
+        ) : null}
       </div>
-      {scene.sub ? (
-        <div style={{fontSize: 38, fontWeight: 700, color: muted(t), textAlign: "center", opacity: subIn,
-          transform: `translateY(${(1 - subIn) * 10}px)`, maxWidth: 880}}>
-          {scene.sub}
-        </div>
-      ) : null}
-    </div>
+    </NoteCard>
   );
 };
 
-/** Rounded "screen" panel used by the chat and SMS mockups: invented header, no real app's look. */
+/** Rounded "screen" panel used by the chat, SMS and settings mockups: invented header, no real app's look. */
 export const PhonePanel: React.FC<{header: React.ReactNode; children: React.ReactNode; top?: number;
   bottom?: number}> = ({header, children, top = BODY_TOP, bottom = BODY_BOTTOM}) => {
   const t = useTheme();
   return (
     <div style={{position: "absolute", top, left: 110, width: 860, height: bottom - top, borderRadius: 48,
-      background: t.panel, border: "2px solid rgba(255,255,255,0.12)", boxShadow: "0 30px 80px rgba(0,0,0,0.55)",
-      overflow: "hidden", display: "flex", flexDirection: "column"}}>
+      background: t.panel, border: "2px solid rgba(255,255,255,0.12)", boxShadow: "0 30px 80px rgba(0,0,0,0.45)",
+      overflow: "hidden", display: "flex", flexDirection: "column", color: TEXT}}>
       <div style={{flex: "0 0 auto", height: 112, display: "flex", alignItems: "center", gap: 22, padding: "0 30px",
         borderBottom: "2px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.03)"}}>
         <div style={{fontSize: 56, fontWeight: 700, color: muted(t), marginTop: -8}}>‹</div>
@@ -159,7 +255,7 @@ export const Avatar: React.FC<{label: string; size?: number; color?: string; chi
     <div style={{flex: "0 0 auto", width: size, height: size, borderRadius: "50%",
       background: color ?? `linear-gradient(160deg, ${t.avatar[0]}, ${t.avatar[1]})`,
       border: "2px solid rgba(255,255,255,0.22)", display: "flex", alignItems: "center", justifyContent: "center",
-      fontSize: size * 0.46, fontWeight: 900}}>
+      fontSize: size * 0.46, fontWeight: 900, color: TEXT}}>
       {children ?? label.slice(0, 1)}
     </div>
   );
@@ -167,3 +263,14 @@ export const Avatar: React.FC<{label: string; size?: number; color?: string; chi
 
 /** Spring progress that starts at `at` (0 before it): the shared spring with a scene-local frame. */
 export const useAppear = (at: number, dur = 14, overshoot = 0.02) => spr(useCurrentFrame(), at, dur, overshoot);
+
+/** Solid label pill (white text on the tone's dark solid: >= 7:1, see tests/test_design_tokens.py). */
+export const TonePill: React.FC<{tone: Tone; children: React.ReactNode; size?: number; style?: React.CSSProperties}> = ({
+  tone, children, size = 34, style,
+}) => (
+  <div style={{display: "inline-flex", alignItems: "center", gap: 10, padding: `${size * 0.22}px ${size * 0.62}px`,
+    borderRadius: 999, background: tone.solid, color: tone.onSolid, fontSize: size, fontWeight: 900, lineHeight: 1.1,
+    whiteSpace: "nowrap", ...style}}>
+    {children}
+  </div>
+);

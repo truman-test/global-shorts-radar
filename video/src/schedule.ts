@@ -38,3 +38,20 @@ export const checklistTicks = (scene: SceneProps, fps: number) => beats(scene, (
 
 /** Timeline: one step per beat; the rail draws down to each new step. */
 export const timelineBeats = (scene: SceneProps, fps: number) => beats(scene, (scene.steps ?? []).length, fps, 6);
+
+/** Compare: the two cards land at COMPARE_IN; then the check on 진짜, the cross on 가짜, the circle on its key line. */
+export const COMPARE_IN = [4, 10] as const;
+export const compareBeats = (scene: SceneProps, fps: number) => beats(scene, 3, fps, 22);
+
+/**
+ * Toggle: one tap per menu step, then the tap on the switch (n + 1 taps); the row zooms and gets circled
+ * TOGGLE_CIRCLE frames after the switch flips.
+ */
+export const toggleTaps = (scene: SceneProps, fps: number) => beats(scene, (scene.path ?? []).length + 1, fps, 16);
+export const TOGGLE_CIRCLE = 10;
+
+/** Flow: one node per beat, drawn top to bottom. */
+export const flowBeats = (scene: SceneProps, fps: number) => beats(scene, (scene.nodes ?? []).length, fps, 6);
+
+/** Dots: one stage per beat (the first one shortly after the grid has appeared). */
+export const dotBeats = (scene: SceneProps, fps: number) => beats(scene, (scene.stages ?? []).length, fps, 16);

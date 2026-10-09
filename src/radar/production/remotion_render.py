@@ -17,7 +17,7 @@ from radar.production.assemble import (TRIM, ProductionError, ProductionResult, 
                                        write_meta)
 from radar.production.script import Script, caption_chunks
 from radar.production.textnorm import speakable_length, split_sentences
-from radar.production.themes import resolve_theme
+from radar.production.themes import record_style, resolve_style
 from radar.production.tts import TTSError
 
 VIDEO_DIR = PROJECT_ROOT / "video"
@@ -183,10 +183,13 @@ VOICE_LABEL = "AI 음성"   # every narration is synthetic; OpenRAIL-M (Superton
 
 def build_props(script: Script, scenes: list[dict], channel_name: str, sfx: bool = True,
                 music: dict | None = None, voice_label: str | None = VOICE_LABEL,
-                transition: str = "continuity", theme: str = "classic") -> dict:
-    return {"channel": channel_name, "voiceLabel": voice_label, "disclaimer": script.disclaimer, "sfx": sfx,
-            "music": music, "transition": transition, "posterTailMs": POSTER_TAIL_MS, "theme": theme,
-            "scenes": scenes}
+                transition: str = "continuity", theme: str = "classic", category: str | None = None) -> dict:
+    props = {"channel": channel_name, "voiceLabel": voice_label, "disclaimer": script.disclaimer, "sfx": sfx,
+             "music": music, "transition": transition, "posterTailMs": POSTER_TAIL_MS, "theme": theme,
+             "scenes": scenes}
+    if category:
+        props["category"] = category
+    return props
 
 
 def layout_props(scene) -> dict:
@@ -207,13 +210,22 @@ def layout_props(scene) -> dict:
         return {"steps": [{"when": s["when"], "text": s["text"]} for s in scene.steps]}
     if scene.layout == "checklist":
         return {"items": list(scene.items)}
+    if scene.layout == "compare":
+        return {"real": dict(scene.real), "fake": dict(scene.fake)}
+    if scene.layout == "toggle":
+        return {"path": list(scene.path), "setting": scene.setting, "toggleTo": scene.toggle_to}
+    if scene.layout == "flow":
+        return {"nodes": [dict(n) for n in scene.nodes]}
+    if scene.layout == "dots":
+        return {"total": scene.total, "stages": [dict(s) for s in scene.stages], "unit": scene.unit}
     return {}
 
 
 def scene_props(scene, audio: str, lead: float, speech: float, length: float, pages: list[dict]) -> dict:
     return {"layout": scene.layout, "audio": audio, "leadInMs": round(lead * 1000), "speechMs": round(speech * 1000),
             "durationMs": round(length * 1000), "pages": pages, "headline": scene.headline, "sub": scene.sub,
-            "icon": scene.icon, "accent": scene.accent, **layout_props(scene)}
+            "icon": scene.icon, "accent": scene.accent, **({"mark": scene.mark} if scene.mark else {}),
+            **layout_props(scene)}
 
 
 def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name: str, sfx: bool = True,
@@ -248,8 +260,11 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
         total += round(length * 1000) / 1000
     music, music_item = music_props(script)
     props_path = out_dir / "props.json"
-    theme = resolve_theme(script)   # own field, else topic, never the same as the previous scheduled day
-    props = build_props(script, scenes, channel_name, sfx, music, transition=transition, theme=theme)
+    # own fields, else topic + the stage-family rules over the schedule (see themes.py)
+    style = resolve_style(script)
+    theme = style.theme
+    props = build_props(script, scenes, channel_name, sfx, music, transition=transition, theme=theme,
+                        category=style.category)
     props_path.write_text(json.dumps(props, ensure_ascii=False, indent=1), encoding="utf-8")
 
     video = out_dir / "video.mp4"
@@ -278,8 +293,9 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
         warnings.append(f"voice backend '{tts.name}' is for local preview only; re-produce with --backend google to publish")
     subprocess.run([ffmpeg_exe(), "-hide_banner", "-loglevel", "error", "-y", "-ss", "1.2",
                     "-i", str(video), "-frames:v", "1", str(out_dir / "thumb.png")], capture_output=True)
+    record_style(script, style)   # content/style_log.json: stage, theme, layouts (next episodes' constraints)
     extra = {"engine": "remotion", "render_seconds": round(render_seconds, 1), "transition": transition,
-             "theme": theme}
+             "theme": theme, "stage": style.family, "category": style.category}
     if music_item:
         extra["music"] = {k: music_item[k] for k in ("id", "title", "artist", "license", "license_url",
                                                        "attribution_required", "sha256")}

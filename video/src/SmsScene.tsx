@@ -2,7 +2,7 @@ import React from "react";
 import {TriangleAlert, User} from "lucide-react";
 import {interpolate, useCurrentFrame} from "remotion";
 import {Avatar, clamp, PhonePanel, SceneHeader, SceneShell} from "./kit";
-import {muted, useTheme} from "./themes";
+import {BRAND, muted, TONES, useTheme} from "./themes";
 import {spr} from "./motion";
 import {SMS_ARRIVE, SMS_FLAG} from "./schedule";
 import {SceneProps} from "./types";
@@ -17,7 +17,8 @@ const LINK_RE = /((?:https?:\/\/)?●+[^\s]*)/;
 export const SmsScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   const frame = useCurrentFrame();
   const t = useTheme();
-  const red = t.accents.red;
+  const red = TONES.danger.fill; // marks
+  const pill = TONES.danger.solid; // white text on it: >= 7:1
   const text = scene.smsText ?? "";
   const [before, link, after] = (() => {
     const m = LINK_RE.exec(text);
@@ -52,7 +53,7 @@ export const SmsScene: React.FC<{scene: SceneProps}> = ({scene}) => {
               overflowWrap: "anywhere"}}>
               {before}
               {link ? (
-                <span style={{position: "relative", display: "inline-block", color: mark > 0.5 ? "#FFB3B5" : "#9CC3FF",
+                <span style={{position: "relative", display: "inline-block", color: mark > 0.5 ? BRAND.flaggedLink : "#9CC3FF",
                   textDecoration: "underline", textUnderlineOffset: 6, whiteSpace: "nowrap"}}>
                   <span style={{position: "absolute", left: -10, right: -10, top: -4, bottom: -4, borderRadius: 14,
                     border: `4px solid ${red}`, opacity: mark, background: `${red}${Math.round(20 + pulse * 30).toString(16)}`,
@@ -68,9 +69,10 @@ export const SmsScene: React.FC<{scene: SceneProps}> = ({scene}) => {
               alignItems: "flex-start", opacity: Math.min(1, flag), transform: `translateY(${(1 - flag) * -16}px) scale(${
                 (0.6 + 0.4 * flag) * (1 + pulse * 0.04)})`, transformOrigin: "20% 0%"}}>
               <div style={{marginLeft: 40, width: 0, height: 0, borderLeft: "16px solid transparent",
-                borderRight: "16px solid transparent", borderBottom: `18px solid ${red}`}} />
+                borderRight: "16px solid transparent", borderBottom: `18px solid ${pill}`}} />
               <div style={{display: "flex", alignItems: "center", gap: 14, padding: "14px 28px", borderRadius: 999,
-                background: red, fontSize: 38, fontWeight: 900, boxShadow: `0 0 ${18 + pulse * 22}px ${red}aa`}}>
+                background: pill, color: TONES.danger.onSolid, fontSize: 38, fontWeight: 900,
+                boxShadow: `0 0 ${18 + pulse * 22}px ${red}aa`}}>
                 <TriangleAlert size={40} color="#fff" strokeWidth={2.6} />
                 의심 링크
               </div>
