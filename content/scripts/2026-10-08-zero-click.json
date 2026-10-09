@@ -1,26 +1,63 @@
 {
  "id": "2026-10-08-zero-click",
  "source_video_id": "LhB_x5LQZss",
- "title": "링크 안 눌렀는데 해킹? '제로클릭' 스파이웨어의 진실 #Shorts",
+ "title": "스마트폰 해킹, 클릭 없이 감염되는 제로클릭 (업데이트 필수)",
  "description": "아무것도 누르지 않아도 폰이 감염되는 '제로클릭' 공격은 실제로 있었습니다. 하지만 표적은 따로 있습니다. 평범한 우리가 지켜야 할 기본은 하나입니다.",
- "tags": ["스마트폰 보안", "해킹", "스파이웨어", "제로클릭", "아이폰 차단 모드"],
+ "tags": [
+  "스마트폰 보안",
+  "해킹",
+  "스파이웨어",
+  "제로클릭",
+  "아이폰 차단 모드"
+ ],
  "disclaimer": "※ 실제 보고서를 바탕으로 한 설명입니다",
  "scenes": [
-  {"narration": "아무것도 누르지 않았는데, 폰이 해킹될 수 있을까요?",
-   "headline": "링크를 안 눌러도 해킹될까?", "sub": "", "icon": "phone", "accent": "red"},
-  {"narration": "실제로 있었습니다. 2025년 보고서에 따르면, 메신저를 노린 공격으로 기자와 활동가들의 폰이 감염됐습니다. 클릭조차 필요 없었죠.",
-   "headline": "실제로 있었다", "sub": "2025년 3월 시티즌랩 보고서", "icon": "warning", "accent": "red"},
-  {"narration": "이런 공격은 비싸고 정교해서, 표적은 주로 기자, 활동가, 정치인 같은 특정 인물입니다.",
-   "headline": "표적은 따로 있다", "sub": "기자 · 활동가 · 정치인", "icon": "lock", "accent": "blue"},
-  {"narration": "평범한 우리가 표적일 가능성은 낮습니다. 그래도 지켜야 할 기본이 있습니다.",
-   "headline": "그래도 이것만은 꼭", "sub": "", "icon": "shield", "accent": "yellow"},
-  {"narration": "폰과 앱은 항상 최신으로 업데이트하세요. 아이폰에서 위협 알림을 받았다면, 차단 모드를 켜세요.",
-   "headline": "업데이트는 미루지 않기", "sub": "위협 알림을 받으면 '차단 모드'", "icon": "update", "accent": "green"}
+  {
+   "narration": "안 눌러도 해킹된 폰, 실제로 있었습니다.",
+   "headline": "안 눌러도 해킹, 실제였다",
+   "sub": "",
+   "icon": "phone",
+   "accent": "red"
+  },
+  {
+   "narration": "2025년 보고서에 따르면, 메신저를 노린 공격으로 활동가들의 폰이 감염됐습니다. 클릭조차 필요 없었죠.",
+   "headline": "클릭 없이 감염됐다",
+   "sub": "2025년 3월 시티즌랩 보고서",
+   "icon": "warning",
+   "accent": "red"
+  },
+  {
+   "narration": "이런 공격은 비싸고 정교해서, 표적은 주로 기자, 활동가, 정치인 같은 특정 인물입니다.",
+   "headline": "표적은 따로 있다",
+   "sub": "기자 · 활동가 · 정치인",
+   "icon": "lock",
+   "accent": "blue"
+  },
+  {
+   "narration": "평범한 우리가 표적일 가능성은 낮습니다. 그래도 지켜야 할 기본이 있습니다.",
+   "headline": "그래도 이것만은 꼭",
+   "sub": "",
+   "icon": "shield",
+   "accent": "yellow"
+  },
+  {
+   "narration": "폰과 앱은 항상 최신으로 업데이트하세요. 아이폰에서 위협 알림을 받았다면, 차단 모드를 켜세요. 클릭 없이 노리는 공격도 있으니까요.",
+   "headline": "업데이트는 미루지 않기",
+   "sub": "위협 알림을 받으면 '차단 모드'",
+   "icon": "update",
+   "accent": "green"
+  }
  ],
  "sources": [
-  {"title": "Citizen Lab, A first look at Paragon's proliferating spyware operations (2025-03-19)", "url": "https://citizenlab.ca/2025/03/a-first-look-at-paragons-proliferating-spyware-operations/"},
-  {"title": "Apple 지원, 위협 알림과 고도화된 스파이웨어 공격", "url": "https://support.apple.com/en-us/102174"}
+  {
+   "title": "Citizen Lab, A first look at Paragon's proliferating spyware operations (2025-03-19)",
+   "url": "https://citizenlab.ca/2025/03/a-first-look-at-paragons-proliferating-spyware-operations/"
+  },
+  {
+   "title": "Apple 지원, 위협 알림과 고도화된 스파이웨어 공격",
+   "url": "https://support.apple.com/en-us/102174"
+  }
  ],
  "music": "tech",
- "author": "llm:claude-opus-5-5 (orchestrator; source video not watched)"
+ "author": "llm:claude-opus-5-5 (orchestrator; source video not watched); hook/length revision per 쇼츠 훅과 썸네일 최적화 report"
 }

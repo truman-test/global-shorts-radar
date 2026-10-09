@@ -21,7 +21,10 @@ OUT_DIR = ROOT / "media" / "upload"
 WEEKDAYS = "월화수목금토일"
 
 COMMON = """모든 영상 공통 선택값
-▶ 썸네일: 아래 썸네일 파일 업로드 (안 되면 자동 장면 중 첫 화면과 비슷한 것)
+▶ 썸네일 (올린 뒤 휴대폰에서 30초):
+   유튜브 앱 → 내 영상 → 이 쇼츠 ⋮ → 수정 → 썸네일 → 맨 끝 장면 선택
+   (영상 마지막 0.5초가 첫 화면과 같은 포스터입니다. 앱의 '텍스트 추가'는 쓰지 마세요)
+   쇼츠 썸네일 파일 업로드는 파트너 프로그램 가입 채널만 데스크톱에서 됩니다. 그때는 아래 썸네일 파일을 쓰면 됩니다
 ▶ 재생목록: 비워 두기
 ▶ 시청자층: 아니요, 아동용이 아닙니다
 ▶ 연령 제한: 없음
@@ -60,7 +63,7 @@ def main(argv: list[str] | None = None) -> int:
         if (folder / "thumb.png").is_file():
             Image.open(folder / "thumb.png").convert("RGB").save(thumb, quality=90)
         lines += ["-" * 60, f"[{e['date']} ({weekday(e['date'])})]  {meta['duration_seconds']}초", "-" * 60,
-                  "▶ 영상 파일", str(video), "", "▶ 썸네일", str(thumb), "", "▶ 제목", meta["title"], "",
+                  "▶ 영상 파일", str(video), "", "▶ 썸네일 파일 (파트너 가입 후 업로드용)", str(thumb), "", "▶ 제목", meta["title"], "",
                   "▶ 설명", meta["description"].rstrip(), "", "▶ 태그 (더보기 → 태그 칸)", ", ".join(meta["tags"]), ""]
     if not upcoming:
         lines.append("올릴 영상이 아직 없습니다. 오케스트레이터가 준비 중입니다.")
