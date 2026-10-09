@@ -33,13 +33,13 @@
   {
    "date": "2026-10-14",
    "script": "2026-10-09-kid-tap-payment",
-   "status": "planned",
+   "status": "ready",
    "source_video_id": "hpMCY56yDWA"
   },
   {
    "date": "2026-10-15",
    "script": "2026-10-09-deepfake-invest-ad",
-   "status": "planned",
+   "status": "ready",
    "source_video_id": "iU2Gp3kkUAo"
   },
   {
