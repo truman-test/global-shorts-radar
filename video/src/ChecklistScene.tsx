@@ -1,15 +1,51 @@
 import React from "react";
-import {interpolateColors, useCurrentFrame, useVideoConfig} from "remotion";
+import {interpolate, interpolateColors, useCurrentFrame, useVideoConfig} from "remotion";
 import {handCheck, drawn, seedOf} from "./hand";
-import {BODY_BOTTOM, BODY_TOP, NoteCard, SceneHeader, SceneShell} from "./kit";
-import {spr} from "./motion";
+import {BODY_BOTTOM, BODY_TOP, clamp, NoteCard, SceneHeader, SceneShell} from "./kit";
+import {spr, useScene} from "./motion";
+import {rng} from "./hand";
 import {checklistTicks} from "./schedule";
-import {NOTE, useTone} from "./themes";
+import {CATEGORIES, NOTE, TONES, useCategory, useTheme, useTone} from "./themes";
 import {SceneProps} from "./types";
 
 const ROW_H = 132;
 const PAD_Y = 30;
 const BOX = 72;
+
+/**
+ * Two short bursts of paper flecks from the card's side edges at frame `at` (drawn behind the card, so they never
+ * cover text): seeded, gravity, gone within ~1.3 s and kept above the captions.
+ */
+const Confetti: React.FC<{at: number; y: number; colors: string[]}> = ({at, y, colors}) => {
+  const frame = useCurrentFrame();
+  const t = frame - at;
+  if (t < 0 || t > 40) return null;
+  const r = rng(4242);
+  return (
+    <svg width={1080} height={1920} style={{position: "absolute", inset: 0, pointerEvents: "none"}}>
+      {Array.from({length: 24}, (_, k) => {
+        const side = k % 2 ? 1 : -1;
+        const x = side > 0 ? 975 : 105;
+        const ang = -Math.PI / 2 + side * (0.35 + r() * 0.9);
+        const v = 15 + r() * 15;
+        const spin = (r() - 0.5) * 30;
+        const px = x + Math.cos(ang) * (34 + v * t * 0.9);
+        const py = y + Math.sin(ang) * (34 + v * t * 0.9) + 0.55 * t * t;
+        const c = colors[k % colors.length];
+        const op = Math.min(1, (40 - t) / 10) * (py < 1230 ? 1 : 0);
+        return <rect key={k} x={px - 7} y={py - 4} width={14} height={8} rx={2} fill={c} opacity={op}
+          transform={`rotate(${spin * t} ${px} ${py})`} />;
+      })}
+    </svg>
+  );
+};
+
+/** Screen y of the centre of checklist row k (the mascot walks the margin beside it). */
+export const checklistRowY = (scene: SceneProps, k: number) => {
+  const height = (scene.items ?? []).length * ROW_H + PAD_Y * 2;
+  const top = BODY_TOP + Math.max(0, (BODY_BOTTOM - BODY_TOP - height) / 2) - 10;
+  return top + PAD_Y + k * ROW_H + ROW_H / 2;
+};
 
 /**
  * The closing checklist note (a fixed signature of every episode): rows slide in together, then each item is
@@ -20,6 +56,9 @@ export const ChecklistScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const tone = useTone(scene.accent);
+  const t = useTheme();
+  const s = useScene();
+  const cat = useCategory();
   const items = scene.items ?? [];
   const ticks = checklistTicks(scene, fps);
   const height = items.length * ROW_H + PAD_Y * 2;
@@ -31,9 +70,19 @@ export const ChecklistScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   const hlBottom = PAD_Y + ROW_H - 10 + ticks.slice(1).reduce((a, _, j) => a + ROW_H * lead(j + 1), 0);
   const hlWidth = items.length ? 22 + BOX + (860 - 40 - 22 - BOX) * lead(0) : 0;
 
+  // paper stage, closing scene: the page warms up as the list fills, a few confetti flecks on the final tick
+  const finale = t.family === "paper" && s.last && items.length > 0;
+  const lastTick = ticks[items.length - 1] ?? 0;
+  const warm = finale ? interpolate(frame, [lastTick - 30, lastTick + 12], [0, 1], clamp) : 0;
   return (
     <SceneShell>
+      {warm > 0 ? (
+        <div style={{position: "absolute", inset: 0, opacity: warm, mixBlendMode: "multiply",
+          background: "radial-gradient(ellipse 90% 70% at 50% 45%, rgba(255,214,150,0.30), rgba(255,170,110,0.22))"}} />
+      ) : null}
       <SceneHeader scene={scene} />
+      {finale ? <Confetti at={lastTick + 2} y={top + PAD_Y + (items.length - 1) * ROW_H + ROW_H / 2}
+        colors={[tone.fill, TONES.caution.fill, CATEGORIES[cat].fill, "#FF8FA3"]} /> : null}
       <NoteCard box={{top, left: 110, width: 860, height}} fold={50}>
         {items.length ? (
           <div style={{position: "absolute", left: 20, top: hlTop, width: hlWidth, height: hlBottom - hlTop,

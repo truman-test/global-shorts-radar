@@ -225,6 +225,7 @@ def scene_props(scene, audio: str, lead: float, speech: float, length: float, pa
     return {"layout": scene.layout, "audio": audio, "leadInMs": round(lead * 1000), "speechMs": round(speech * 1000),
             "durationMs": round(length * 1000), "pages": pages, "headline": scene.headline, "sub": scene.sub,
             "icon": scene.icon, "accent": scene.accent, **({"mark": scene.mark} if scene.mark else {}),
+            **({"mascot": scene.mascot} if isinstance(scene.mascot, bool) else {}),
             **layout_props(scene)}
 
 

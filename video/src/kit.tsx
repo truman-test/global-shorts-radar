@@ -1,6 +1,6 @@
-import React from "react";
+import React, {useLayoutEffect, useRef} from "react";
 import {interpolate, useCurrentFrame} from "remotion";
-import {handLine, markerStyle, seedOf} from "./hand";
+import {handBox, handLine, markerStyle, seedOf} from "./hand";
 import {Anchor, Face, fade, fadeOut, IN_AT, IN_DUR, spr, useMorphIn, useScene} from "./motion";
 import {BRAND, muted, NOTE, Theme, Tone, TYPE, useTheme, useTone} from "./themes";
 import {SceneProps} from "./types";
@@ -56,27 +56,67 @@ const CARD_GRAIN = "data:image/svg+xml;utf8," + encodeURIComponent(
   + "<rect width='220' height='220' filter='url(#n)'/></svg>");
 
 /**
+ * Paper stage, scene change: a wobbly ink line runs in from the page margin and draws the card's outline
+ * (strokeDashoffset), then fades as the card itself fades in, so the next card looks drawn rather than cut in.
+ * The card is measured on screen (its height depends on the text), the path set directly on the element.
+ */
+const SketchOutline: React.FC<{seed: number}> = ({seed}) => {
+  const frame = useCurrentFrame();
+  const box = useRef<HTMLDivElement>(null);
+  const path = useRef<SVGPathElement>(null);
+  const p = interpolate(frame, [0, 12], [0, 1], {...clamp, easing: (x) => 1 - (1 - x) ** 2});
+  const op = interpolate(frame, [10, 18], [1, 0], clamp);
+  useLayoutEffect(() => {
+    const el = box.current?.parentElement as HTMLElement | null;
+    if (!el || !path.current) return;
+    const w = el.offsetWidth;
+    const h = el.offsetHeight;
+    const lead = handLine(40 - el.offsetLeft, -7, 10, -7, seed, 3);
+    const outline = handBox(-7, -7, w + 14, h + 14, NOTE.radius + 6, seed + 1);
+    const total = lead.len + outline.len;
+    path.current.setAttribute("d", `${lead.d} ${outline.d.replace(/^M/, "L")}`);
+    path.current.setAttribute("stroke-dasharray", `${total} ${total + 4}`);
+    path.current.setAttribute("stroke-dashoffset", `${total * (1 - p)}`);
+  });
+  if (op <= 0) return null;
+  return (
+    <div ref={box} style={{position: "absolute", inset: 0, pointerEvents: "none", opacity: op}}>
+      <svg style={{position: "absolute", left: 0, top: 0, overflow: "visible"}} width={1} height={1}>
+        <path ref={path} fill="none" stroke={NOTE.ink} strokeWidth={4.5} strokeLinecap="round" strokeLinejoin="round"
+          opacity={p > 0 ? 0.85 : 0} />
+      </svg>
+    </div>
+  );
+};
+
+/**
  * The white note card every key text sits on, on every stage: same radius, same soft shadow, the folded top-right
- * corner and faint paper grain. Absolutely positioned by `box`; children are laid out inside the padding.
+ * corner and faint paper grain. Absolutely positioned by `box`; children are laid out inside the padding. On paper
+ * stages a card that arrives with a scene change is sketched in ink first (SketchOutline).
  */
 export const NoteCard: React.FC<{box: React.CSSProperties; fold?: number; pad?: number | string;
-  children?: React.ReactNode; inner?: React.CSSProperties}> = ({box, fold = 58, pad = 0, children, inner}) => (
-  <div style={{position: "absolute", filter: "drop-shadow(0 16px 26px rgba(10,14,25,0.22)) drop-shadow(0 2px 3px rgba(10,14,25,0.12))",
-    ...box}}>
-    <div style={{position: "relative", width: "100%", height: "100%", boxSizing: "border-box", padding: pad,
-      background: NOTE.paper, color: NOTE.ink, borderRadius: NOTE.radius,
-      clipPath: `polygon(0 0, calc(100% - ${fold}px) 0, 100% ${fold}px, 100% 100%, 0 100%)`, ...inner}}>
-      <div style={{position: "absolute", inset: 0, borderRadius: NOTE.radius, backgroundImage: `url("${CARD_GRAIN}")`,
-        backgroundSize: "220px 220px", mixBlendMode: "multiply", opacity: 0.5, pointerEvents: "none"}} />
-      {/* the folded corner: the flap lies over the card, a shade darker, with a soft crease shadow */}
-      <div style={{position: "absolute", top: 0, right: 0, width: fold, height: fold, borderBottomLeftRadius: 10,
-        background: `linear-gradient(45deg, ${NOTE.fold} 50%, transparent 50%)`,
-        boxShadow: "-3px 3px 6px rgba(10,14,25,0.10)"}} />
-      <div style={{position: "relative", width: "100%", height: "100%"}}>{children}</div>
+  children?: React.ReactNode; inner?: React.CSSProperties}> = ({box, fold = 58, pad = 0, children, inner}) => {
+  const t = useTheme();
+  const s = useScene();
+  const sketch = t.family === "paper" && s.mode === "continuity" && !s.first;
+  return (
+    <div style={{position: "absolute", filter: "drop-shadow(0 16px 26px rgba(10,14,25,0.22)) drop-shadow(0 2px 3px rgba(10,14,25,0.12))",
+      ...box}}>
+      <div style={{position: "relative", width: "100%", height: "100%", boxSizing: "border-box", padding: pad,
+        background: NOTE.paper, color: NOTE.ink, borderRadius: NOTE.radius,
+        clipPath: `polygon(0 0, calc(100% - ${fold}px) 0, 100% ${fold}px, 100% 100%, 0 100%)`, ...inner}}>
+        <div style={{position: "absolute", inset: 0, borderRadius: NOTE.radius, backgroundImage: `url("${CARD_GRAIN}")`,
+          backgroundSize: "220px 220px", mixBlendMode: "multiply", opacity: 0.5, pointerEvents: "none"}} />
+        {/* the folded corner: the flap lies over the card, a shade darker, with a soft crease shadow */}
+        <div style={{position: "absolute", top: 0, right: 0, width: fold, height: fold, borderBottomLeftRadius: 10,
+          background: `linear-gradient(45deg, ${NOTE.fold} 50%, transparent 50%)`,
+          boxShadow: "-3px 3px 6px rgba(10,14,25,0.10)"}} />
+        <div style={{position: "relative", width: "100%", height: "100%"}}>{children}</div>
+      </div>
+      {sketch ? <SketchOutline seed={s.index * 97 + 13} /> : null}
     </div>
-  </div>
-);
-
+  );
+};
 /* ------------------------------------------------------------------ headlines with a marked key phrase */
 
 /**

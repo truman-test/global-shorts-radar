@@ -46,6 +46,10 @@ const layout = (nodes: FlowNode[]): {placed: Placed[]; font: number} => {
   return {placed: [], font: 31};
 };
 
+/** Screen y of each node's centre (the mascot hops down the margin beside them). */
+export const flowNodeCenters = (scene: SceneProps) =>
+  layout(scene.nodes ?? []).placed.map((p) => CARD.top + p.y + p.h / 2);
+
 /** Arrow: a hand-drawn shaft and a two-stroke head, drawn in with p. */
 const Arrow: React.FC<{x1: number; y1: number; x2: number; y2: number; p: number; color: string; seed: number}> = ({
   x1, y1, x2, y2, p, color, seed,

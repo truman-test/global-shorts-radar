@@ -53,6 +53,15 @@ const Switch: React.FC<{on: number}> = ({on}) => {
   );
 };
 
+/** Screen y of the centre of the setting's row on the final screen (the mascot points at it). */
+export const toggleRowY = (scene: SceneProps) => {
+  const path = scene.path ?? [];
+  const rows = screenRows(path, scene.setting ?? "", scene.toggleTo === "off", path.length,
+    seedOf((scene.setting ?? "") + path.join("/")));
+  const i = rows.findIndex((r) => r.target);
+  return BODY_TOP + HEADER + Math.round((CONTENT_H - rows.length * ROW_H) / 2) + i * ROW_H + ROW_H / 2;
+};
+
 /**
  * Settings flow inside an invented phone screen: a finger taps through the menu path (each screen slides in),
  * flips the switch, then the setting's row zooms a little and gets a hand-drawn circle.

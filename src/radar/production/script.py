@@ -31,7 +31,8 @@ Scene layouts ("layout"; every layout keeps headline/sub/icon/accent):
   flow       hand-drawn decision chart: nodes=[{"text": "...", "yes": "side box"} | {"text", "no"} | {"text"}] (3-5)
   dots       seeded dot simulation: total=1000, stages=[{"label": "링크 클릭", "count": 120}, ...] (2-4, a funnel:
              each count <= the previous; every number must come from the script's sources), unit="명"
-Every scene may set "mark": the headline's key phrase (a substring) that gets the highlighter / underline.
+Every scene may set "mark": the headline's key phrase (a substring) that gets the highlighter / underline, and
+"mascot": false / true to hide / show 노트 the mascot (default: on for paper stages, off for dark ones).
 Mockup text never contains real phone numbers, real-looking links or brand names.
 """
 from __future__ import annotations
@@ -97,6 +98,7 @@ class Scene:
     total: int = 0              # dots: people the grid stands for
     stages: list[dict] = field(default_factory=list)     # dots: [{"label", "count"}]
     unit: str = "명"            # dots: counter unit
+    mascot: object = None       # 노트 the mascot: True / False, None = by stage (on for paper, off for dark)
 
     def tts_text(self) -> str:
         return self.tts.strip() or normalize_for_tts(self.narration)
@@ -171,7 +173,7 @@ def load_script(path: str | Path) -> Script:
                         total=_int(s.get("total", 0)),
                         stages=[{"label": str(t.get("label", "")).strip(), "count": _int(t.get("count", 0))}
                                 for t in s.get("stages", [])],
-                        unit=str(s.get("unit", "명")).strip() or "명")
+                        unit=str(s.get("unit", "명")).strip() or "명", mascot=s.get("mascot"))
                   for s in data["scenes"]]
         return Script(id=str(data["id"]), source_video_id=str(data["source_video_id"]), title=str(data["title"]).strip(),
                       description=str(data.get("description", "")).strip(), tags=[str(t) for t in data.get("tags", [])],
@@ -356,6 +358,8 @@ def _layout_errors(i: int, sc: Scene) -> list[str]:
         more, extra = _new_layout_errors(i, sc)
         errors += more
         texts += extra
+    if sc.mascot is not None and not isinstance(sc.mascot, bool):
+        errors.append(f"scene {i}: mascot must be true or false (or left out: on for paper stages)")
     if sc.mark and sc.mark not in sc.headline:
         errors.append(f"scene {i}: mark '{sc.mark}' is not part of the headline")
     for text in texts:

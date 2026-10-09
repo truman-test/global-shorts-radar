@@ -1,5 +1,6 @@
 import React from "react";
 import {interpolate, useCurrentFrame} from "remotion";
+import {DoodleProp} from "./Doodles";
 import {clamp, Headline, NoteCard, useShell} from "./kit";
 import {Anchor, Face, MORPH, spr, useMorphIn} from "./motion";
 import {chipRadius, NOTE, TYPE, useTheme, useTone} from "./themes";
@@ -44,6 +45,13 @@ export const CardScene: React.FC<{scene: SceneProps}> = ({scene}) => {
           <Face look={{kind: "chip", icon: scene.icon, accent: scene.accent}} size={BADGE} glow={60} />
         </Anchor>
       </div>
+      {/* paper stage: two line-art props of the episode's topic draw themselves around the badge */}
+      {t.family === "paper" ? (
+        <>
+          <DoodleProp which={0} x={858} y={520} size={150} at={4} tilt={8} />
+          <DoodleProp which={1} x={250} y={452} size={118} at={7} tilt={-8} />
+        </>
+      ) : null}
       {/* the note card with the headline */}
       <NoteCard box={{top: 712, left: 64, right: 64, opacity: Math.min(1, cardIn * 1.3),
         transform: `translateY(${(1 - cardIn) * 40}px)`}} fold={56}>

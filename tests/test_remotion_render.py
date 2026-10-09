@@ -284,3 +284,16 @@ def test_build_props_carries_the_category():
     s = load_script("content/scripts/2026-10-08-family-password.json")
     props = build_props(s, [], "채널", theme="paper", category="voice")
     assert props["theme"] == "paper" and props["category"] == "voice"
+
+def test_mascot_switch_per_scene(tmp_path):
+    from radar.production.remotion_render import scene_props
+    assert _errors(mascot=False) == [] and _errors(mascot=True) == []
+    assert any("mascot must be true or false" in e for e in _errors(mascot="no"))
+    assert scene_props(Scene(NARR, "헤드", "phone", mascot=False), "", 0.0, 1.0, 1.25, [])["mascot"] is False
+    assert "mascot" not in scene_props(Scene(NARR, "헤드", "phone"), "", 0.0, 1.0, 1.25, [])
+    data = json.loads(open("content/scripts/2026-10-08-family-password.json", encoding="utf-8").read())
+    data["scenes"][1]["mascot"] = False
+    p = tmp_path / "s.json"
+    p.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    s = load_script(p)
+    assert s.scenes[1].mascot is False and s.scenes[0].mascot is None and validate(s)[0] == []

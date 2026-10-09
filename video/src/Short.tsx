@@ -17,6 +17,7 @@ import {AnchorSpec, MORPH, SceneContext, Transition} from "./motion";
 import {Backdrop} from "./Backdrop";
 import {BRAND, CATEGORIES, CategoryContext, categoryFor, ThemeContext, themeFor, useCategory, useTheme} from "./themes";
 import {Traveller} from "./Traveller";
+import {MascotTrack} from "./Mascot";
 import {Captions} from "./Captions";
 import {AlertScene} from "./AlertScene";
 import {ChatScene} from "./ChatScene";
@@ -247,6 +248,8 @@ export const Short: React.FC<ShortProps> = (props) => {
           </Sequence>
         )) : null}
       </div>
+      {/* 노트 the mascot: one continuous track over the whole video (in the margin, never on text or captions) */}
+      <MascotTrack props={props} spans={spans} poster={POSTER} />
       {/* narration, captions and SFX keep the exact scene spans in both modes */}
       {props.scenes.map((scene, i) => {
         const {from, frames} = spans[i];
@@ -269,11 +272,15 @@ export const Short: React.FC<ShortProps> = (props) => {
         // Poster tail: the opening frame again (first scene settled, first caption page, disclaimer badge), so the
         // loop back to frame 0 is seamless and this frame can be picked as the Shorts thumbnail in the app.
         <Sequence from={end} durationInFrames={tail}>
-          <Freeze frame={POSTER}>
-            <SceneContext.Provider value={{mode, index: 0, frames: spans[0].frames + POSTER, first: true, last: false}}>
-              <SceneBody scene={props.scenes[0]} />
-            </SceneContext.Provider>
-          </Freeze>
+          {/* the frozen frame must stay inside the sequence's own length (Remotion clamps it to the 15-frame tail),
+              so the scene is shifted by POSTER and frozen at its local frame 0 = the opening frame's POSTER */}
+          <Sequence from={-POSTER} layout="none">
+            <Freeze frame={0}>
+              <SceneContext.Provider value={{mode, index: 0, frames: spans[0].frames + POSTER, first: true, last: false}}>
+                <SceneBody scene={props.scenes[0]} />
+              </SceneContext.Provider>
+            </Freeze>
+          </Sequence>
           <Freeze frame={0}>
             <Captions pages={props.scenes[0].pages} instantFirst />
             <DisclaimerBadge text={props.disclaimer} />
