@@ -1,9 +1,10 @@
 import React from "react";
 import {interpolateColors, useCurrentFrame, useVideoConfig} from "remotion";
-import {BODY_BOTTOM, BODY_TOP, MUTED, PANEL, SceneHeader, SceneShell} from "./kit";
+import {BODY_BOTTOM, BODY_TOP, SceneHeader, SceneShell} from "./kit";
+import {muted, useTheme} from "./themes";
 import {spr} from "./motion";
 import {checklistTicks} from "./schedule";
-import {ACCENTS, SceneProps} from "./types";
+import {SceneProps} from "./types";
 
 const ROW_H = 132;
 const PAD_Y = 30;
@@ -17,8 +18,9 @@ const BOX = 76;
  */
 export const ChecklistScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   const frame = useCurrentFrame();
+  const t = useTheme();
   const {fps} = useVideoConfig();
-  const accent = ACCENTS[scene.accent];
+  const accent = t.accents[scene.accent];
   const items = scene.items ?? [];
   const ticks = checklistTicks(scene, fps);
   const height = items.length * ROW_H + 60;
@@ -33,7 +35,7 @@ export const ChecklistScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   return (
     <SceneShell>
       <SceneHeader scene={scene} />
-      <div style={{position: "absolute", top, left: 110, width: 860, height, borderRadius: 44, background: PANEL,
+      <div style={{position: "absolute", top, left: 110, width: 860, height, borderRadius: 44, background: t.panel,
         border: "2px solid rgba(255,255,255,0.12)", boxShadow: "0 30px 80px rgba(0,0,0,0.5)", padding: `${PAD_Y}px 44px`}}>
         {items.length ? (
           <div style={{position: "absolute", left: 20, top: hlTop, width: hlWidth, height: hlBottom - hlTop,
@@ -61,7 +63,7 @@ export const ChecklistScene: React.FC<{scene: SceneProps}> = ({scene}) => {
                 </svg>
               </div>
               <div style={{fontSize: 50, fontWeight: 800, lineHeight: 1.2,
-                color: interpolateColors(f, [0, 1], [MUTED, "#ffffff"])}}>{text}</div>
+                color: interpolateColors(f, [0, 1], [muted(t), "#ffffff"])}}>{text}</div>
             </div>
           );
         })}

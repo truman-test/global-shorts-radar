@@ -145,7 +145,9 @@ def test_build_props_shape():
     s = load_script("content/scripts/2026-10-08-family-password.json")
     props = build_props(s, [{"layout": "card"}], "채널")
     assert props == {"channel": "채널", "voiceLabel": "AI 음성", "disclaimer": s.disclaimer, "sfx": True,
-                     "music": None, "transition": "continuity", "posterTailMs": 500, "scenes": [{"layout": "card"}]}
+                     "music": None, "transition": "continuity", "posterTailMs": 500, "theme": "classic",
+                     "scenes": [{"layout": "card"}]}
+    assert build_props(s, [], "채널", theme="pulse")["theme"] == "pulse"
     json.dumps(props, ensure_ascii=False)
     assert build_props(s, [], "채널", transition="classic")["transition"] == "classic"
 

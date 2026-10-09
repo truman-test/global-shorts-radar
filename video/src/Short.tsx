@@ -3,7 +3,6 @@ import {
   AbsoluteFill,
   Audio,
   Freeze,
-  interpolateColors,
   Sequence,
   spring,
   staticFile,
@@ -14,7 +13,9 @@ import {FONT} from "./fonts";
 import {CALL_AVATAR, CallScene} from "./CallScene";
 import {BADGE, CardScene} from "./CardScene";
 import {CHIP} from "./kit";
-import {AnchorSpec, fade, MORPH, SceneContext, Transition} from "./motion";
+import {AnchorSpec, MORPH, SceneContext, Transition} from "./motion";
+import {Backdrop} from "./Backdrop";
+import {ThemeContext, themeFor} from "./themes";
 import {Traveller} from "./Traveller";
 import {Captions} from "./Captions";
 import {AlertScene} from "./AlertScene";
@@ -34,39 +35,6 @@ const sceneFrames = (props: ShortProps, fps: number) => {
     from += frames;
     return out;
   });
-};
-
-/** Slowly drifting grid + two soft glows whose color follows the current scene's accent. */
-const Background: React.FC<{props: ShortProps}> = ({props}) => {
-  const frame = useCurrentFrame();
-  const {fps} = useVideoConfig();
-  const spans = sceneFrames(props, fps);
-  let idx = spans.findIndex((s) => frame < s.from + s.frames);
-  if (idx < 0) idx = spans.length - 1;
-  const prev = props.scenes[Math.max(0, idx - 1)].accent;
-  const cur = props.scenes[idx].accent;
-  const color = interpolateColors(fade(frame, spans[idx].from, 16), [0, 1], [ACCENTS[prev], ACCENTS[cur]]);
-  const drift = (frame * 0.7) % 90;
-  const gx = Math.sin(frame / 55) * 80;
-  const gy = Math.cos(frame / 70) * 60;
-  return (
-    <AbsoluteFill style={{background: "linear-gradient(180deg, #060b16 0%, #0b1730 55%, #0e1d3a 100%)"}}>
-      <AbsoluteFill
-        style={{
-          opacity: 0.08,
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.9) 2px, transparent 2px), linear-gradient(90deg, rgba(255,255,255,0.9) 2px, transparent 2px)",
-          backgroundSize: "90px 90px",
-          backgroundPosition: `0px ${drift}px`,
-        }}
-      />
-      <div style={{position: "absolute", width: 900, height: 900, left: -250 + gx, top: 120 + gy, borderRadius: "50%",
-        background: color, opacity: 0.22, filter: "blur(160px)"}} />
-      <div style={{position: "absolute", width: 800, height: 800, right: -300 - gx, bottom: 80 - gy, borderRadius: "50%",
-        background: color, opacity: 0.14, filter: "blur(170px)"}} />
-      <AbsoluteFill style={{background: "radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.55) 100%)"}} />
-    </AbsoluteFill>
-  );
 };
 
 const TopBar: React.FC<{channel: string; voiceLabel?: string}> = ({channel, voiceLabel}) => {
@@ -216,8 +184,9 @@ export const Short: React.FC<ShortProps> = (props) => {
   const end = n ? spans[n - 1].from + spans[n - 1].frames : 0;
   const tail = Math.round(((props.posterTailMs ?? 0) / 1000) * fps);
   return (
+    <ThemeContext.Provider value={themeFor(props.theme)}>
     <AbsoluteFill style={{fontFamily: FONT, color: "#fff", wordBreak: "keep-all"}}>
-      <Background props={props} />
+      <Backdrop props={props} />
       <MusicBed props={props} />
       {/* scene visuals; in continuity mode each one stays mounted a little past its end (fading out)
           so the traveller can measure its anchor and the two scenes can crossfade */}
@@ -287,6 +256,7 @@ export const Short: React.FC<ShortProps> = (props) => {
         <DisclaimerBadge text={props.disclaimer} />
       </Sequence>
     </AbsoluteFill>
+    </ThemeContext.Provider>
   );
 };
 

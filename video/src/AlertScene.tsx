@@ -4,7 +4,8 @@ import {Icon} from "./icons";
 import {BODY_TOP, clamp, SceneHeader, SceneShell} from "./kit";
 import {spr} from "./motion";
 import {ALERT_LAND} from "./schedule";
-import {ACCENTS, SceneProps} from "./types";
+import {useTheme} from "./themes";
+import {SceneProps} from "./types";
 
 const PHONE_W = 820;
 const BEZEL = 14;
@@ -16,7 +17,8 @@ const BEZEL = 14;
  */
 export const AlertScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   const frame = useCurrentFrame();
-  const accent = ACCENTS[scene.accent];
+  const t = useTheme();
+  const accent = t.accents[scene.accent];
   const slide = spr(frame, ALERT_LAND - 8, 14);
   const dim = interpolate(frame, [ALERT_LAND - 4, ALERT_LAND + 8], [0, 0.62], clamp);
   const buzz = frame >= ALERT_LAND - 2 && frame < ALERT_LAND + 12 ? Math.sin(frame * 2.4) * 6 : 0;
@@ -29,12 +31,12 @@ export const AlertScene: React.FC<{scene: SceneProps}> = ({scene}) => {
         borderRadius: 86, background: "#0a0e18", border: "3px solid rgba(255,255,255,0.18)", padding: BEZEL,
         boxShadow: "0 40px 90px rgba(0,0,0,0.6)", transform: `translateX(${buzz}px)`}}>
         <div style={{position: "relative", width: "100%", height: "100%", borderRadius: 72, overflow: "hidden",
-          background: "linear-gradient(160deg, #23315a 0%, #3b2d63 45%, #142240 100%)"}}>
+          background: t.wallpaper[0]}}>
           {/* abstract wallpaper */}
           <div style={{position: "absolute", width: 600, height: 600, left: -160, top: 260, borderRadius: "50%",
-            background: "#5a7dff", opacity: 0.35, filter: "blur(90px)"}} />
+            background: t.wallpaper[1], opacity: 0.35, filter: "blur(90px)"}} />
           <div style={{position: "absolute", width: 520, height: 520, right: -180, top: 40, borderRadius: "50%",
-            background: "#c45cff", opacity: 0.28, filter: "blur(100px)"}} />
+            background: t.wallpaper[2], opacity: 0.28, filter: "blur(100px)"}} />
           {/* lock-screen clock (below the banner, so it stays readable as context) */}
           <div style={{position: "absolute", top: 400, width: "100%", textAlign: "center"}}>
             <div style={{fontSize: 34, fontWeight: 700, color: "rgba(255,255,255,0.85)"}}>10월 9일 목요일</div>

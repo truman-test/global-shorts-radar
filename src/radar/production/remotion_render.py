@@ -17,6 +17,7 @@ from radar.production.assemble import (TRIM, ProductionError, ProductionResult, 
                                        write_meta)
 from radar.production.script import Script, caption_chunks
 from radar.production.textnorm import speakable_length, split_sentences
+from radar.production.themes import resolve_theme
 from radar.production.tts import TTSError
 
 VIDEO_DIR = PROJECT_ROOT / "video"
@@ -182,9 +183,10 @@ VOICE_LABEL = "AI 음성"   # every narration is synthetic; OpenRAIL-M (Superton
 
 def build_props(script: Script, scenes: list[dict], channel_name: str, sfx: bool = True,
                 music: dict | None = None, voice_label: str | None = VOICE_LABEL,
-                transition: str = "continuity") -> dict:
+                transition: str = "continuity", theme: str = "classic") -> dict:
     return {"channel": channel_name, "voiceLabel": voice_label, "disclaimer": script.disclaimer, "sfx": sfx,
-            "music": music, "transition": transition, "posterTailMs": POSTER_TAIL_MS, "scenes": scenes}
+            "music": music, "transition": transition, "posterTailMs": POSTER_TAIL_MS, "theme": theme,
+            "scenes": scenes}
 
 
 def layout_props(scene) -> dict:
@@ -246,7 +248,8 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
         total += round(length * 1000) / 1000
     music, music_item = music_props(script)
     props_path = out_dir / "props.json"
-    props = build_props(script, scenes, channel_name, sfx, music, transition=transition)
+    theme = resolve_theme(script)   # own field, else topic, never the same as the previous scheduled day
+    props = build_props(script, scenes, channel_name, sfx, music, transition=transition, theme=theme)
     props_path.write_text(json.dumps(props, ensure_ascii=False, indent=1), encoding="utf-8")
 
     video = out_dir / "video.mp4"
@@ -275,7 +278,8 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
         warnings.append(f"voice backend '{tts.name}' is for local preview only; re-produce with --backend google to publish")
     subprocess.run([ffmpeg_exe(), "-hide_banner", "-loglevel", "error", "-y", "-ss", "1.2",
                     "-i", str(video), "-frames:v", "1", str(out_dir / "thumb.png")], capture_output=True)
-    extra = {"engine": "remotion", "render_seconds": round(render_seconds, 1), "transition": transition}
+    extra = {"engine": "remotion", "render_seconds": round(render_seconds, 1), "transition": transition,
+             "theme": theme}
     if music_item:
         extra["music"] = {k: music_item[k] for k in ("id", "title", "artist", "license", "license_url",
                                                        "attribution_required", "sha256")}

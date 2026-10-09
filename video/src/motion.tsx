@@ -3,7 +3,8 @@
 import React, {createContext, useContext} from "react";
 import {useCurrentFrame} from "remotion";
 import {Icon} from "./icons";
-import {ACCENTS, Accent} from "./types";
+import {chipRadius, useTheme} from "./themes";
+import {Accent} from "./types";
 
 export type Transition = "continuity" | "classic";
 
@@ -60,18 +61,19 @@ export type Look = {kind: "chip"; icon: string; accent: Accent} | {kind: "avatar
 export type AnchorSpec = {look: Look; size: number; glow?: number};
 
 export const Face: React.FC<AnchorSpec> = ({look, size, glow}) => {
+  const t = useTheme();
   if (look.kind === "avatar") {
     return (
-      <div style={{width: size, height: size, borderRadius: "50%", background: "linear-gradient(160deg, #2b3d63, #18233c)",
+      <div style={{width: size, height: size, borderRadius: "50%", background: `linear-gradient(160deg, ${t.avatar[0]}, ${t.avatar[1]})`,
         border: `${Math.max(3, size / 70)}px solid rgba(255,255,255,0.25)`, boxSizing: "border-box", display: "flex",
         alignItems: "center", justifyContent: "center", fontSize: size * 0.46, fontWeight: 900, color: "#fff"}}>
         {look.letter}
       </div>
     );
   }
-  const c = ACCENTS[look.accent];
+  const c = t.accents[look.accent];
   return (
-    <div style={{width: size, height: size, borderRadius: "50%", background: `${c}22`, border: `3px solid ${c}99`,
+    <div style={{width: size, height: size, borderRadius: chipRadius(t, size), background: `${c}22`, border: `3px solid ${c}99`,
       boxSizing: "border-box", boxShadow: `0 0 ${glow ?? Math.round(size * 0.3)}px ${c}55`, display: "flex",
       alignItems: "center", justifyContent: "center"}}>
       <Icon name={look.icon} size={Math.round(size * 0.54)} color={c} />

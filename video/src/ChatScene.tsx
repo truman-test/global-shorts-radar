@@ -1,6 +1,7 @@
 import React from "react";
 import {interpolate, useCurrentFrame, useVideoConfig} from "remotion";
-import {Avatar, BUBBLE_ME, BUBBLE_THEM, clamp, MUTED, PhonePanel, SceneHeader, SceneShell} from "./kit";
+import {Avatar, clamp, PhonePanel, SceneHeader, SceneShell} from "./kit";
+import {muted, useTheme} from "./themes";
 import {spr} from "./motion";
 import {chatBeats} from "./schedule";
 import {SceneProps} from "./types";
@@ -11,18 +12,21 @@ const CHARS_PER_LINE = 14; // at 42px inside a bubble capped at 78% of the panel
 /** Rough bubble height, only used to let the thread grow smoothly instead of jumping. */
 const estHeight = (text: string) => Math.ceil(Math.max(1, text.length) / CHARS_PER_LINE) * 56 + 46;
 
-const TypingDots: React.FC<{frame: number}> = ({frame}) => (
+const TypingDots: React.FC<{frame: number}> = ({frame}) => {
+  const t = useTheme();
+  return (
   <div style={{display: "flex", gap: 12, padding: "26px 30px", borderRadius: 34, borderBottomLeftRadius: 10,
-    background: BUBBLE_THEM}}>
+    background: t.bubble}}>
     {[0, 1, 2].map((k) => {
       const y = Math.sin((frame - k * 4) / 3.2);
       return (
-        <div key={k} style={{width: 16, height: 16, borderRadius: "50%", background: "rgba(230,236,245,0.8)",
+        <div key={k} style={{width: 16, height: 16, borderRadius: "50%", background: muted(t, 0.8),
           transform: `translateY(${Math.min(0, y) * 9}px)`, opacity: 0.5 + 0.5 * Math.max(0, -y)}} />
       );
     })}
   </div>
-);
+  );
+};
 
 /**
  * Invented messenger thread: bubbles arrive one by one over the narration (typing dots before
@@ -30,6 +34,7 @@ const TypingDots: React.FC<{frame: number}> = ({frame}) => (
  */
 export const ChatScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   const frame = useCurrentFrame();
+  const t = useTheme();
   const {fps} = useVideoConfig();
   const msgs = scene.messages ?? [];
   const beats = chatBeats(scene, fps);
@@ -58,7 +63,7 @@ export const ChatScene: React.FC<{scene: SceneProps}> = ({scene}) => {
         transformOrigin: me ? "100% 100%" : "0% 100%"}}>
         <div style={{padding: "20px 30px 22px", borderRadius: 34,
           [me ? "borderBottomRightRadius" : "borderBottomLeftRadius"]: 10,
-          background: me ? BUBBLE_ME : BUBBLE_THEM, fontSize: FONT_SIZE, fontWeight: 700, lineHeight: 1.3,
+          background: me ? t.bubbleMe : t.bubble, fontSize: FONT_SIZE, fontWeight: 700, lineHeight: 1.3,
           color: "#fff", boxShadow: "0 8px 24px rgba(0,0,0,0.3)"}}>
           {m.text}
         </div>
@@ -74,7 +79,7 @@ export const ChatScene: React.FC<{scene: SceneProps}> = ({scene}) => {
           <Avatar label={title} />
           <div style={{display: "flex", flexDirection: "column"}}>
             <div style={{fontSize: 40, fontWeight: 800}}>{title}</div>
-            <div style={{fontSize: 26, fontWeight: 700, color: MUTED}}>메신저</div>
+            <div style={{fontSize: 26, fontWeight: 700, color: muted(t)}}>메신저</div>
           </div>
         </>
       }>
