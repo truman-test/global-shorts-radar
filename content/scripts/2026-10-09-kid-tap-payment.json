@@ -24,7 +24,10 @@
    "headline": "16만 7400원 결제",
    "sub": "한국소비자원 피해 사례 (2013년)",
    "icon": "money",
-   "accent": "red"
+   "accent": "red",
+   "layout": "alert",
+   "app_label": "앱 마켓",
+   "alert_text": "게임 아이템 167,400원 결제가 완료되었습니다."
   },
   {
    "narration": "공정위 안내 문답엔, 열세 살 아이가 약 40일 동안 80번에 걸쳐 670만 원어치 아이템을 산 경우도 나옵니다.",
@@ -45,7 +48,13 @@
    "headline": "결제마다 인증 확인",
    "sub": "아이가 폰 잠금 비밀번호를 안다면 바꾸기",
    "icon": "lock",
-   "accent": "green"
+   "accent": "green",
+   "layout": "checklist",
+   "items": [
+    "플레이 스토어: 구매할 때마다 인증",
+    "아이폰: 암호 설정 → 항상 입력",
+    "아이 계정: 구입 요청 켜기"
+   ]
   }
  ],
  "sources": [

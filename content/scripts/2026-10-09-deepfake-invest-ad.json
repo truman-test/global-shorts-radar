@@ -31,14 +31,32 @@
    "headline": "채팅방 → 가짜 주식앱",
    "sub": "처음엔 돈이 불어나는 척",
    "icon": "phone",
-   "accent": "yellow"
+   "accent": "yellow",
+   "layout": "timeline",
+   "steps": [
+    {
+     "when": "1단계",
+     "text": "유튜브 속 투자 광고"
+    },
+    {
+     "when": "2단계",
+     "text": "단체 채팅방 초대"
+    },
+    {
+     "when": "3단계",
+     "text": "가짜 주식거래 앱 설치"
+    }
+   ]
   },
   {
    "narration": "경찰청 자료로, 2025년 한 해 접수된 불법 리딩방 등 투자 사기 전체 피해액은 6,581억 원입니다.",
    "headline": "리딩방 등 사기 6,581억 원",
    "sub": "2025년 경찰청 자료 · 서울신문 보도",
    "icon": "money",
-   "accent": "red"
+   "accent": "red",
+   "layout": "stat",
+   "stat_value": "6,581억 원",
+   "stat_label": "2025년 리딩방 등 투자 사기 피해액"
   },
   {
    "narration": "광고에서 시작해 앱 설치를 권하면 불법업자로 보세요. 증권사 직원이라면 그 회사 공식 고객센터에 재직 여부부터 확인하세요.",

@@ -42,14 +42,23 @@
    "headline": "가짜 업체 1만 건 넘게",
    "sub": "2025년 3월 구글 소송 발표",
    "icon": "lock",
-   "accent": "blue"
+   "accent": "blue",
+   "layout": "stat",
+   "stat_value": "10,000건+",
+   "stat_label": "구글이 지운 가짜 업체 정보"
   },
   {
    "narration": "공식 앱이나 예약 확인 메일, 주소를 직접 친 공식 홈페이지의 번호로 거세요. 검색이나 지도에 뜬 번호로 바로 걸지 마세요.",
    "headline": "번호는 공식 홈페이지에서",
    "sub": "공식 앱 · 예약 확인 메일도 확인",
    "icon": "check",
-   "accent": "green"
+   "accent": "green",
+   "layout": "checklist",
+   "items": [
+    "공식 앱의 번호 확인",
+    "예약 확인 메일의 번호 확인",
+    "검색·지도 번호로 바로 걸지 않기"
+   ]
   }
  ],
  "sources": [

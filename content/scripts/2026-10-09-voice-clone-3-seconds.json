@@ -34,7 +34,10 @@
    "headline": "3초 음성, 85% 일치",
    "sub": "맥아피 2023년 보고서",
    "icon": "warning",
-   "accent": "yellow"
+   "accent": "yellow",
+   "layout": "stat",
+   "stat_value": "85%",
+   "stat_label": "3초 음성으로 만든 목소리 일치율"
   },
   {
    "narration": "재료는 온라인에 올린 영상일 수 있습니다. 같은 조사에서 53%가 매주 목소리를 온라인에 올린다고 답했죠.",
@@ -48,7 +51,13 @@
    "headline": "목소리 영상, 공개 범위 줄이기",
    "sub": "급한 전화는 끊고 저장된 번호로",
    "icon": "lock",
-   "accent": "green"
+   "accent": "green",
+   "layout": "checklist",
+   "items": [
+    "목소리 영상 공개 범위 줄이기",
+    "급한 가족 전화는 일단 끊기",
+    "저장된 번호로 다시 걸기"
+   ]
   }
  ],
  "sources": [

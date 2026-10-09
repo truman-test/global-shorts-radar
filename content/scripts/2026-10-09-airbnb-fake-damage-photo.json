@@ -24,7 +24,10 @@
    "headline": "파손 배상 2천만 원",
    "sub": "2025년 영국 가디언 보도",
    "icon": "money",
-   "accent": "red"
+   "accent": "red",
+   "layout": "stat",
+   "stat_value": "12,000파운드",
+   "stat_label": "청구액 · 우리 돈 2천만 원 넘게"
   },
   {
    "narration": "그런데 게스트는 같은 테이블을 찍은 사진 두 장의 금 모양이 서로 다르다며, 조작된 사진이라고 반박했습니다.",
@@ -45,7 +48,13 @@
    "headline": "입실·퇴실 영상 남기기",
    "sub": "날짜 남은 원본 그대로 보관",
    "icon": "check",
-   "accent": "green"
+   "accent": "green",
+   "layout": "checklist",
+   "items": [
+    "입실할 때 전체 영상 찍기",
+    "퇴실할 때 다시 찍기",
+    "날짜 남은 원본 그대로 보관"
+   ]
   }
  ],
  "sources": [
