@@ -53,6 +53,7 @@ export type ShortProps = {
   music?: Music | null;
   transition?: "continuity" | "classic"; // scene changes: shared-element morph (default) or slide/fade
   posterTailMs?: number; // the last moment shows the opening poster again (loop + thumbnail frame)
+  theme?: string; // visual theme (themes.ts): background pattern, colours, headline/chip style; default classic
   scenes: SceneProps[];
 };
 

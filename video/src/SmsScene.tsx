@@ -1,10 +1,11 @@
 import React from "react";
 import {TriangleAlert, User} from "lucide-react";
 import {interpolate, useCurrentFrame} from "remotion";
-import {Avatar, BUBBLE_THEM, clamp, MUTED, PhonePanel, SceneHeader, SceneShell} from "./kit";
+import {Avatar, clamp, PhonePanel, SceneHeader, SceneShell} from "./kit";
+import {muted, useTheme} from "./themes";
 import {spr} from "./motion";
 import {SMS_ARRIVE, SMS_FLAG} from "./schedule";
-import {ACCENTS, SceneProps} from "./types";
+import {SceneProps} from "./types";
 
 // Links reach us already masked by the Python validator ("http://●●●●.kr/…").
 const LINK_RE = /((?:https?:\/\/)?●+[^\s]*)/;
@@ -15,7 +16,8 @@ const LINK_RE = /((?:https?:\/\/)?●+[^\s]*)/;
  */
 export const SmsScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   const frame = useCurrentFrame();
-  const red = ACCENTS.red;
+  const t = useTheme();
+  const red = t.accents.red;
   const text = scene.smsText ?? "";
   const [before, link, after] = (() => {
     const m = LINK_RE.exec(text);
@@ -31,21 +33,21 @@ export const SmsScene: React.FC<{scene: SceneProps}> = ({scene}) => {
       <SceneHeader scene={scene} />
       <PhonePanel header={
         <>
-          <Avatar label="" color="linear-gradient(160deg, #4a5878, #2a3550)">
-            <User size={38} color="rgba(230,236,245,0.85)" strokeWidth={2.4} />
+          <Avatar label="" color={`linear-gradient(160deg, ${t.avatar[0]}, ${t.avatar[1]})`}>
+            <User size={38} color={muted(t, 0.85)} strokeWidth={2.4} />
           </Avatar>
           <div style={{display: "flex", flexDirection: "column", minWidth: 0}}>
             <div style={{fontSize: 40, fontWeight: 800, whiteSpace: "nowrap"}}>{scene.sender}</div>
-            <div style={{fontSize: 26, fontWeight: 700, color: MUTED}}>문자 메시지</div>
+            <div style={{fontSize: 26, fontWeight: 700, color: muted(t)}}>문자 메시지</div>
           </div>
         </>
       }>
         <div style={{flex: 1, display: "flex", flexDirection: "column", padding: "34px 34px 0", gap: 26}}>
-          <div style={{alignSelf: "center", fontSize: 26, fontWeight: 700, color: MUTED, padding: "6px 20px",
+          <div style={{alignSelf: "center", fontSize: 26, fontWeight: 700, color: muted(t), padding: "6px 20px",
             borderRadius: 999, background: "rgba(255,255,255,0.06)"}}>오늘 오후 2:14</div>
           <div style={{alignSelf: "flex-start", maxWidth: "86%", opacity: Math.min(1, arrive * 1.3),
             transform: `translateY(${(1 - arrive) * 30}px) scale(${0.85 + 0.15 * arrive})`, transformOrigin: "0% 100%"}}>
-            <div style={{padding: "26px 32px 28px", borderRadius: 36, borderBottomLeftRadius: 10, background: BUBBLE_THEM,
+            <div style={{padding: "26px 32px 28px", borderRadius: 36, borderBottomLeftRadius: 10, background: t.bubble,
               fontSize: text.length > 70 ? 39 : 42, fontWeight: 700, lineHeight: 1.38, boxShadow: "0 10px 28px rgba(0,0,0,0.35)",
               overflowWrap: "anywhere"}}>
               {before}

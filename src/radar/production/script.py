@@ -11,8 +11,9 @@ never contains the source video's narration. JSON shape:
   "scenes": [{"narration": "...", "headline": "...", "sub": "...", "icon": "phone", "accent": "red",
               "tts": "(optional spoken override)"}],
   "sources": [{"title": "...", "url": "https://..."}],
-  "author": "llm:<model> | manual"
-}
+  "author": "llm:<model> | manual",
+  "theme": "aurora"                               # optional visual theme (radar.production.themes); default:
+}                                                 # picked by topic, rotated so consecutive days differ
 
 Scene layouts ("layout"; every layout keeps headline/sub/icon/accent):
   card       explainer card (default)
@@ -95,6 +96,7 @@ class Script:
     sources: list[dict]
     author: str = ""
     music: str = ""             # mood key from assets/manifest.json (tense, explainer, uplifting, tech, suspense)
+    theme: str = ""             # visual theme (radar.production.themes.THEMES); "" = by topic / rotation
     path: str = ""
     extra: dict = field(default_factory=dict)
 
@@ -126,7 +128,7 @@ def load_script(path: str | Path) -> Script:
                       description=str(data.get("description", "")).strip(), tags=[str(t) for t in data.get("tags", [])],
                       disclaimer=str(data.get("disclaimer", "")).strip(), scenes=scenes,
                       sources=[dict(s) for s in data.get("sources", [])], author=str(data.get("author", "")),
-                      music=str(data.get("music", "")).strip(),
+                      music=str(data.get("music", "")).strip(), theme=str(data.get("theme", "")).strip(),
                       path=str(path))
     except (KeyError, TypeError, AttributeError) as exc:
         raise ScriptError(f"{path}: missing or malformed field {exc}") from exc
@@ -295,6 +297,10 @@ def validate(script: Script, db=None, allow_unverified: bool = False) -> tuple[l
         known = moods()
         if known and script.music not in known:
             errors.append(f"music mood '{script.music}' not in assets/manifest.json ({', '.join(known)})")
+    if script.theme:
+        from radar.production.themes import THEMES
+        if script.theme not in THEMES:
+            errors.append(f"unknown theme '{script.theme}' (use {', '.join(THEMES)})")
     if len(", ".join(script.tags)) > 450:
         errors.append("tags exceed YouTube's ~500 character limit")
     if len(build_description(script)) > 4800:

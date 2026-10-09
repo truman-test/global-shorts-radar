@@ -1,9 +1,10 @@
 import React from "react";
 import {useCurrentFrame, useVideoConfig} from "remotion";
-import {BODY_BOTTOM, BODY_TOP, MUTED, SceneHeader, SceneShell} from "./kit";
+import {BODY_BOTTOM, BODY_TOP, SceneHeader, SceneShell} from "./kit";
+import {muted, useTheme} from "./themes";
 import {spr} from "./motion";
 import {timelineBeats} from "./schedule";
-import {ACCENTS, SceneProps} from "./types";
+import {SceneProps} from "./types";
 
 const RAIL_X = 196;
 
@@ -14,8 +15,9 @@ const RAIL_X = 196;
  */
 export const TimelineScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   const frame = useCurrentFrame();
+  const t = useTheme();
   const {fps} = useVideoConfig();
-  const accent = ACCENTS[scene.accent];
+  const accent = t.accents[scene.accent];
   const steps = scene.steps ?? [];
   const beats = timelineBeats(scene, fps);
   const top = BODY_TOP + 40;
@@ -50,7 +52,7 @@ export const TimelineScene: React.FC<{scene: SceneProps}> = ({scene}) => {
         return (
           <div key={k} style={{position: "absolute", top: y(k), left: 0, right: 0}}>
             <div style={{position: "absolute", left: RAIL_X - 23, top: 0, width: 46, height: 46, borderRadius: "50%",
-              background: frame >= beats[k] ? accent : "#1b2640", border: `5px solid ${frame >= beats[k] ? "#fff" : "rgba(255,255,255,0.25)"}`,
+              background: frame >= beats[k] ? accent : t.railOff, border: `5px solid ${frame >= beats[k] ? "#fff" : "rgba(255,255,255,0.25)"}`,
               transform: `scale(${0.6 + 0.4 * s})`, boxShadow: active ? `0 0 30px ${accent}` : "none"}} />
             {active ? (
               <div style={{position: "absolute", left: RAIL_X - 23, top: 0, width: 46, height: 46, borderRadius: "50%",
@@ -61,7 +63,7 @@ export const TimelineScene: React.FC<{scene: SceneProps}> = ({scene}) => {
               <div style={{display: "inline-block", fontSize: 36, fontWeight: 900, color: accent, padding: "2px 18px",
                 borderRadius: 999, background: `${accent}1f`, border: `2px solid ${accent}66`}}>{st.when}</div>
               <div style={{marginTop: 10, fontSize: 52, fontWeight: 800, lineHeight: 1.22,
-                color: active ? "#fff" : MUTED}}>{st.text}</div>
+                color: active ? "#fff" : muted(t)}}>{st.text}</div>
             </div>
           </div>
         );

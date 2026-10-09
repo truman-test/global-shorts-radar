@@ -1,9 +1,10 @@
 import React from "react";
 import {Easing, interpolate, useCurrentFrame} from "remotion";
-import {BODY_BOTTOM, BODY_TOP, clamp, MUTED, SceneHeader, SceneShell} from "./kit";
+import {BODY_BOTTOM, BODY_TOP, clamp, SceneHeader, SceneShell} from "./kit";
+import {muted, useTheme} from "./themes";
 import {spr} from "./motion";
 import {STAT_COUNT} from "./schedule";
-import {ACCENTS, SceneProps} from "./types";
+import {SceneProps} from "./types";
 
 const NUM_RE = /\d[\d,]*(?:\.\d+)?/g;
 
@@ -44,7 +45,8 @@ const emWidth = (s: string) => [...s].reduce((a, c) => a + (/[\d.,]/.test(c) ? 0
  */
 export const StatScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   const frame = useCurrentFrame();
-  const accent = ACCENTS[scene.accent];
+  const th = useTheme();
+  const accent = th.accents[scene.accent];
   const full = scene.statValue ?? "";
   const [a, b] = STAT_COUNT;
   const t = interpolate(frame, [a, b], [0, 1], {...clamp, easing: Easing.out(Easing.cubic)});
@@ -87,7 +89,7 @@ export const StatScene: React.FC<{scene: SceneProps}> = ({scene}) => {
       </div>
       {scene.sub ? (
         <div style={{position: "absolute", top: meterTop + 16 + 44 + 64 + 26, left: 140, right: 140, textAlign: "center",
-          fontSize: 38, fontWeight: 700, color: MUTED, opacity: subIn, transform: `translateY(${(1 - subIn) * 10}px)`}}>
+          fontSize: 38, fontWeight: 700, color: muted(th), opacity: subIn, transform: `translateY(${(1 - subIn) * 10}px)`}}>
           {scene.sub}
         </div>
       ) : null}
