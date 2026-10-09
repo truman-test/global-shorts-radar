@@ -1,0 +1,78 @@
+{
+ "id": "2026-10-09-voice-clone-3-seconds",
+ "source_video_id": "Jf1239_V0mw",
+ "title": "목소리 복제에 단 3초? 내가 올린 영상이 재료가 될 수 있습니다 #Shorts",
+ "description": "AI 목소리 복제의 재료는 우리가 SNS에 올린 짧은 영상일 수 있습니다. 오늘 내 목소리 영상의 공개 범위부터 줄이세요.",
+ "tags": [
+  "AI 음성 복제",
+  "딥보이스",
+  "보이스피싱",
+  "SNS 보안",
+  "사기 예방"
+ ],
+ "disclaimer": "※ 실제 수법을 바탕으로 한 재연입니다",
+ "scenes": [
+  {
+   "narration": "단 3초 분량의 목소리. 내 목소리를 복제하는 재료로 충분할 수 있습니다.",
+   "headline": "목소리 복제, 단 3초?",
+   "sub": "",
+   "icon": "voice",
+   "accent": "red"
+  },
+  {
+   "narration": "엄마, 나 사고 났어. 돈 좀 보내줘. 아들 목소리 그대로지만, 가짜일 수 있습니다.",
+   "headline": "아들 목소리, 진짜일까?",
+   "sub": "",
+   "icon": "phone",
+   "accent": "red",
+   "layout": "call",
+   "caller": "아들",
+   "caller_sub": "휴대전화"
+  },
+  {
+   "narration": "보안업체 맥아피는 2023년 실험에서, 3초 음성으로 85% 일치하는 목소리를 만들었다고 밝혔습니다.",
+   "headline": "3초 음성, 85% 일치",
+   "sub": "맥아피 2023년 보고서",
+   "icon": "warning",
+   "accent": "yellow"
+  },
+  {
+   "narration": "재료는 온라인에 올린 영상일 수 있습니다. 같은 조사에서 53%가 매주 목소리를 온라인에 올린다고 답했죠.",
+   "headline": "재료는 내가 올린 영상일 수도",
+   "sub": "7개국 응답자 53% · 매주 목소리 공유",
+   "icon": "video",
+   "accent": "red"
+  },
+  {
+   "narration": "오늘, 목소리 담긴 영상은 나만 보기나 친구만으로 바꿔 두세요. 급한 가족 전화는 끊고, 저장된 번호로 다시 거세요.",
+   "headline": "목소리 영상, 공개 범위 줄이기",
+   "sub": "급한 전화는 끊고 저장된 번호로",
+   "icon": "lock",
+   "accent": "green"
+  }
+ ],
+ "sources": [
+  {
+   "title": "McAfee 보도자료(Business Wire), Artificial Intelligence Voice Scams on the Rise with 1 in 4 Adults Impacted (2023-05-02)",
+   "url": "https://www.businesswire.com/news/home/20230501005587/en/Artificial-Intelligence-Voice-Scams-on-the-Rise-with-1-in-4-Adults-Impacted"
+  },
+  {
+   "title": "같은 보도자료 사본 (financialcontent)",
+   "url": "https://markets.financialcontent.com/stocks/article/bizwire-2023-5-2-artificial-intelligence-voice-scams-on-the-rise-with-1-in-4-adults-impacted"
+  },
+  {
+   "title": "미국 FTC 소비자 경보, Scammers use AI to enhance their family emergency schemes (2023-03-20)",
+   "url": "https://consumer.ftc.gov/consumer-alerts/2023/03/scammers-use-ai-enhance-their-family-emergency-schemes"
+  },
+  {
+   "title": "FBI IC3 공익 경보 PSA241203 (2024-12-03)",
+   "url": "https://www.ic3.gov/PSA/2024/PSA241203"
+  },
+  {
+   "title": "금융위원회·금융감독원, 보이스피싱 피해예방 10계명 (2026-02-10)",
+   "url": "https://www.fsc.go.kr/no010101/86250"
+  }
+ ],
+ "music": "tense",
+ "author": "llm:claude-opus-5-5 (research agent; source video not watched); fixes from fact-checker review applied by orchestrator"
+}

@@ -1,0 +1,71 @@
+{
+ "id": "2026-10-09-deepfake-invest-ad",
+ "source_video_id": "iU2Gp3kkUAo",
+ "title": "유튜브 광고 속 그 전문가, 진짜일까? 딥페이크 투자 사기 #Shorts",
+ "description": "유명인이나 증권사 전문가의 얼굴과 목소리를 합성한 투자 광고가 리딩방과 가짜 주식앱으로 이어집니다. 금융감독원 소비자경보와 경찰청 통계를 다룬 언론 보도를 바탕으로 정리했습니다.",
+ "tags": [
+  "딥페이크",
+  "투자 사기",
+  "리딩방",
+  "유명인 사칭",
+  "가짜 주식앱"
+ ],
+ "disclaimer": "※ 언론 보도를 바탕으로 한 설명입니다",
+ "scenes": [
+  {
+   "narration": "이 투자 광고 속 얼굴, 진짜가 아닐 수 있습니다.",
+   "headline": "이 얼굴, 진짜일까?",
+   "sub": "영상 중간에 뜬 투자 광고",
+   "icon": "video",
+   "accent": "red"
+  },
+  {
+   "narration": "인공지능으로 실존 증권사 직원이나 전문가의 얼굴과 목소리를 꾸며, 유튜브 등에서 투자를 권합니다.",
+   "headline": "얼굴도 목소리도 합성",
+   "sub": "금융감독원 소비자경보 · 2026년 1월",
+   "icon": "voice",
+   "accent": "red"
+  },
+  {
+   "narration": "링크는 단체 채팅방으로, 다시 가짜 주식거래 앱으로 이어집니다. 처음엔 돈이 불어나는 척하죠.",
+   "headline": "채팅방 → 가짜 주식앱",
+   "sub": "처음엔 돈이 불어나는 척",
+   "icon": "phone",
+   "accent": "yellow"
+  },
+  {
+   "narration": "경찰청 자료로, 2025년 한 해 접수된 불법 리딩방 등 투자 사기 전체 피해액은 6,581억 원입니다.",
+   "headline": "리딩방 등 사기 6,581억 원",
+   "sub": "2025년 경찰청 자료 · 서울신문 보도",
+   "icon": "money",
+   "accent": "red"
+  },
+  {
+   "narration": "광고에서 시작해 앱 설치를 권하면 불법업자로 보세요. 증권사 직원이라면 그 회사 공식 고객센터에 재직 여부부터 확인하세요.",
+   "headline": "광고 속 앱은 깔지 않기",
+   "sub": "직원이라면 공식 고객센터에 재직 확인",
+   "icon": "check",
+   "accent": "green"
+  }
+ ],
+ "sources": [
+  {
+   "title": "한국경제, \"증권사 직원입니다\"의 진화…AI 얼굴까지 빌려 투자금 뜯는다 (2026-01-26)",
+   "url": "https://www.hankyung.com/article/202601263694i"
+  },
+  {
+   "title": "SBS Biz, 금감원 불법 리딩방 소비자경보 '주의' 발령 (2026-01-26)",
+   "url": "https://biz.sbs.co.kr/amp/article/20000287460"
+  },
+  {
+   "title": "서울신문, 불법 투자리딩방 경찰청 접수 현황 보도 (2026-02-27)",
+   "url": "https://m.seoul.co.kr/news/2026/02/27/20260227005002"
+  },
+  {
+   "title": "머니투데이, 유튜브 광고 속 유명인 딥페이크 투자 권유 (2024-04-20)",
+   "url": "https://www.mt.co.kr/tech/2024/04/20/2024041915010221270"
+  }
+ ],
+ "music": "tense",
+ "author": "llm:claude-opus-5-5 (research agent; source video not watched); fixes from fact-checker review applied by orchestrator"
+}

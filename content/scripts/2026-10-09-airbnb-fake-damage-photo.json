@@ -1,0 +1,67 @@
+{
+ "id": "2026-10-09-airbnb-fake-damage-photo",
+ "source_video_id": "WNu1h71ID_4",
+ "title": "깨진 테이블 사진이 가짜? 에어비앤비 2천만 원 배상 청구의 반전 #Shorts",
+ "description": "2025년, 숙소 호스트가 낸 파손 사진을 게스트는 조작된 사진이라고 반박했고 에어비앤비는 결국 사과했습니다. 사진 한 장이 증거가 되는 시대, 내 기록은 내가 남겨야 합니다.",
+ "tags": [
+  "조작 사진 의혹",
+  "에어비앤비",
+  "숙소 파손",
+  "렌터카 분쟁",
+  "사기 예방"
+ ],
+ "disclaimer": "※ 실제 보도를 바탕으로 한 설명입니다",
+ "scenes": [
+  {
+   "narration": "이 깨진 테이블 사진, 진짜일까요?",
+   "headline": "이 사진, 진짜일까?",
+   "sub": "",
+   "icon": "warning",
+   "accent": "red"
+  },
+  {
+   "narration": "미국 뉴욕의 에어비앤비 숙소. 호스트가 퇴실한 게스트에게, 1만 2천 파운드, 우리 돈 2천만 원이 넘는 파손 배상을 청구했습니다. 증거는 사진이었죠.",
+   "headline": "파손 배상 2천만 원",
+   "sub": "2025년 영국 가디언 보도",
+   "icon": "money",
+   "accent": "red"
+  },
+  {
+   "narration": "그런데 게스트는 같은 테이블을 찍은 사진 두 장의 금 모양이 서로 다르다며, 조작된 사진이라고 반박했습니다.",
+   "headline": "같은 테이블, 다른 금",
+   "sub": "게스트 주장: 조작·AI 생성 의심",
+   "icon": "video",
+   "accent": "yellow"
+  },
+  {
+   "narration": "에어비앤비는 처음엔 약 5천 파운드, 우리 돈 약 천만 원을 물어내라고 했지만, 언론 취재 뒤 사과하고 숙박비 전액을 환불했습니다.",
+   "headline": "결국 사과, 전액 환불",
+   "sub": "호스트에게는 경고 조치",
+   "icon": "shield",
+   "accent": "blue"
+  },
+  {
+   "narration": "이제 사진만으론 진실을 알기 어렵습니다. 숙소나 렌터카는 들어갈 때와 나올 때, 전체를 영상으로 찍어 원본 그대로 두세요.",
+   "headline": "입실·퇴실 영상 남기기",
+   "sub": "날짜 남은 원본 그대로 보관",
+   "icon": "check",
+   "accent": "green"
+  }
+ ],
+ "sources": [
+  {
+   "title": "The Guardian, Airbnb guest says images were altered in false £12,000 damage claim (2025-08-02)",
+   "url": "https://www.theguardian.com/technology/2025/aug/02/airbnb-guest-damage-claim-refund-photos"
+  },
+  {
+   "title": "FOX Business, Airbnb apologizes after 'superhost' allegedly used AI-doctored photos to claim $16K in fake damages (2025-08-06)",
+   "url": "https://www.foxbusiness.com/lifestyle/airbnb-apologizes-superhost-allegedly-ai-doctored-photos-claim-16k-fake-damages"
+  },
+  {
+   "title": "전자신문(다음 뉴스), 에어비앤비 파손 배상 청구 보도 — 원화 환산 출처 (2025-08-10)",
+   "url": "https://v.daum.net/v/20250810060242612"
+  }
+ ],
+ "music": "suspense",
+ "author": "llm:claude-opus-5-5 (research agent; source video not watched); fixes from fact-checker review applied by orchestrator"
+}

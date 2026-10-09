@@ -1,0 +1,71 @@
+{
+ "id": "2026-10-09-fake-map-number",
+ "source_video_id": "Xz7rLQ62WOs",
+ "title": "검색해서 건 고객센터가 사기범? 지도·검색 속 가짜 번호 #Shorts",
+ "description": "해외에서 검색 결과 맨 위나 구글 지도에 사기범 전화번호가 뜬 사례가 실제로 있었습니다. 전화하기 전, 공식 앱이나 예약 확인 메일의 번호인지 먼저 확인하세요.",
+ "tags": [
+  "가짜 고객센터",
+  "전화번호 사기",
+  "구글 지도",
+  "검색 광고 사기",
+  "사기 예방"
+ ],
+ "disclaimer": "※ 실제 사례를 바탕으로 한 재연입니다",
+ "scenes": [
+  {
+   "narration": "네, 항공사 고객센터입니다. 수수료부터 먼저 내셔야 해요.",
+   "headline": "검색해서 찾은 고객센터",
+   "sub": "그런데 이 번호, 진짜일까?",
+   "icon": "phone",
+   "accent": "red",
+   "layout": "call",
+   "caller": "항공사 고객센터",
+   "caller_sub": "검색 결과 맨 위 번호",
+   "call_label": "내가 건 전화"
+  },
+  {
+   "narration": "올해 7월 보도에 따르면, 미국에서 한국 항공사를 사칭한 가짜 번호가 구글 검색 상단에 떴고, 이런 번호에 전화한 소비자는 238달러를 냈습니다.",
+   "headline": "검색 상단이 가짜였다",
+   "sub": "2026년 7월 미주중앙일보 보도 · 미국 사례",
+   "icon": "warning",
+   "accent": "red"
+  },
+  {
+   "narration": "구글 지도도 마찬가지입니다. 2024년 인도네시아에선 이민국 구글 지도에 가짜 메신저 번호가 올라왔습니다.",
+   "headline": "구글 지도 번호도 바뀌었다",
+   "sub": "2024년 8월 인도네시아 이민국 경고",
+   "icon": "warning",
+   "accent": "yellow"
+  },
+  {
+   "narration": "구글은 2025년 3월, 가짜 업체 정보를 만 건 넘게 지웠다고 밝혔습니다. 진짜 업체 계정을 가로챈 경우도 있었죠.",
+   "headline": "가짜 업체 1만 건 넘게",
+   "sub": "2025년 3월 구글 소송 발표",
+   "icon": "lock",
+   "accent": "blue"
+  },
+  {
+   "narration": "공식 앱이나 예약 확인 메일, 주소를 직접 친 공식 홈페이지의 번호로 거세요. 검색이나 지도에 뜬 번호로 바로 걸지 마세요.",
+   "headline": "번호는 공식 홈페이지에서",
+   "sub": "공식 앱 · 예약 확인 메일도 확인",
+   "icon": "check",
+   "accent": "green"
+  }
+ ],
+ "sources": [
+  {
+   "title": "미주중앙일보, 한국 항공사 사칭 가짜 고객센터 사이트 (2026-07-26)",
+   "url": "https://www.koreadaily.com/article/20260726210641474"
+  },
+  {
+   "title": "detikInet, Google Tanggapi Nomor WhatsApp Palsu Kantor Imigrasi di Maps (2024-08-13)",
+   "url": "https://inet.detik.com/cyberlife/d-7487354/google-tanggapi-nomor-whatsapp-palsu-kantor-imigrasi-di-maps"
+  },
+  {
+   "title": "CBS News, Google finds 10,000 fake listings on Google Maps, sues alleged network of scammers (2025-03-19)",
+   "url": "https://www.cbsnews.com/news/google-maps-fake-listings-lawsuit-scams/"
+  }
+ ],
+ "music": "suspense",
+ "author": "llm:claude-opus-5-5 (research agent; source video not watched); fixes from fact-checker review applied by orchestrator"
+}

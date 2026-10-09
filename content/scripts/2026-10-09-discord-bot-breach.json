@@ -1,0 +1,67 @@
+{
+ "id": "2026-10-09-discord-bot-breach",
+ "source_video_id": "LNOSVdWdwFY",
+ "title": "디스코드 인증 봇이 해킹당했다… 약 2800만 계정 정보 노출 #Shorts",
+ "description": "디스코드 인증 봇 '더블 카운터'가 해킹돼 사용자 이름과 아이피 주소 등이 유출된 것으로 간주됐습니다. 디스코드 설정의 '승인된 앱'에서 안 쓰는 앱 연결부터 끊으세요.",
+ "tags": [
+  "디스코드",
+  "개인정보 유출",
+  "해킹",
+  "디스코드 봇",
+  "피싱 예방"
+ ],
+ "disclaimer": "※ 공식 발표를 바탕으로 한 설명입니다",
+ "scenes": [
+  {
+   "narration": "디스코드 서버를 지키던 외부 보안 봇이 해킹당했습니다.",
+   "headline": "보안 봇이 해킹당했다",
+   "sub": "",
+   "icon": "warning",
+   "accent": "red"
+  },
+  {
+   "narration": "부계정을 걸러 주는 인증 봇, 더블 카운터. 해커는 쓰지 않던 옛 서버로 들어와, 약 6시간 동안 시스템을 휘저었습니다.",
+   "headline": "안 쓰던 옛 서버로 침입",
+   "sub": "2026년 10월 4일 · 운영사 보고서",
+   "icon": "lock",
+   "accent": "red"
+  },
+  {
+   "narration": "약 2800만 계정의 사용자 이름, 비슷한 규모의 아이피 주소와 대략적 위치가 유출된 것으로 간주됐습니다. 비밀번호는 무관합니다.",
+   "headline": "이름·아이피·위치 노출",
+   "sub": "약 2800만 계정 · 운영사 추산 · 비밀번호 무관",
+   "icon": "warning",
+   "accent": "yellow"
+  },
+  {
+   "narration": "해커는 봇을 장악해 대형 서버 약 50곳에 자기 링크를 뿌렸고, 디스코드는 이 봇의 신규 설치를 막았습니다.",
+   "headline": "믿던 봇이 수상한 링크를",
+   "sub": "디스코드 침해는 아님 · 신규 설치 중단",
+   "icon": "phone",
+   "accent": "blue"
+  },
+  {
+   "narration": "믿던 봇이 보낸 링크도 바로 누르지 마세요. 오늘은 설정의 승인된 앱에서, 안 쓰는 앱을 승인 취소하세요.",
+   "headline": "승인된 앱 정리하기",
+   "sub": "설정 → 승인된 앱 → 승인 취소",
+   "icon": "check",
+   "accent": "green"
+  }
+ ],
+ "sources": [
+  {
+   "title": "Double Counter 공식 사고 보고서 INC-2026-10-04 (2026-10-05)",
+   "url": "https://doublecounter.gg/blog/security-incident-october-2026"
+  },
+  {
+   "title": "Dexerto, Discord disables new bot installs after hack exposed millions of users' IP addresses (2026-10-07)",
+   "url": "https://www.dexerto.com/gaming/discord-bot-built-to-stop-alt-accounts-leaks-millions-of-users-ip-addresses-3416371/"
+  },
+  {
+   "title": "Discord 고객지원, Discord 계정이 해킹당했거나 유출된 경우",
+   "url": "https://support.discord.com/hc/ko/articles/24160905919511"
+  }
+ ],
+ "music": "tech",
+ "author": "llm:claude-opus-5-5 (research agent; source video not watched); fixes from fact-checker review applied by orchestrator"
+}

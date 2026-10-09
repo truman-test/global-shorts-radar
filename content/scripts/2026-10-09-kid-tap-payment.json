@@ -1,0 +1,79 @@
+{
+ "id": "2026-10-09-kid-tap-payment",
+ "source_video_id": "hpMCY56yDWA",
+ "title": "아이가 누른 버튼 하나에 16만 원? 게임 결제 막는 법 #Shorts",
+ "description": "아이가 게임 속 구매 버튼을 누르면 실제 돈이 나가고, 부모 폰으로 결제됐다면 환불이 어려울 수 있습니다. 오늘 앱 마켓 설정이 '구매할 때마다 인증'으로 되어 있는지 확인하세요.",
+ "tags": [
+  "자녀 게임 결제",
+  "인앱결제",
+  "미성년자 결제 환불",
+  "소액결제",
+  "스마트폰 보안"
+ ],
+ "disclaimer": "※ 공식 자료와 실제 사례를 바탕으로 한 설명입니다",
+ "scenes": [
+  {
+   "narration": "아이가 누른 버튼 하나, 얼마였을까요?",
+   "headline": "아이가 누른 버튼 하나",
+   "sub": "게임 속 '구매' 버튼",
+   "icon": "phone",
+   "accent": "red"
+  },
+  {
+   "narration": "2013년, 네 살 아이가 무료 게임을 하다 아이템을 샀고, 16만 7400원이 결제됐습니다. 환불은 거부됐습니다.",
+   "headline": "16만 7400원 결제",
+   "sub": "한국소비자원 피해 사례 (2013년)",
+   "icon": "money",
+   "accent": "red"
+  },
+  {
+   "narration": "공정위 안내 문답엔, 열세 살 아이가 약 40일 동안 80번에 걸쳐 670만 원어치 아이템을 산 경우도 나옵니다.",
+   "headline": "약 40일에 670만 원",
+   "sub": "공정거래위원회 문답 사례 (2019년)",
+   "icon": "warning",
+   "accent": "red"
+  },
+  {
+   "narration": "부모 명의 폰으로 결제하면, 아이가 했다는 걸 증명하기 어려워 환불이 안 될 수 있습니다.",
+   "headline": "부모 폰 결제, 환불 어렵다",
+   "sub": "앱결제안심터·한국소비자원 안내",
+   "icon": "warning",
+   "accent": "yellow"
+  },
+  {
+   "narration": "오늘 플레이 스토어는 구매할 때마다 인증인지 확인하고, 아이폰은 암호 설정을 항상 입력으로 바꾸세요. 아이 계정이 따로 있다면 구입 요청을 켜세요.",
+   "headline": "결제마다 인증 확인",
+   "sub": "아이가 폰 잠금 비밀번호를 안다면 바꾸기",
+   "icon": "lock",
+   "accent": "green"
+  }
+ ],
+ "sources": [
+  {
+   "title": "한국소비자원 피해예방주의보, 모바일게임 부모 동의 없는 미성년자 결제 피해 많아 (2013-12-10)",
+   "url": "https://www.kca.go.kr/home/sub.do?menukey=4005&mode=view&no=1001462285"
+  },
+  {
+   "title": "정책브리핑(공정거래위원회), 아이가 부모 동의 없이 산 게임 아이템, 환불받을 수 있을까 (2019-12-02)",
+   "url": "https://www.korea.kr/multi/visualNewsView.do?newsId=148867012"
+  },
+  {
+   "title": "Google Play 고객센터, 대한민국의 Google Play 구매 인증",
+   "url": "https://support.google.com/googleplay/answer/1626831?hl=ko"
+  },
+  {
+   "title": "Apple 지원, '구입 요청'으로 자녀가 구입 및 다운로드할 수 있는 항목 승인하기",
+   "url": "https://support.apple.com/ko-kr/105055"
+  },
+  {
+   "title": "앱결제안심터, 미성년자 결제 환불 안내",
+   "url": "https://www.appsafer.or.kr/refund/refundInfoList"
+  },
+  {
+   "title": "Apple 지원, 구입 시 암호 설정 관리하기",
+   "url": "https://support.apple.com/ko-kr/119848"
+  }
+ ],
+ "music": "explainer",
+ "author": "llm:claude-opus-5-5 (research agent; source video not watched); fixes from fact-checker review applied by orchestrator"
+}

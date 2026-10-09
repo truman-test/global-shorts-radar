@@ -5,7 +5,8 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 *.db
-.claude/
+/.claude/*
+!/.claude/agents/
 research_notes/
 media/
 .venv-tts/

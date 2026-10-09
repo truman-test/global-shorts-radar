@@ -31,6 +31,7 @@ Everything else is the orchestrator's job. Talk to the owner in plain, short Kor
      ~2.5 s and ~50% to look at it, check loudness (target −14 LUFS ±1.5), and set status `ready`;
    - if the owner rejected a fact (status `false`), drop the entry and pull the next approved story forward.
    Fill empty future dates from approved, unscheduled scripts (`content/scripts/2026-10-09-*.json` etc.).
+   Before marking a video `ready`, have a `video-qa` agent check it (or do the same checks yourself).
    Prefer variety: don't put two stories of the same kind (e.g. two voice-clone calls) back to back.
 4. **Notepad:** `PYTHONUTF8=1 .venv/Scripts/python.exe tools/upload_notepad.py` writes
    `media/upload/업로드_예정.txt` plus thumbnails. It exits non-zero if a scheduled video is missing.
@@ -38,18 +39,20 @@ Everything else is the orchestrator's job. Talk to the owner in plain, short Kor
    and no approval request is still waiting, prepare the next batch of up to 7 stories:
    - pick on-topic candidates from today's report (`reports/radar_*.md`, ranking + Topic fit), skipping
      published/used source ids (`published` table, existing scripts) and off-topic items;
-   - for each: a Korean fact sheet `content/week*/<video_id>.md` (claims → exact source URL, publisher, date,
-     short quote; uncertainties; one prevention action) and a draft script
-     `content/scripts/<yyyy-mm-dd>-<slug>.json` that passes `radar script-check --allow-unverified`.
-     Use official/primary sources (경찰청, 금융감독원, KISA, 방통위, FBI/FTC, vendor statements) and open every URL.
-     Parallel research agents are fine; review their work before using it;
-   - write `media/upload/사실확인_요청_<yyyymmdd>.md` for the owner: per story 3–5 lines (what the video
-     claims, the 1–3 key sources) and the exact approve command
-     `PYTHONUTF8=1 .venv/Scripts/radar.exe verify <video_id> --status verified --source <url> --note "<짧게>"`
-     and the reject command (`--status false`). Add the stories to `content/schedule.json` as `planned`.
-6. **Commit and push** scripts, fact sheets, schedule and code changes (not media).
+   - use the specialist agents defined in `.claude/agents/` (spawn them as general-purpose agents told to read
+     and follow their file if the named types are not available): `fact-researcher` writes the fact sheet
+     `content/week*/<video_id>.md`; `script-writer` writes `content/scripts/<yyyy-mm-dd>-<slug>.json` (must pass
+     `radar script-check --allow-unverified`); then a DIFFERENT agent acting as `fact-checker` writes
+     `content/week*/<video_id>.review.md`. Apply the checker's fixes to the script yourself and re-run script-check.
+     Drop stories the checker marks 보류. Review every agent's output before using it;
+   - write `media/upload/사실확인_요청_<yyyymmdd>.md` for the owner in plain Korean: per story 3-5 lines (what the
+     video claims, the checker's verdict, the 1-3 key sources) and the reject command per story
+     (`radar verify <id> --status false --note "..."`), then ONE copy-paste block that approves every 승인 권장 story
+     (one `radar verify <id> --status verified --source <url> --note "owner approved <date>"` line each). The owner
+     approves; you never run these commands. Add the stories to `content/schedule.json` as `planned`.
+6. **Commit and push** scripts, fact sheets, reviews, schedule and code changes (not media).
 7. **Tell the owner** with one push notification (PushNotification, under 200 chars, Korean): today's video
    title and that `media/upload/업로드_예정.txt` is ready; plus "사실 확인 요청 N건" if a batch is waiting
    or a problem that needs them. Send the notepad and today's thumbnail with SendUserFile if available.
-8. **Weekly (Mondays):** a short Korean review in `reports/weekly_<yyyymmdd>.md`: subscribers, views per
+8. **Weekly (Mondays):** have a `growth-analyst` agent write a short Korean review in `reports/weekly_<yyyymmdd>.md`: subscribers, views per
    video, which hooks/topics did best, and what to change in the next batch (topics, hook style, length).
