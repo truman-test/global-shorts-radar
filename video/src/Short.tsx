@@ -13,7 +13,14 @@ import {FONT} from "./fonts";
 import {CallScene} from "./CallScene";
 import {CardScene} from "./CardScene";
 import {Captions} from "./Captions";
-import {ACCENTS, ShortProps} from "./types";
+import {AlertScene} from "./AlertScene";
+import {ChatScene} from "./ChatScene";
+import {ChecklistScene} from "./ChecklistScene";
+import {ALERT_LAND, chatBeats, checklistTicks, SMS_ARRIVE, STAT_COUNT, timelineBeats} from "./schedule";
+import {SmsScene} from "./SmsScene";
+import {StatScene} from "./StatScene";
+import {TimelineScene} from "./TimelineScene";
+import {ACCENTS, SceneProps, ShortProps} from "./types";
 
 const sceneFrames = (props: ShortProps, fps: number) => {
   let from = 0;
@@ -101,6 +108,63 @@ const Sfx: React.FC<{name: string; at: number; volume: number; until?: number}> 
   </Sequence>
 );
 
+const SceneBody: React.FC<{scene: SceneProps}> = ({scene}) => {
+  switch (scene.layout) {
+    case "call": return <CallScene scene={scene} />;
+    case "chat": return <ChatScene scene={scene} />;
+    case "sms": return <SmsScene scene={scene} />;
+    case "alert": return <AlertScene scene={scene} />;
+    case "stat": return <StatScene scene={scene} />;
+    case "timeline": return <TimelineScene scene={scene} />;
+    case "checklist": return <ChecklistScene scene={scene} />;
+    default: return <CardScene scene={scene} />;
+  }
+};
+
+/** Synthesized SFX, timed from the same schedules the scene components animate with. */
+const SceneSfx: React.FC<{scene: SceneProps; first: boolean; last: boolean; lead: number; words: number;
+  fps: number}> = ({scene, first, last, lead, words, fps}) => {
+  const whoosh = first ? null : <Sfx name="whoosh" at={0} volume={0.35} />;
+  const pops = (frames: number[], volume = 0.28) => frames.map((f, k) => (
+    <Sfx key={k} name={last && k === frames.length - 1 ? "ding" : "pop"} at={f} volume={volume} />
+  ));
+  switch (scene.layout) {
+    case "call":
+      return (
+        <>
+          <Sfx name="ring" at={0} volume={0.55} until={lead + 6} />
+          <Sfx name="vibrate" at={0} volume={0.5} until={lead + 4} />
+        </>
+      );
+    case "chat":
+      return <>{whoosh}{pops(chatBeats(scene, fps).map((b) => b.showAt), 0.26)}</>;
+    case "sms":
+      return (
+        <>
+          {whoosh}
+          <Sfx name="vibrate" at={SMS_ARRIVE - 2} volume={0.4} until={SMS_ARRIVE + 14} />
+          <Sfx name="pop" at={SMS_ARRIVE} volume={0.3} />
+        </>
+      );
+    case "alert":
+      return (
+        <>
+          {whoosh}
+          <Sfx name="vibrate" at={ALERT_LAND - 2} volume={0.4} until={ALERT_LAND + 12} />
+          <Sfx name="ding" at={ALERT_LAND - 2} volume={0.32} />
+        </>
+      );
+    case "stat":
+      return <>{whoosh}<Sfx name={last ? "ding" : "pop"} at={STAT_COUNT[1]} volume={0.3} /></>;
+    case "timeline":
+      return <>{whoosh}{pops(timelineBeats(scene, fps))}</>;
+    case "checklist":
+      return <>{whoosh}{pops(checklistTicks(scene, fps))}</>;
+    default:
+      return <>{whoosh}<Sfx name={last ? "ding" : "pop"} at={6 + words * 3} volume={0.3} /></>;
+  }
+};
+
 /** Background music: fades in/out, ducks under narration with short ramps so lines stay clear. */
 const MusicBed: React.FC<{props: ShortProps}> = ({props}) => {
   const {fps, durationInFrames} = useVideoConfig();
@@ -140,26 +204,15 @@ export const Short: React.FC<ShortProps> = (props) => {
         const words = scene.headline.split(" ").length;
         return (
           <Sequence key={i} from={from} durationInFrames={frames}>
-            {scene.layout === "call" ? <CallScene scene={scene} /> : <CardScene scene={scene} />}
+            <SceneBody scene={scene} />
             <Captions pages={scene.pages} />
             {scene.audio ? (
               <Sequence from={lead} layout="none">
                 <Audio src={staticFile(scene.audio)} />
               </Sequence>
             ) : null}
-            {props.sfx ? (
-              scene.layout === "call" ? (
-                <>
-                  <Sfx name="ring" at={0} volume={0.55} until={lead + 6} />
-                  <Sfx name="vibrate" at={0} volume={0.5} until={lead + 4} />
-                </>
-              ) : (
-                <>
-                  {i > 0 ? <Sfx name="whoosh" at={0} volume={0.35} /> : null}
-                  <Sfx name={i === props.scenes.length - 1 ? "ding" : "pop"} at={6 + words * 3} volume={0.3} />
-                </>
-              )
-            ) : null}
+            {props.sfx ? <SceneSfx scene={scene} first={i === 0} last={i === props.scenes.length - 1}
+              lead={lead} words={words} fps={fps} /> : null}
           </Sequence>
         );
       })}

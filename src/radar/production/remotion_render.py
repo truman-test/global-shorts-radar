@@ -22,6 +22,7 @@ from radar.production.tts import TTSError
 VIDEO_DIR = PROJECT_ROOT / "video"
 TAIL_GAP = 0.25          # seconds after each scene's speech
 CALL_LEAD_IN = 0.9       # the phone rings before the first line
+LEAD_IN = {"call": CALL_LEAD_IN, "alert": 0.5}   # alert: the banner lands (ding) before the narration
 CAPTION_MAX_CHARS = 11
 PAGE_HOLD = 0.35         # keep the last page on screen a moment after the last word
 
@@ -183,6 +184,33 @@ def build_props(script: Script, scenes: list[dict], channel_name: str, sfx: bool
             "music": music, "scenes": scenes}
 
 
+def layout_props(scene) -> dict:
+    """Layout-specific fields for the React scene components (camelCase, only what the layout uses)."""
+    if scene.layout == "call":
+        return {"caller": scene.caller, "callerSub": scene.caller_sub or "휴대전화",
+                "callLabel": scene.call_label or "수신 전화"}
+    if scene.layout == "chat":
+        return {"chatTitle": scene.chat_title or "대화",
+                "messages": [{"from": m["from"], "text": m["text"]} for m in scene.messages]}
+    if scene.layout == "sms":
+        return {"sender": scene.sender, "smsText": scene.sms_text}
+    if scene.layout == "alert":
+        return {"appLabel": scene.app_label, "alertText": scene.alert_text}
+    if scene.layout == "stat":
+        return {"statValue": scene.stat_value, "statLabel": scene.stat_label}
+    if scene.layout == "timeline":
+        return {"steps": [{"when": s["when"], "text": s["text"]} for s in scene.steps]}
+    if scene.layout == "checklist":
+        return {"items": list(scene.items)}
+    return {}
+
+
+def scene_props(scene, audio: str, lead: float, speech: float, length: float, pages: list[dict]) -> dict:
+    return {"layout": scene.layout, "audio": audio, "leadInMs": round(lead * 1000), "speechMs": round(speech * 1000),
+            "durationMs": round(length * 1000), "pages": pages, "headline": scene.headline, "sub": scene.sub,
+            "icon": scene.icon, "accent": scene.accent, **layout_props(scene)}
+
+
 def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name: str, sfx: bool = True,
                      timeout: int = 1800) -> ProductionResult:
     if not (VIDEO_DIR / "node_modules" / "remotion").is_dir():
@@ -205,17 +233,11 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
         if speech < 0.3:
             raise ProductionError(f"scene {i + 1}: TTS produced no usable audio")
         shutil.copy(wav, public_job / wav.name)
-        lead = CALL_LEAD_IN if scene.layout == "call" else 0.0
+        lead = LEAD_IN.get(scene.layout, 0.0)
         length = lead + speech + TAIL_GAP
         timed = [(w, a + lead, b + lead) for w, a, b in words]
-        scenes.append({
-            "layout": scene.layout, "audio": f"jobs/{script.id}/{wav.name}", "leadInMs": round(lead * 1000),
-            "speechMs": round(speech * 1000), "durationMs": round(length * 1000),
-            "pages": caption_pages(scene.narration, timed, length),
-            "headline": scene.headline, "sub": scene.sub, "icon": scene.icon, "accent": scene.accent,
-            **({"caller": scene.caller, "callerSub": scene.caller_sub or "휴대전화",
-                "callLabel": scene.call_label or "수신 전화"} if scene.layout == "call" else {}),
-        })
+        scenes.append(scene_props(scene, f"jobs/{script.id}/{wav.name}", lead, speech, length,
+                                  caption_pages(scene.narration, timed, length)))
         total += round(length * 1000) / 1000
     music, music_item = music_props(script)
     props_path = out_dir / "props.json"
