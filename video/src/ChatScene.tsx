@@ -1,0 +1,89 @@
+import React from "react";
+import {interpolate, spring, useCurrentFrame, useVideoConfig} from "remotion";
+import {Avatar, BUBBLE_ME, BUBBLE_THEM, clamp, MUTED, PhonePanel, SceneHeader, SceneShell} from "./kit";
+import {chatBeats} from "./schedule";
+import {SceneProps} from "./types";
+
+const FONT_SIZE = 42;
+const CHARS_PER_LINE = 14; // at 42px inside a bubble capped at 78% of the panel
+
+/** Rough bubble height, only used to let the thread grow smoothly instead of jumping. */
+const estHeight = (text: string) => Math.ceil(Math.max(1, text.length) / CHARS_PER_LINE) * 56 + 46;
+
+const TypingDots: React.FC<{frame: number}> = ({frame}) => (
+  <div style={{display: "flex", gap: 12, padding: "26px 30px", borderRadius: 34, borderBottomLeftRadius: 10,
+    background: BUBBLE_THEM}}>
+    {[0, 1, 2].map((k) => {
+      const y = Math.sin((frame - k * 4) / 3.2);
+      return (
+        <div key={k} style={{width: 16, height: 16, borderRadius: "50%", background: "rgba(230,236,245,0.8)",
+          transform: `translateY(${Math.min(0, y) * 9}px)`, opacity: 0.5 + 0.5 * Math.max(0, -y)}} />
+      );
+    })}
+  </div>
+);
+
+/**
+ * Invented messenger thread: bubbles arrive one by one over the narration (typing dots before
+ * each incoming one), newest at the bottom, older ones scrolling up and fading under the header.
+ */
+export const ChatScene: React.FC<{scene: SceneProps}> = ({scene}) => {
+  const frame = useCurrentFrame();
+  const {fps} = useVideoConfig();
+  const msgs = scene.messages ?? [];
+  const beats = chatBeats(scene, fps);
+  const title = scene.chatTitle ?? "대화";
+
+  const rows: React.ReactNode[] = [];
+  msgs.forEach((m, k) => {
+    const {typingFrom, showAt} = beats[k];
+    const me = m.from === "me";
+    if (typingFrom !== null && frame >= typingFrom && frame < showAt) {
+      const t = spring({frame: frame - typingFrom, fps, config: {damping: 14}});
+      rows.push(
+        <div key={`t${k}`} style={{alignSelf: "flex-start", flexShrink: 0, maxHeight: 90 * t, opacity: t,
+          transform: `scale(${0.7 + 0.3 * t})`, transformOrigin: "0% 100%"}}>
+          <TypingDots frame={frame} />
+        </div>,
+      );
+    }
+    if (frame < showAt) return;
+    const s = spring({frame: frame - showAt, fps, config: {damping: 13, mass: 0.55}});
+    const grow = typingFrom !== null ? 1 : interpolate(s, [0, 0.6], [0, 1], clamp);
+    rows.push(
+      <div key={k} style={{alignSelf: me ? "flex-end" : "flex-start", maxWidth: "78%", flexShrink: 0,
+        maxHeight: (estHeight(m.text) + 60) * grow, opacity: Math.min(1, s * 1.3),
+        transform: `translateY(${(1 - s) * 24}px) scale(${0.82 + 0.18 * s})`,
+        transformOrigin: me ? "100% 100%" : "0% 100%"}}>
+        <div style={{padding: "20px 30px 22px", borderRadius: 34,
+          [me ? "borderBottomRightRadius" : "borderBottomLeftRadius"]: 10,
+          background: me ? BUBBLE_ME : BUBBLE_THEM, fontSize: FONT_SIZE, fontWeight: 700, lineHeight: 1.3,
+          color: "#fff", boxShadow: "0 8px 24px rgba(0,0,0,0.3)"}}>
+          {m.text}
+        </div>
+      </div>,
+    );
+  });
+
+  return (
+    <SceneShell>
+      <SceneHeader scene={scene} />
+      <PhonePanel header={
+        <>
+          <Avatar label={title} />
+          <div style={{display: "flex", flexDirection: "column"}}>
+            <div style={{fontSize: 40, fontWeight: 800}}>{title}</div>
+            <div style={{fontSize: 26, fontWeight: 700, color: MUTED}}>메신저</div>
+          </div>
+        </>
+      }>
+        <div style={{flex: 1, display: "flex", flexDirection: "column", justifyContent: "flex-end", gap: 18,
+          padding: "0 30px 34px", overflow: "hidden",
+          maskImage: "linear-gradient(180deg, transparent 0px, #000 70px)",
+          WebkitMaskImage: "linear-gradient(180deg, transparent 0px, #000 70px)"}}>
+          {rows}
+        </div>
+      </PhonePanel>
+    </SceneShell>
+  );
+};

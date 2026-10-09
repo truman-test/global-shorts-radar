@@ -13,6 +13,17 @@ never contains the source video's narration. JSON shape:
   "sources": [{"title": "...", "url": "https://..."}],
   "author": "llm:<model> | manual"
 }
+
+Scene layouts ("layout"; every layout keeps headline/sub/icon/accent):
+  card       explainer card (default)
+  call       incoming-call mockup: caller, caller_sub, call_label
+  chat       invented messenger thread: chat_title, messages=[{"from": "them"|"me", "text": "..."}]
+  sms        invented text message: sender, sms_text (links masked like "http://●●●●.kr/…")
+  alert      push banner over a dimmed phone: app_label (generic, e.g. "은행 앱"), alert_text
+  stat       one big counting number: stat_value ("6,581억 원"), stat_label
+  timeline   2-4 dated steps: steps=[{"when": "1일차", "text": "..."}]
+  checklist  2-4 action items ticked one by one: items=["...", "..."]
+Mockup text never contains real phone numbers, real-looking links or brand names.
 """
 from __future__ import annotations
 
@@ -28,7 +39,14 @@ SYLLABLES_PER_SECOND = 6.0   # measured 6.01 chars/s on edge-tts SunHi at +15% a
 SCENE_GAP = 0.2              # seconds of silence after each scene
 MIN_SECONDS, MAX_SECONDS = 12.0, 50.0
 TARGET_SECONDS = (15.0, 45.0)
-LAYOUTS = ("card", "call")
+LAYOUTS = ("card", "call", "chat", "sms", "alert", "stat", "timeline", "checklist")
+MASK = "●"
+# Real apps, banks, platforms and people that must never appear in an invented mockup.
+BRANDS = ("카카오", "카톡", "토스", "네이버", "구글", "애플", "삼성", "갤럭시", "아이폰", "유튜브", "인스타", "페이스북",
+          "쿠팡", "배민", "국민은행", "신한", "우리은행", "하나은행", "농협", "기업은행", "케이뱅크", "새마을금고",
+          "우체국", "SKT", "KT", "LG유플러스", "kakao", "toss", "naver", "google", "apple", "samsung", "galaxy",
+          "iphone", "youtube", "instagram", "facebook", "whatsapp", "telegram", "coupang", "paypal", "amazon",
+          "netflix", "microsoft", "openai", "chatgpt")
 _ID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{2,80}$")
 
 
@@ -48,6 +66,16 @@ class Scene:
     caller: str = ""
     caller_sub: str = ""
     call_label: str = ""        # call layout: "수신 전화" (default) or e.g. "영상통화"
+    chat_title: str = ""        # chat: name in the thread header, e.g. "엄마"
+    messages: list[dict] = field(default_factory=list)   # chat: [{"from": "them"|"me", "text": "..."}]
+    sender: str = ""            # sms: sender label, e.g. "택배 안내" or "010-●●●●-●●●●"
+    sms_text: str = ""          # sms: body; links masked like "http://●●●●.kr/…"
+    app_label: str = ""         # alert: generic app name, e.g. "은행 앱"
+    alert_text: str = ""        # alert: notification body
+    stat_value: str = ""        # stat: e.g. "6,581억 원" (the numeric part counts up)
+    stat_label: str = ""        # stat: what the number is
+    steps: list[dict] = field(default_factory=list)      # timeline: [{"when": "1일차", "text": "..."}]
+    items: list[str] = field(default_factory=list)       # checklist: ["...", "..."]
 
     def tts_text(self) -> str:
         return self.tts.strip() or normalize_for_tts(self.narration)
@@ -81,7 +109,16 @@ def load_script(path: str | Path) -> Script:
                         accent=str(s.get("accent", "yellow")), tts=str(s.get("tts", "")),
                         layout=str(s.get("layout", "card")), caller=str(s.get("caller", "")).strip(),
                         caller_sub=str(s.get("caller_sub", "")).strip(),
-                        call_label=str(s.get("call_label", "")).strip())
+                        call_label=str(s.get("call_label", "")).strip(),
+                        chat_title=str(s.get("chat_title", "")).strip(),
+                        messages=[{"from": str(m.get("from", "them")).strip(), "text": str(m.get("text", "")).strip()}
+                                  for m in s.get("messages", [])],
+                        sender=str(s.get("sender", "")).strip(), sms_text=str(s.get("sms_text", "")).strip(),
+                        app_label=str(s.get("app_label", "")).strip(), alert_text=str(s.get("alert_text", "")).strip(),
+                        stat_value=str(s.get("stat_value", "")).strip(), stat_label=str(s.get("stat_label", "")).strip(),
+                        steps=[{"when": str(t.get("when", "")).strip(), "text": str(t.get("text", "")).strip()}
+                               for t in s.get("steps", [])],
+                        items=[str(t).strip() for t in s.get("items", [])])
                   for s in data["scenes"]]
         return Script(id=str(data["id"]), source_video_id=str(data["source_video_id"]), title=str(data["title"]).strip(),
                       description=str(data.get("description", "")).strip(), tags=[str(t) for t in data.get("tags", [])],
@@ -127,6 +164,83 @@ def build_description(script: Script, voice_note: str = "AI 합성 음성 (실�
     return "\n".join(lines).strip()
 
 
+_LINKISH_RE = re.compile(r"(?i)://|www\.|\.[a-z]{2,6}(?:/|$)")
+_MASKED_LINK_RE = re.compile(r"^(?:https?://)?●+(?:\.●+)*\.[a-z]{2,6}(?:/[●…./]*)?[가-힣]*$")
+_PHONE_RE = re.compile(
+    r"(?<!\d)(?:\+?82[-. ]?)?0\d{1,2}[-. )]?\d{3,4}[-. ]?\d{4}(?!\d)"    # 010-1234-5678, 02-123-4567
+    r"|(?<!\d)1[5-9]\d{2}[-. ]?\d{4}(?!\d)"                              # 1588-0000
+    r"|\+\d{1,3}[ -]?\d{2,4}[ -]?\d{3,4}[ -]?\d{3,4}"                    # +1 202 555 0100
+    r"|\d{7,}")                                                          # account-like digit runs
+_BRAND_RES = [(b, re.compile(rf"(?<![A-Za-z]){re.escape(b)}(?![A-Za-z])", re.I) if b.isascii()
+               else re.compile(re.escape(b) + ("(?!트)" if b == "토스" else ""))) for b in BRANDS]
+
+
+def mockup_text_problems(text: str) -> list[str]:
+    """Problems with text shown inside an invented phone mockup: real-looking links, real phone or
+    account numbers, real brand names. Links must be masked with ● in host and path ("http://●●●●.kr/…"),
+    numbers like "010-●●●●-●●●●"."""
+    problems = []
+    for token in text.split():
+        token = token.strip(".,!?)(\"'“”‘’[]<>")
+        if token and _LINKISH_RE.search(token):
+            if not _MASKED_LINK_RE.match(token):
+                problems.append(f"unmasked link '{token}' (mask it like http://{MASK * 4}.kr/…)")
+            elif len(token) > 24:
+                problems.append(f"masked link '{token}' is longer than 24 characters (it must fit one line)")
+    problems += [f"real-looking number '{m.group(0).strip()}' (mask digits with {MASK})" for m in _PHONE_RE.finditer(text)]
+    problems += [f"real brand '{b}' (use a generic name like '은행 앱')" for b, rx in _BRAND_RES if rx.search(text)]
+    return problems
+
+
+# layout -> (required fields, fields shown inside a mockup, max characters per field)
+_LAYOUT_RULES = {
+    "call": (("caller",), ("caller", "caller_sub"), {"caller": 8, "caller_sub": 14}),
+    "chat": (("messages",), ("chat_title",), {"chat_title": 12}),
+    "sms": (("sender", "sms_text"), ("sender", "sms_text"), {"sender": 20, "sms_text": 100}),
+    "alert": (("app_label", "alert_text"), ("app_label", "alert_text"), {"app_label": 12, "alert_text": 70}),
+    "stat": (("stat_value", "stat_label"), (), {"stat_value": 12, "stat_label": 28}),
+    "timeline": (("steps",), (), {}),
+    "checklist": (("items",), (), {}),
+}
+
+
+def _layout_errors(i: int, sc: Scene) -> list[str]:
+    need, mock, limits = _LAYOUT_RULES.get(sc.layout, ((), (), {}))
+    errors = []
+    for name in need:
+        if not getattr(sc, name):
+            errors.append(f"scene {i}: layout '{sc.layout}' needs {'a caller name' if name == 'caller' else name}")
+    for name, n in limits.items():
+        if len(getattr(sc, name)) > n:
+            errors.append(f"scene {i}: {name} is longer than {n} characters")
+    texts = [getattr(sc, name) for name in mock]
+    if sc.layout == "chat":
+        texts += [m.get("text", "") for m in sc.messages]
+        if len(sc.messages) > 5:
+            errors.append(f"scene {i}: chat has {len(sc.messages)} messages; use at most 5")
+        for k, m in enumerate(sc.messages, start=1):
+            if m.get("from") not in ("them", "me"):
+                errors.append(f"scene {i}: message {k} 'from' must be 'them' or 'me'")
+            if not 1 <= len(m.get("text", "")) <= 40:
+                errors.append(f"scene {i}: message {k} needs text of 1-40 characters")
+    elif sc.layout == "stat" and sc.stat_value and not re.search(r"\d", sc.stat_value):
+        errors.append(f"scene {i}: stat_value '{sc.stat_value}' has no number to count up")
+    elif sc.layout == "timeline":
+        if sc.steps and not 2 <= len(sc.steps) <= 4:
+            errors.append(f"scene {i}: timeline needs 2-4 steps")
+        for k, st in enumerate(sc.steps, start=1):
+            if not st.get("when") or len(st["when"]) > 10 or not st.get("text") or len(st["text"]) > 26:
+                errors.append(f"scene {i}: step {k} needs 'when' (<= 10 chars) and 'text' (<= 26 chars)")
+    elif sc.layout == "checklist":
+        if sc.items and not 2 <= len(sc.items) <= 4:
+            errors.append(f"scene {i}: checklist needs 2-4 items")
+        if any(not 1 <= len(t) <= 22 for t in sc.items):
+            errors.append(f"scene {i}: checklist items must be 1-22 characters")
+    for text in texts:
+        errors += [f"scene {i}: {p}" for p in mockup_text_problems(text)]
+    return errors
+
+
 def validate(script: Script, db=None, allow_unverified: bool = False) -> tuple[list[str], list[str]]:
     """QA gate. Returns (errors, warnings); production refuses to run with any error."""
     errors, warnings = [], []
@@ -148,8 +262,8 @@ def validate(script: Script, db=None, allow_unverified: bool = False) -> tuple[l
             errors.append(f"scene {i}: unknown icon '{sc.icon}' (use {', '.join(ICONS)})")
         if sc.layout not in LAYOUTS:
             errors.append(f"scene {i}: unknown layout '{sc.layout}' (use {', '.join(LAYOUTS)})")
-        elif sc.layout == "call" and not sc.caller:
-            errors.append(f"scene {i}: layout 'call' needs a caller name")
+        else:
+            errors += _layout_errors(i, sc)
         if sc.accent not in ACCENTS:
             errors.append(f"scene {i}: unknown accent '{sc.accent}' (use {', '.join(ACCENTS)})")
         if re.search(r"https?://|www\.", sc.narration + sc.headline + sc.sub):
