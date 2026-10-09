@@ -21,3 +21,11 @@ Workflow: implement, add props to types.ts and the Python builder, validate in s
 run `PYTHONUTF8=1 .venv/Scripts/python.exe -m pytest -q` and `cd video && npx tsc --noEmit`, then render stills with
 `npx remotion still` (or a short render) and LOOK at them before reporting. Do not change voice, music, captions logic
 or the disclosure badges unless asked.
+
+Reference library (ideas only): https://github.com/zhuyansen/awesome-opus-5.5-video lists ~1,400 videos made with
+Claude 5.5 models (cases.json; prompts on jasonzhu.ai). The repo has no license and says inclusion grants no license:
+never copy a listed work, its assets or a prompt verbatim into our project. Use it only to learn techniques, e.g.
+motion driven purely by time (springs computed from the frame, no state between frames), small overshoot instead of
+bouncy easing, shared-element continuity between scenes instead of hard cuts, beat-aligned scene changes, a restrained
+palette with one accent, and checking one preview frame per beat/scene before a full render. Most useful categories:
+"motion" and "education" (filter tools_reported for Remotion).
