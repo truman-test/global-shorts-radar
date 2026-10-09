@@ -89,10 +89,13 @@ const TopBar: React.FC<{channel: string; voiceLabel?: string}> = ({channel, voic
   );
 };
 
+/** Frames the first scene's visuals are advanced by (see the poster start in Short). */
+export const POSTER = 24;
+
 const DisclaimerBadge: React.FC<{text: string}> = ({text}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
-  const s = spring({frame, fps, config: {damping: 16}});
+  const s = spring({frame: frame + POSTER, fps, config: {damping: 16}});
   return (
     <div style={{position: "absolute", top: 160, width: "100%", display: "flex", justifyContent: "center",
       opacity: s, transform: `translateY(${(1 - s) * -20}px)`}}>
@@ -221,9 +224,19 @@ export const Short: React.FC<ShortProps> = (props) => {
           const last = i === n - 1;
           return (
             <Sequence key={i} from={from} durationInFrames={frames + (cont && !last ? MORPH : 0)}>
-              <SceneContext.Provider value={{mode, index: i, frames, first: i === 0, last}}>
-                <SceneBody scene={scene} />
-              </SceneContext.Provider>
+              {i === 0 ? (
+                // Poster start: the first scene's visuals run POSTER frames ahead, so frame 0 (the feed preview,
+                // and the moment viewers decide to swipe) already shows the finished hook, not an empty screen.
+                <Sequence from={-POSTER} layout="none">
+                  <SceneContext.Provider value={{mode, index: i, frames: frames + POSTER, first: true, last}}>
+                    <SceneBody scene={scene} />
+                  </SceneContext.Provider>
+                </Sequence>
+              ) : (
+                <SceneContext.Provider value={{mode, index: i, frames, first: false, last}}>
+                  <SceneBody scene={scene} />
+                </SceneContext.Provider>
+              )}
             </Sequence>
           );
         })}
@@ -240,7 +253,7 @@ export const Short: React.FC<ShortProps> = (props) => {
         const words = scene.headline.split(" ").length;
         return (
           <Sequence key={i} from={from} durationInFrames={frames}>
-            <Captions pages={scene.pages} />
+            <Captions pages={scene.pages} instantFirst={i === 0} />
             {scene.audio ? (
               <Sequence from={lead} layout="none">
                 <Audio src={staticFile(scene.audio)} />

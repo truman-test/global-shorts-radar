@@ -13,14 +13,15 @@ const Outlined: React.FC<{text: string; color: string}> = ({text, color}) => (
 );
 
 /** Word-synced captions: the page of words being spoken, the current word in yellow and slightly larger. */
-export const Captions: React.FC<{pages: CaptionPage[]}> = ({pages}) => {
+export const Captions: React.FC<{pages: CaptionPage[]; instantFirst?: boolean}> = ({pages, instantFirst}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const t = (frame / fps) * 1000;
   const page = pages.find((p) => t >= p.startMs && t < p.endMs);
   if (!page) return null;
   const pageFrame = Math.round(((t - page.startMs) / 1000) * fps);
-  const pop = spring({frame: pageFrame, fps, config: {damping: 13, mass: 0.5}});
+  // the very first page of the video is on screen from frame 0 (no pop-in), so the opening frame is complete
+  const pop = instantFirst && page === pages[0] && page.startMs === 0 ? 1 : spring({frame: pageFrame, fps, config: {damping: 13, mass: 0.5}});
   return (
     <div style={{position: "absolute", top: 1255, left: 70, right: 150, display: "flex", flexWrap: "wrap",
       justifyContent: "center", alignItems: "baseline", columnGap: 36, rowGap: 6, fontSize: 82, fontWeight: 800,
