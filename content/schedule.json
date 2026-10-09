@@ -51,19 +51,19 @@
   {
    "date": "2026-10-17",
    "script": "2026-10-09-fake-map-number",
-   "status": "planned",
+   "status": "ready",
    "source_video_id": "Xz7rLQ62WOs"
   },
   {
    "date": "2026-10-18",
    "script": "2026-10-09-airbnb-fake-damage-photo",
-   "status": "planned",
+   "status": "ready",
    "source_video_id": "WNu1h71ID_4"
   },
   {
    "date": "2026-10-19",
    "script": "2026-10-09-kid-password",
-   "status": "planned",
+   "status": "ready",
    "source_video_id": "D1Z-xslsgyg"
   }
  ]
