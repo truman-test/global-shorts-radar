@@ -11,8 +11,11 @@ Read src/radar/production/script.py (format and validation rules) and two existi
 
 Rules:
 - 5 scenes, 28-35 s spoken (about 6 Korean characters per second).
-- Scene 1 is the hook in the first 2 seconds: a question or a realistic moment. Use the "call" layout when a phone or
-  video call fits.
+- Scene 1 is the hook in the first 2 seconds: a question or a realistic moment.
+- Pick a visual layout per scene (see the list at the top of script.py); use at least 2 non-card layouts per video:
+  "call" for a phone/video call, "chat" for messenger reenactments, "sms" for a text with a masked link, "alert" for a
+  push notification, "stat" for the one key number, "timeline" for 2-4 dated steps, "checklist" for the final actions.
+  Mockup text is a reenactment: generic names only ("은행 앱", "메신저"), masked links/numbers, nothing beyond the facts.
 - One idea per scene. The last scene is one action the viewer can do today.
 - Every number and fact must appear in the fact sheet. Keep its hedging ("주장", "의심") and its dates.
 - No URLs or English abbreviations in narration; brand names in Hangul; numbers as digits (the system normalizes them).
