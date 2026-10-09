@@ -120,6 +120,9 @@ terms = ["phone", "iphone", "android", "ai", "scam", "password", "hacker", "hack
 # ---------------------------------------------------------------- production (our own Shorts)
 [channel]
 name = "디지털 생존노트"      # chosen by the orchestrator on 2026-10-08 (user delegated); change freely
+handle = "@digitalsurvivalnote"                 # channel created by the user on 2026-10-09
+channel_id = "UCKOGChZBYFRMiRntfMlmNiQ"
+url = "https://www.youtube.com/@digitalsurvivalnote"
 
 [production]
 # supertonic = Supertonic 3, local open weights (OpenRAIL-M: commercial OK, disclose AI voice): publishable, free
