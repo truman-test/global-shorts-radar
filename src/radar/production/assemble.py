@@ -174,14 +174,18 @@ def produce(script: Script, out_root: str | Path, *, tts, channel_name: str, fon
 
 def write_meta(out_dir: Path, script: Script, duration: float, size: str, tts, warnings: list[str],
                extra: dict | None = None) -> Path:
-    """meta.json next to the video: everything an uploader needs, plus provenance."""
+    """meta.json next to the video: everything an uploader needs, plus provenance.
+
+    contains_synthetic_media is always True: the narration is machine generated and the scenes are
+    realistic reenactments, which YouTube asks creators to disclose (the "altered or synthetic content" box).
+    """
     meta = out_dir / "meta.json"
     meta.write_text(json.dumps({
         "script_id": script.id, "source_video_id": script.source_video_id, "script_path": script.path,
         "title": script.title, "description": build_description(script), "tags": script.tags,
         "duration_seconds": round(duration, 2), "size": size, "tts_backend": tts.name,
         "voice": getattr(tts, "voice", None), "publishable": bool(tts.publishable),
-        "contains_synthetic_media": False, "made_for_kids": False, "category_id": "27",
+        "contains_synthetic_media": True, "made_for_kids": False, "category_id": "27",
         "default_language": "ko", "created_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "warnings": warnings, **(extra or {}),
     }, ensure_ascii=False, indent=1), encoding="utf-8")

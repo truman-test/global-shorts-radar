@@ -174,7 +174,7 @@ def test_produce_end_to_end_with_tone_voice(tmp_path):
     duration, size = media_info(result.video)
     assert size == "1080x1920" and abs(duration - result.duration) < 0.1 and 8 < duration < 40
     meta = json.loads(result.meta.read_text(encoding="utf-8"))
-    assert meta["publishable"] is False and meta["tts_backend"] == "tone" and "※ 재연입니다" in meta["description"]
+    assert meta["publishable"] is False and meta["contains_synthetic_media"] is True and meta["tts_backend"] == "tone" and "※ 재연입니다" in meta["description"]
     assert result.thumbnail.is_file() and any("preview only" in w for w in result.warnings)
     ass = (result.video.parent / "work" / "captions.ass").read_text(encoding="utf-8")
     assert ass.count("Dialogue:") >= 6
