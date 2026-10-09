@@ -22,7 +22,7 @@ class ProductionConfig:
     font_file: str | None = None
     out_dir: str = "media"
     supertonic_voice: str = "F1"
-    supertonic_speed: float = 1.15
+    supertonic_speed: float = 1.2
     supertonic_steps: int = 16
     tts_python: str = ".venv-tts/Scripts/python.exe"
     transition: str = "continuity"   # Remotion scene changes: continuity (shared-element morph) | classic (slide/fade)

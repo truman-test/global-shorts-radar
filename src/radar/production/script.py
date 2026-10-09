@@ -35,10 +35,12 @@ from pathlib import Path
 from radar.production.render import ACCENTS, ICONS
 from radar.production.textnorm import normalize_for_tts, speakable_length, tts_problems
 
-SYLLABLES_PER_SECOND = 6.0   # measured 6.01 chars/s on edge-tts SunHi at +15% after silence trimming (2026-10-08)
-SCENE_GAP = 0.2              # seconds of silence after each scene
+SYLLABLES_PER_SECOND = 5.4   # Supertonic F1 at speed 1.2: measured 5.16 spoken chars/s at 1.15 over 40 scenes (2026-10-09)
+SCENE_GAP = 0.25             # seconds of silence after each scene (remotion_render.TAIL_GAP)
+LAYOUT_LEAD_IN = {"call": 0.9, "alert": 0.5}   # time before the narration starts (first scene capped at 0.4 s)
+POSTER_TAIL = 0.5            # the loop-back poster at the end
 MIN_SECONDS, MAX_SECONDS = 12.0, 50.0
-TARGET_SECONDS = (15.0, 45.0)
+TARGET_SECONDS = (20.0, 36.0)   # final video length; Shorts research 2026-10-09: 30-35 s for this channel
 LAYOUTS = ("card", "call", "chat", "sms", "alert", "stat", "timeline", "checklist")
 MASK = "●"
 # Real apps, banks, platforms and people that must never appear in an invented mockup.
@@ -131,7 +133,11 @@ def load_script(path: str | Path) -> Script:
 
 
 def estimate_seconds(script: Script) -> float:
-    return sum(speakable_length(s.tts_text()) / SYLLABLES_PER_SECOND + SCENE_GAP for s in script.scenes)
+    total = POSTER_TAIL
+    for i, s in enumerate(script.scenes):
+        lead = LAYOUT_LEAD_IN.get(s.layout, 0.0)
+        total += speakable_length(s.tts_text()) / SYLLABLES_PER_SECOND + SCENE_GAP + (min(lead, 0.4) if i == 0 else lead)
+    return total
 
 
 def caption_chunks(text: str, max_chars: int = 10) -> list[str]:
@@ -156,10 +162,14 @@ def _hangul_ratio(text: str) -> float:
     return sum(1 for c in letters if "가" <= c <= "힣") / len(letters) if letters else 0.0
 
 
+BRAND_HASHTAG = "#디지털생존노트"
+
+
 def build_description(script: Script, voice_note: str = "AI 합성 음성 (실제 인물의 목소리가 아닙니다)") -> str:
     lines = [script.description, "", script.disclaimer, f"음성: {voice_note}", "", "출처:"]
     lines += [f"- {s.get('title') or s['url']}: {s['url']}" for s in script.sources]
-    hashtags = ["#Shorts"] + ["#" + t.replace(" ", "") for t in script.tags[:2]]
+    # #Shorts is not needed (any vertical video up to 3 min is a Short); lead with the channel tag, 3 hashtags total
+    hashtags = [BRAND_HASHTAG] + ["#" + t.replace(" ", "") for t in script.tags[:2]]
     lines += ["", " ".join(hashtags)]
     return "\n".join(lines).strip()
 
@@ -246,6 +256,8 @@ def validate(script: Script, db=None, allow_unverified: bool = False) -> tuple[l
     errors, warnings = [], []
     if not _ID_RE.match(script.id):
         errors.append(f"id '{script.id}' must match [a-z0-9-] (3-81 chars)")
+    if "#" in script.title:
+        warnings.append("title contains a hashtag; keep hashtags in the description (#Shorts is not needed)")
     if not 5 <= len(script.title) <= 95 or "<" in script.title or ">" in script.title:
         errors.append("title must be 5-95 characters without < or >")
     if not script.disclaimer:

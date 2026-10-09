@@ -23,6 +23,8 @@ VIDEO_DIR = PROJECT_ROOT / "video"
 TAIL_GAP = 0.25          # seconds after each scene's speech
 CALL_LEAD_IN = 0.9       # the phone rings before the first line
 LEAD_IN = {"call": CALL_LEAD_IN, "alert": 0.5}   # alert: the banner lands (ding) before the narration
+FIRST_SCENE_MAX_LEAD_IN = 0.4   # the voice must start almost at once in the opening scene (swipe decision)
+POSTER_TAIL_MS = 500     # the last 0.5 s returns to the opening poster: seamless loop + the frame to pick as thumbnail
 CAPTION_MAX_CHARS = 11
 PAGE_HOLD = 0.35         # keep the last page on screen a moment after the last word
 
@@ -182,7 +184,7 @@ def build_props(script: Script, scenes: list[dict], channel_name: str, sfx: bool
                 music: dict | None = None, voice_label: str | None = VOICE_LABEL,
                 transition: str = "continuity") -> dict:
     return {"channel": channel_name, "voiceLabel": voice_label, "disclaimer": script.disclaimer, "sfx": sfx,
-            "music": music, "transition": transition, "scenes": scenes}
+            "music": music, "transition": transition, "posterTailMs": POSTER_TAIL_MS, "scenes": scenes}
 
 
 def layout_props(scene) -> dict:
@@ -235,6 +237,8 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
             raise ProductionError(f"scene {i + 1}: TTS produced no usable audio")
         shutil.copy(wav, public_job / wav.name)
         lead = LEAD_IN.get(scene.layout, 0.0)
+        if not scenes:
+            lead = min(lead, FIRST_SCENE_MAX_LEAD_IN)
         length = lead + speech + TAIL_GAP
         timed = [(w, a + lead, b + lead) for w, a, b in words]
         scenes.append(scene_props(scene, f"jobs/{script.id}/{wav.name}", lead, speech, length,

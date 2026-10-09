@@ -29,7 +29,8 @@ const sample: ShortProps = {
 };
 
 const calculateMetadata: CalculateMetadataFunction<ShortProps> = ({props}) => ({
-  durationInFrames: Math.max(FPS, Math.round((props.scenes.reduce((a, s) => a + s.durationMs, 0) / 1000) * FPS)),
+  durationInFrames: Math.max(FPS, Math.round((props.scenes.reduce((a, s) => a + s.durationMs, 0) / 1000) * FPS)
+    + Math.round(((props.posterTailMs ?? 0) / 1000) * FPS)),
 });
 
 export const RemotionRoot: React.FC = () => (

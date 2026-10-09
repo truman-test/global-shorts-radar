@@ -2,6 +2,7 @@ import React from "react";
 import {
   AbsoluteFill,
   Audio,
+  Freeze,
   interpolateColors,
   Sequence,
   spring,
@@ -212,6 +213,8 @@ export const Short: React.FC<ShortProps> = (props) => {
   const mode: Transition = props.transition === "classic" ? "classic" : "continuity";
   const cont = mode === "continuity";
   const n = props.scenes.length;
+  const end = n ? spans[n - 1].from + spans[n - 1].frames : 0;
+  const tail = Math.round(((props.posterTailMs ?? 0) / 1000) * fps);
   return (
     <AbsoluteFill style={{fontFamily: FONT, color: "#fff", wordBreak: "keep-all"}}>
       <Background props={props} />
@@ -264,6 +267,21 @@ export const Short: React.FC<ShortProps> = (props) => {
           </Sequence>
         );
       })}
+      {tail > 0 && n ? (
+        // Poster tail: the opening frame again (first scene settled, first caption page, disclaimer badge), so the
+        // loop back to frame 0 is seamless and this frame can be picked as the Shorts thumbnail in the app.
+        <Sequence from={end} durationInFrames={tail}>
+          <Freeze frame={POSTER}>
+            <SceneContext.Provider value={{mode, index: 0, frames: spans[0].frames + POSTER, first: true, last: false}}>
+              <SceneBody scene={props.scenes[0]} />
+            </SceneContext.Provider>
+          </Freeze>
+          <Freeze frame={0}>
+            <Captions pages={props.scenes[0].pages} instantFirst />
+            <DisclaimerBadge text={props.disclaimer} />
+          </Freeze>
+        </Sequence>
+      ) : null}
       <TopBar channel={props.channel} voiceLabel={props.voiceLabel} />
       <Sequence durationInFrames={spans[0]?.frames ?? fps * 3}>
         <DisclaimerBadge text={props.disclaimer} />

@@ -49,7 +49,7 @@ def _script(**over):
                     "그 목소리, 가짜일 수 있다", "voice"),
               Scene("미국 FBI는 가족끼리 비밀 단어를 정해 두라고 권고했습니다. 오늘 저녁 하나 정해 두세요.",
                     "가족 암호 정하기", "check", accent="green")]
-    base = dict(id="2026-10-08-test", source_video_id="smpl_A1", title="엄마, 나야… 그 목소리 진짜일까? #Shorts",
+    base = dict(id="2026-10-08-test", source_video_id="smpl_A1", title="엄마, 나야… 그 목소리 진짜일까?",
                 description="설명", tags=["보이스피싱", "AI 음성 복제"], disclaimer="※ 재연입니다", scenes=scenes,
                 sources=[{"title": "FBI", "url": "https://www.ic3.gov/PSA/2024/PSA241203"}])
     base.update(over)
@@ -66,7 +66,8 @@ def _verified_db(db, settings, now):
 def test_valid_script_passes_and_estimates_length(db, settings, now):
     s = _script()
     assert 12 < estimate_seconds(s) < 30
-    assert validate(s, _verified_db(db, settings, now)) == ([], [])
+    errors, warnings = validate(s, _verified_db(db, settings, now))
+    assert errors == [] and all(w.startswith("estimated length") for w in warnings), warnings  # the fixture is a short 3-scene script
 
 
 def test_qa_gate_catches_each_problem(db, settings, now):
@@ -90,7 +91,7 @@ def test_qa_gate_catches_each_problem(db, settings, now):
 def test_description_has_disclaimer_sources_and_hashtags():
     d = build_description(_script())
     assert "※ 재연입니다" in d and "https://www.ic3.gov/PSA/2024/PSA241203" in d and "음성: AI 합성 음성 (실제 인물의 목소리가 아닙니다)" in d
-    assert d.rstrip().endswith("#Shorts #보이스피싱 #AI음성복제")
+    assert d.rstrip().endswith("#디지털생존노트 #보이스피싱 #AI음성복제") and "#Shorts" not in d
 
 
 def test_repository_scripts_pass_the_gate_without_db():

@@ -131,7 +131,7 @@ url = "https://www.youtube.com/@digitalsurvivalnote"
 engine = "remotion"        # remotion = animated scenes (video/ project, Node.js); ffmpeg = static cards fallback
 backend = "supertonic"
 supertonic_voice = "F1"        # F1-F5, M1-M5 (built-in voices; no cloning)
-supertonic_speed = 1.15
+supertonic_speed = 1.2
 supertonic_steps = 16
 tts_python = ".venv-tts/Scripts/python.exe"   # Python 3.12 venv with `supertonic` installed
 edge_voice = "ko-KR-SunHiNeural"
