@@ -1,7 +1,7 @@
 import React from "react";
-import {interpolate, spring, useCurrentFrame, useVideoConfig} from "remotion";
-import {Icon} from "./icons";
-import {ACCENTS, SceneProps} from "./types";
+import {interpolate, useCurrentFrame} from "remotion";
+import {Anchor, Face, fade, fadeOut, IN_AT, IN_DUR, spr, useMorphIn, useScene} from "./motion";
+import {SceneProps} from "./types";
 
 export const clamp = {extrapolateLeft: "clamp", extrapolateRight: "clamp"} as const;
 
@@ -18,48 +18,65 @@ export const PANEL = "rgba(14,21,38,0.94)";
 export const BUBBLE_THEM = "#26324D";
 export const BUBBLE_ME = "#5B63F0"; // neutral indigo: deliberately not any real messenger's colour
 
-/** Enter (slide up + fade) and exit (fade) shared by every mockup layout. */
-export const SceneShell: React.FC<{children: React.ReactNode}> = ({children}) => {
+export const CHIP = 98; // header icon chip (outer size), the shared element of the mockup layouts
+
+export type ShellStyle = "slide" | "swipe" | "fade";
+
+/**
+ * Enter/exit of a whole scene. Classic: each layout's own slide/swipe/fade in, fade out over the last
+ * 7 frames. Continuity: no movement, the content only crossfades around the boundary while the shared
+ * element (icon chip / avatar) travels between scenes (see Traveller in Short.tsx).
+ */
+export const useShell = (style: ShellStyle): React.CSSProperties => {
   const frame = useCurrentFrame();
-  const {fps, durationInFrames} = useVideoConfig();
-  const enter = spring({frame, fps, config: {damping: 18, mass: 0.7}});
-  const exit = interpolate(frame, [durationInFrames - 7, durationInFrames], [1, 0], clamp);
-  return (
-    <div style={{position: "absolute", inset: 0, opacity: exit * Math.min(1, enter * 1.4),
-      transform: `translateY(${(1 - enter) * 60}px)`}}>
-      {children}
-    </div>
-  );
+  const s = useScene();
+  const cont = s.mode === "continuity";
+  const classicExit = interpolate(frame, [s.frames - 7, s.frames], [1, 0], clamp);
+  const exit = cont && !s.last ? fadeOut(frame, s.frames) : classicExit;
+  if (cont && !s.first) return {opacity: exit * fade(frame, IN_AT, IN_DUR)};
+  if (style === "swipe") {
+    const e = spr(frame, 0, 14, 0.01);
+    return {opacity: exit, transform: `translateX(${(1 - e) * 120}px) scale(${0.97 + 0.03 * e})`};
+  }
+  if (style === "fade") return {opacity: exit * Math.min(1, spr(frame, 0, 16))};
+  const e = spr(frame, 0, 16, 0);
+  return {opacity: exit * Math.min(1, e * 1.4), transform: `translateY(${(1 - e) * 60}px)`};
 };
+
+export const SceneShell: React.FC<{children: React.ReactNode; style?: ShellStyle}> = ({children, style = "slide"}) => (
+  <div style={{position: "absolute", inset: 0, ...useShell(style)}}>{children}</div>
+);
 
 /** Headline with an icon chip, words popping in one by one, and the sub-line under it. */
 export const SceneHeader: React.FC<{scene: SceneProps; top?: number; height?: number}> = ({
   scene, top = HEADER_TOP, height = HEADER_H,
 }) => {
   const frame = useCurrentFrame();
-  const {fps} = useVideoConfig();
-  const accent = ACCENTS[scene.accent];
+  const morph = useMorphIn();
   const words = scene.headline.split(" ");
   // keep long headlines to two lines so they never reach the disclaimer badge or the mockup
   const n = scene.headline.replace(/\s/g, "").length;
   const size = n <= 13 ? 70 : n <= 18 ? 64 : n <= 24 ? 58 : 50;
-  const iconIn = spring({frame: frame - 1, fps, config: {damping: 12, mass: 0.6}});
-  const subIn = interpolate(frame, [8 + words.length * 2, 18 + words.length * 2], [0, 1], clamp);
+  // the chip arrives with the traveller when the scene morphs in; otherwise it pops in itself
+  const iconIn = morph ? 1 : spr(frame, 1, 12, 0.04);
+  // when the chip flies in, the words wait until it has nearly landed so they never appear under it
+  const w0 = morph ? 8 : 3;
+  const subIn = interpolate(frame, [w0 + 5 + words.length * 2, w0 + 15 + words.length * 2], [0, 1], clamp);
   return (
     <div style={{position: "absolute", top, height, left: 70, right: 70, display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center", gap: 18}}>
       <div style={{display: "flex", alignItems: "center", gap: 26, maxWidth: 940}}>
-        <div style={{flex: "0 0 auto", width: 92, height: 92, borderRadius: "50%", background: `${accent}22`,
-          border: `3px solid ${accent}99`, boxShadow: `0 0 36px ${accent}55`, display: "flex", alignItems: "center",
-          justifyContent: "center", opacity: iconIn, transform: `scale(${0.4 + 0.6 * iconIn})`}}>
-          <Icon name={scene.icon} size={52} color={accent} />
+        <div style={{flex: "0 0 auto", opacity: Math.min(1, iconIn), transform: `scale(${0.4 + 0.6 * iconIn})`}}>
+          <Anchor size={CHIP}>
+            <Face look={{kind: "chip", icon: scene.icon, accent: scene.accent}} size={CHIP} glow={36} />
+          </Anchor>
         </div>
         <div style={{fontSize: size, fontWeight: 900, lineHeight: 1.16, letterSpacing: -1.5,
           textWrap: "balance" as React.CSSProperties["textWrap"]}}>
           {words.map((w, i) => {
-            const s = spring({frame: frame - (3 + i * 2), fps, config: {damping: 13, mass: 0.6}});
+            const s = spr(frame, w0 + i * 2, 12);
             return (
-              <span key={i} style={{display: "inline-block", marginRight: size * 0.24, opacity: s,
+              <span key={i} style={{display: "inline-block", marginRight: size * 0.24, opacity: Math.min(1, s),
                 transform: `translateY(${(1 - s) * 28}px)`, textShadow: "0 6px 26px rgba(0,0,0,0.6)"}}>
                 {w}
               </span>
@@ -102,9 +119,5 @@ export const Avatar: React.FC<{label: string; size?: number; color?: string; chi
   </div>
 );
 
-/** Spring progress that starts at `at` (0 before it). */
-export const useAppear = (at: number, damping = 14, mass = 0.6) => {
-  const frame = useCurrentFrame();
-  const {fps} = useVideoConfig();
-  return spring({frame: frame - at, fps, config: {damping, mass}});
-};
+/** Spring progress that starts at `at` (0 before it): the shared spring with a scene-local frame. */
+export const useAppear = (at: number, dur = 14, overshoot = 0.02) => spr(useCurrentFrame(), at, dur, overshoot);

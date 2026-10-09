@@ -145,8 +145,27 @@ def test_build_props_shape():
     s = load_script("content/scripts/2026-10-08-family-password.json")
     props = build_props(s, [{"layout": "card"}], "채널")
     assert props == {"channel": "채널", "voiceLabel": "AI 음성", "disclaimer": s.disclaimer, "sfx": True,
-                     "music": None, "scenes": [{"layout": "card"}]}
+                     "music": None, "transition": "continuity", "scenes": [{"layout": "card"}]}
     json.dumps(props, ensure_ascii=False)
+    assert build_props(s, [], "채널", transition="classic")["transition"] == "classic"
+
+
+def test_transition_comes_from_production_config(tmp_path):
+    import pytest
+
+    from radar.config import ConfigError
+    from radar.production.config import load_production_config
+
+    cfg = tmp_path / "radar.toml"
+    cfg.write_text("[production]\nengine = \"remotion\"\n", encoding="utf-8")
+    assert load_production_config(cfg, env={}, dotenv_path=tmp_path / "none").transition == "continuity"
+    cfg.write_text("[production]\ntransition = \"Classic\"\n", encoding="utf-8")
+    assert load_production_config(cfg, env={}, dotenv_path=tmp_path / "none").transition == "classic"
+    cfg.write_text("[production]\ntransition = \"wipe\"\n", encoding="utf-8")
+    with pytest.raises(ConfigError):
+        load_production_config(cfg, env={}, dotenv_path=tmp_path / "none")
+    # the shipped config keeps the default
+    assert load_production_config(env={}, dotenv_path=tmp_path / "none").transition == "continuity"
 
 
 def test_music_props_resolve_from_manifest(tmp_path, monkeypatch):

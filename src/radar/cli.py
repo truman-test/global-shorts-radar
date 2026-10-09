@@ -197,7 +197,8 @@ def _script_command(cmd, args, db) -> int:
         backend = make_backend(args.backend or pcfg.backend, pcfg)
         if (args.engine or pcfg.engine) == "remotion":
             from radar.production.remotion_render import produce_remotion
-            result = produce_remotion(script, args.out or pcfg.out_dir, tts=backend, channel_name=pcfg.channel_name)
+            result = produce_remotion(script, args.out or pcfg.out_dir, tts=backend, channel_name=pcfg.channel_name,
+                                      transition=pcfg.transition)
         else:
             result = produce(script, args.out or pcfg.out_dir, tts=backend, channel_name=pcfg.channel_name,
                              font_path=find_font(pcfg.font_file))

@@ -1,6 +1,7 @@
 import React from "react";
-import {Easing, interpolate, spring, useCurrentFrame, useVideoConfig} from "remotion";
+import {Easing, interpolate, useCurrentFrame} from "remotion";
 import {BODY_BOTTOM, BODY_TOP, clamp, MUTED, SceneHeader, SceneShell} from "./kit";
+import {spr} from "./motion";
 import {STAT_COUNT} from "./schedule";
 import {ACCENTS, SceneProps} from "./types";
 
@@ -43,16 +44,15 @@ const emWidth = (s: string) => [...s].reduce((a, c) => a + (/[\d.,]/.test(c) ? 0
  */
 export const StatScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   const frame = useCurrentFrame();
-  const {fps} = useVideoConfig();
   const accent = ACCENTS[scene.accent];
   const full = scene.statValue ?? "";
   const [a, b] = STAT_COUNT;
   const t = interpolate(frame, [a, b], [0, 1], {...clamp, easing: Easing.out(Easing.cubic)});
   const shown = countUp(full, t);
   const size = Math.min(220, Math.floor(860 / Math.max(1, emWidth(full))));
-  const punch = spring({frame: frame - b, fps, config: {damping: 9, mass: 0.5}});
+  const punch = spr(frame, b, 10, 0.03);
   const scale = frame < b ? 0.9 + 0.1 * t : 1 + 0.06 * Math.sin(Math.min(1, punch) * Math.PI);
-  const labelIn = spring({frame: frame - (b - 6), fps, config: {damping: 15}});
+  const labelIn = spr(frame, b - 6, 14);
   const subIn = interpolate(frame, [b + 4, b + 14], [0, 1], clamp);
   const meter = interpolate(frame, [a, b], [0, 1], {...clamp, easing: Easing.out(Easing.cubic)});
   const numH = size * 1.12;
@@ -81,7 +81,7 @@ export const StatScene: React.FC<{scene: SceneProps}> = ({scene}) => {
           background: "#fff", boxShadow: `0 0 24px ${accent}`, opacity: meter > 0.01 ? 1 : 0}} />
       </div>
       <div style={{position: "absolute", top: meterTop + 16 + 44, left: 140, right: 140, textAlign: "center",
-        fontSize: 52, fontWeight: 800, lineHeight: 1.22, opacity: labelIn,
+        fontSize: 52, fontWeight: 800, lineHeight: 1.22, opacity: Math.min(1, labelIn),
         transform: `translateY(${(1 - labelIn) * 20}px)`}}>
         {scene.statLabel}
       </div>

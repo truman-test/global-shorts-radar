@@ -1,7 +1,8 @@
 import React from "react";
 import {TriangleAlert, User} from "lucide-react";
-import {interpolate, spring, useCurrentFrame, useVideoConfig} from "remotion";
+import {interpolate, useCurrentFrame} from "remotion";
 import {Avatar, BUBBLE_THEM, clamp, MUTED, PhonePanel, SceneHeader, SceneShell} from "./kit";
+import {spr} from "./motion";
 import {SMS_ARRIVE, SMS_FLAG} from "./schedule";
 import {ACCENTS, SceneProps} from "./types";
 
@@ -14,15 +15,14 @@ const LINK_RE = /((?:https?:\/\/)?●+[^\s]*)/;
  */
 export const SmsScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   const frame = useCurrentFrame();
-  const {fps} = useVideoConfig();
   const red = ACCENTS.red;
   const text = scene.smsText ?? "";
   const [before, link, after] = (() => {
     const m = LINK_RE.exec(text);
     return m ? [text.slice(0, m.index), m[1], text.slice(m.index + m[1].length)] : [text, "", ""];
   })();
-  const arrive = spring({frame: frame - SMS_ARRIVE, fps, config: {damping: 13, mass: 0.6}});
-  const flag = spring({frame: frame - SMS_FLAG, fps, config: {damping: 11, mass: 0.6}});
+  const arrive = spr(frame, SMS_ARRIVE, 13, 0.03);
+  const flag = spr(frame, SMS_FLAG, 12, 0.04);
   const pulse = frame >= SMS_FLAG ? (Math.sin((frame - SMS_FLAG) / 5) + 1) / 2 : 0;
   const mark = interpolate(frame, [SMS_FLAG - 6, SMS_FLAG + 4], [0, 1], clamp);
 
@@ -63,7 +63,7 @@ export const SmsScene: React.FC<{scene: SceneProps}> = ({scene}) => {
           </div>
           {link ? (
             <div style={{alignSelf: "flex-start", marginLeft: 40, display: "flex", flexDirection: "column",
-              alignItems: "flex-start", opacity: flag, transform: `translateY(${(1 - flag) * -16}px) scale(${
+              alignItems: "flex-start", opacity: Math.min(1, flag), transform: `translateY(${(1 - flag) * -16}px) scale(${
                 (0.6 + 0.4 * flag) * (1 + pulse * 0.04)})`, transformOrigin: "20% 0%"}}>
               <div style={{marginLeft: 40, width: 0, height: 0, borderLeft: "16px solid transparent",
                 borderRight: "16px solid transparent", borderBottom: `18px solid ${red}`}} />

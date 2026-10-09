@@ -1,6 +1,7 @@
 import React from "react";
-import {interpolate, spring, useCurrentFrame, useVideoConfig} from "remotion";
+import {interpolate, useCurrentFrame, useVideoConfig} from "remotion";
 import {Avatar, BUBBLE_ME, BUBBLE_THEM, clamp, MUTED, PhonePanel, SceneHeader, SceneShell} from "./kit";
+import {spr} from "./motion";
 import {chatBeats} from "./schedule";
 import {SceneProps} from "./types";
 
@@ -39,16 +40,16 @@ export const ChatScene: React.FC<{scene: SceneProps}> = ({scene}) => {
     const {typingFrom, showAt} = beats[k];
     const me = m.from === "me";
     if (typingFrom !== null && frame >= typingFrom && frame < showAt) {
-      const t = spring({frame: frame - typingFrom, fps, config: {damping: 14}});
+      const t = spr(frame, typingFrom, 12);
       rows.push(
-        <div key={`t${k}`} style={{alignSelf: "flex-start", flexShrink: 0, maxHeight: 90 * t, opacity: t,
+        <div key={`t${k}`} style={{alignSelf: "flex-start", flexShrink: 0, maxHeight: 90 * t, opacity: Math.min(1, t),
           transform: `scale(${0.7 + 0.3 * t})`, transformOrigin: "0% 100%"}}>
           <TypingDots frame={frame} />
         </div>,
       );
     }
     if (frame < showAt) return;
-    const s = spring({frame: frame - showAt, fps, config: {damping: 13, mass: 0.55}});
+    const s = spr(frame, showAt, 12, 0.03);
     const grow = typingFrom !== null ? 1 : interpolate(s, [0, 0.6], [0, 1], clamp);
     rows.push(
       <div key={k} style={{alignSelf: me ? "flex-end" : "flex-start", maxWidth: "78%", flexShrink: 0,

@@ -51,6 +51,7 @@ export type ShortProps = {
   disclaimer: string;
   sfx: boolean;
   music?: Music | null;
+  transition?: "continuity" | "classic"; // scene changes: shared-element morph (default) or slide/fade
   scenes: SceneProps[];
 };
 

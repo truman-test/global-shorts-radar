@@ -139,4 +139,5 @@ edge_rate = "+15%"
 google_voice = "ko-KR-Neural2-A"
 google_rate = 1.15
 out_dir = "media"
+transition = "continuity"   # Remotion scene changes: continuity (icon/avatar morphs into the next scene) | classic (slide/fade)
 # font_file = "C:/Windows/Fonts/malgunbd.ttf"   # auto-detected when omitted

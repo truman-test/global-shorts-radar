@@ -10,8 +10,11 @@ import {
   useVideoConfig,
 } from "remotion";
 import {FONT} from "./fonts";
-import {CallScene} from "./CallScene";
-import {CardScene} from "./CardScene";
+import {CALL_AVATAR, CallScene} from "./CallScene";
+import {BADGE, CardScene} from "./CardScene";
+import {CHIP} from "./kit";
+import {AnchorSpec, fade, MORPH, SceneContext, Transition} from "./motion";
+import {Traveller} from "./Traveller";
 import {Captions} from "./Captions";
 import {AlertScene} from "./AlertScene";
 import {ChatScene} from "./ChatScene";
@@ -41,7 +44,7 @@ const Background: React.FC<{props: ShortProps}> = ({props}) => {
   if (idx < 0) idx = spans.length - 1;
   const prev = props.scenes[Math.max(0, idx - 1)].accent;
   const cur = props.scenes[idx].accent;
-  const color = interpolateColors(frame - spans[idx].from, [0, 12], [ACCENTS[prev], ACCENTS[cur]]);
+  const color = interpolateColors(fade(frame, spans[idx].from, 16), [0, 1], [ACCENTS[prev], ACCENTS[cur]]);
   const drift = (frame * 0.7) % 90;
   const gx = Math.sin(frame / 55) * 80;
   const gy = Math.cos(frame / 70) * 60;
@@ -191,20 +194,52 @@ const MusicBed: React.FC<{props: ShortProps}> = ({props}) => {
   return <Audio src={staticFile(music.src)} volume={volume} />;
 };
 
+/** The element a scene hands over at a continuity transition (see Traveller.tsx). */
+const anchorSpec = (scene: SceneProps): AnchorSpec => {
+  if (scene.layout === "call") {
+    return {look: {kind: "avatar", letter: (scene.caller ?? "알 수 없음").slice(0, 1)}, size: CALL_AVATAR};
+  }
+  const look = {kind: "chip", icon: scene.icon, accent: scene.accent} as const;
+  return scene.layout === "card" ? {look, size: BADGE, glow: 60} : {look, size: CHIP, glow: 36};
+};
+
 export const Short: React.FC<ShortProps> = (props) => {
   const {fps} = useVideoConfig();
   const spans = sceneFrames(props, fps);
+  const mode: Transition = props.transition === "classic" ? "classic" : "continuity";
+  const cont = mode === "continuity";
+  const n = props.scenes.length;
   return (
     <AbsoluteFill style={{fontFamily: FONT, color: "#fff", wordBreak: "keep-all"}}>
       <Background props={props} />
       <MusicBed props={props} />
+      {/* scene visuals; in continuity mode each one stays mounted a little past its end (fading out)
+          so the traveller can measure its anchor and the two scenes can crossfade */}
+      <div data-scenes="" style={{position: "absolute", inset: 0}}>
+        {props.scenes.map((scene, i) => {
+          const {from, frames} = spans[i];
+          const last = i === n - 1;
+          return (
+            <Sequence key={i} from={from} durationInFrames={frames + (cont && !last ? MORPH : 0)}>
+              <SceneContext.Provider value={{mode, index: i, frames, first: i === 0, last}}>
+                <SceneBody scene={scene} />
+              </SceneContext.Provider>
+            </Sequence>
+          );
+        })}
+        {cont ? props.scenes.slice(1).map((scene, j) => (
+          <Sequence key={`t${j}`} from={spans[j + 1].from} durationInFrames={MORPH}>
+            <Traveller index={j} from={anchorSpec(props.scenes[j])} to={anchorSpec(scene)} />
+          </Sequence>
+        )) : null}
+      </div>
+      {/* narration, captions and SFX keep the exact scene spans in both modes */}
       {props.scenes.map((scene, i) => {
         const {from, frames} = spans[i];
         const lead = Math.round((scene.leadInMs / 1000) * fps);
         const words = scene.headline.split(" ").length;
         return (
           <Sequence key={i} from={from} durationInFrames={frames}>
-            <SceneBody scene={scene} />
             <Captions pages={scene.pages} />
             {scene.audio ? (
               <Sequence from={lead} layout="none">

@@ -1,7 +1,8 @@
 import React from "react";
-import {interpolate, spring, useCurrentFrame, useVideoConfig} from "remotion";
+import {interpolate, useCurrentFrame} from "remotion";
 import {Icon} from "./icons";
 import {BODY_TOP, clamp, SceneHeader, SceneShell} from "./kit";
+import {spr} from "./motion";
 import {ALERT_LAND} from "./schedule";
 import {ACCENTS, SceneProps} from "./types";
 
@@ -15,9 +16,8 @@ const BEZEL = 14;
  */
 export const AlertScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   const frame = useCurrentFrame();
-  const {fps} = useVideoConfig();
   const accent = ACCENTS[scene.accent];
-  const slide = spring({frame: frame - (ALERT_LAND - 8), fps, config: {damping: 15, mass: 0.7}});
+  const slide = spr(frame, ALERT_LAND - 8, 14);
   const dim = interpolate(frame, [ALERT_LAND - 4, ALERT_LAND + 8], [0, 0.62], clamp);
   const buzz = frame >= ALERT_LAND - 2 && frame < ALERT_LAND + 12 ? Math.sin(frame * 2.4) * 6 : 0;
   const glow = 0.5 + 0.5 * Math.sin(Math.max(0, frame - ALERT_LAND) / 7);

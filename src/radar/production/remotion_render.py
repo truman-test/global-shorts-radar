@@ -179,9 +179,10 @@ VOICE_LABEL = "AI 음성"   # every narration is synthetic; OpenRAIL-M (Superton
 
 
 def build_props(script: Script, scenes: list[dict], channel_name: str, sfx: bool = True,
-                music: dict | None = None, voice_label: str | None = VOICE_LABEL) -> dict:
+                music: dict | None = None, voice_label: str | None = VOICE_LABEL,
+                transition: str = "continuity") -> dict:
     return {"channel": channel_name, "voiceLabel": voice_label, "disclaimer": script.disclaimer, "sfx": sfx,
-            "music": music, "scenes": scenes}
+            "music": music, "transition": transition, "scenes": scenes}
 
 
 def layout_props(scene) -> dict:
@@ -212,7 +213,7 @@ def scene_props(scene, audio: str, lead: float, speech: float, length: float, pa
 
 
 def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name: str, sfx: bool = True,
-                     timeout: int = 1800) -> ProductionResult:
+                     timeout: int = 1800, transition: str = "continuity") -> ProductionResult:
     if not (VIDEO_DIR / "node_modules" / "remotion").is_dir():
         raise ProductionError("Remotion is not installed: run `npm install` and `node scripts/prepare-assets.mjs` in video/")
     out_dir = Path(out_root).resolve() / script.id
@@ -241,8 +242,8 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
         total += round(length * 1000) / 1000
     music, music_item = music_props(script)
     props_path = out_dir / "props.json"
-    props_path.write_text(json.dumps(build_props(script, scenes, channel_name, sfx, music), ensure_ascii=False, indent=1),
-                          encoding="utf-8")
+    props = build_props(script, scenes, channel_name, sfx, music, transition=transition)
+    props_path.write_text(json.dumps(props, ensure_ascii=False, indent=1), encoding="utf-8")
 
     video = out_dir / "video.mp4"
     started = time.monotonic()
@@ -270,7 +271,7 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
         warnings.append(f"voice backend '{tts.name}' is for local preview only; re-produce with --backend google to publish")
     subprocess.run([ffmpeg_exe(), "-hide_banner", "-loglevel", "error", "-y", "-ss", "1.2",
                     "-i", str(video), "-frames:v", "1", str(out_dir / "thumb.png")], capture_output=True)
-    extra = {"engine": "remotion", "render_seconds": round(render_seconds, 1)}
+    extra = {"engine": "remotion", "render_seconds": round(render_seconds, 1), "transition": transition}
     if music_item:
         extra["music"] = {k: music_item[k] for k in ("id", "title", "artist", "license", "license_url",
                                                        "attribution_required", "sha256")}

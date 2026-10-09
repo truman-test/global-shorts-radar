@@ -25,7 +25,18 @@ class ProductionConfig:
     supertonic_speed: float = 1.15
     supertonic_steps: int = 16
     tts_python: str = ".venv-tts/Scripts/python.exe"
+    transition: str = "continuity"   # Remotion scene changes: continuity (shared-element morph) | classic (slide/fade)
     google_api_key: str | None = field(default=None, repr=False)  # never printed
+
+
+TRANSITIONS = ("continuity", "classic")
+
+
+def _transition(value) -> str:
+    value = str(value).strip().lower()
+    if value not in TRANSITIONS:
+        raise ConfigError(f"[production] transition must be one of {', '.join(TRANSITIONS)}, got '{value}'")
+    return value
 
 
 def load_production_config(config_path: str | Path | None = None, env: Mapping[str, str] | None = None,
@@ -53,5 +64,6 @@ def load_production_config(config_path: str | Path | None = None, env: Mapping[s
         supertonic_speed=float(pr.get("supertonic_speed", d.supertonic_speed)),
         supertonic_steps=int(pr.get("supertonic_steps", d.supertonic_steps)),
         tts_python=str(pr.get("tts_python", d.tts_python)),
+        transition=_transition(pr.get("transition", d.transition)),
         google_api_key=merged.get("GOOGLE_TTS_API_KEY") or None,
     )
