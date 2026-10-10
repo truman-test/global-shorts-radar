@@ -300,7 +300,9 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
     warnings += style_warnings
     if not tts.publishable:
         warnings.append(f"voice backend '{tts.name}' is for local preview only; re-produce with --backend google to publish")
-    subprocess.run([ffmpeg_exe(), "-hide_banner", "-loglevel", "error", "-y", "-ss", "1.2",
+    # thumbnail = frame 0, the poster (identical to the 0.5 s loop tail), so the file matches the frame the owner
+    # can pick in the app and can be uploaded as-is where custom Shorts thumbnails are allowed
+    subprocess.run([ffmpeg_exe(), "-hide_banner", "-loglevel", "error", "-y",
                     "-i", str(video), "-frames:v", "1", str(out_dir / "thumb.png")], capture_output=True)
     record_style(script, style)   # content/style_log.json: stage, theme, layouts (next episodes' constraints)
     extra = {"engine": "remotion", "render_seconds": round(render_seconds, 1), "transition": transition,
