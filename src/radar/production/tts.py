@@ -114,22 +114,36 @@ class SupertonicTTS:
 
     def synthesize_sentences(self, text: str, out_path: str | Path) -> list[tuple[float, float, str]]:
         """Write out_path; return [(start_s, end_s, sentence)] for each sentence of `text`."""
-        sentences = split_sentences(text) or [text]
+        return self.synthesize_batch([(text, out_path)])[0]
+
+    def synthesize_batch(self, jobs: list[tuple[str, str | Path]], voice: str | None = None
+                         ) -> list[list[tuple[float, float, str]]]:
+        """One worker call (one model load) for several clips in one voice (default: this backend's voice).
+
+        jobs = [(text, out_path)]; returns, per job, [(start_s, end_s, sentence)] inside its own clip. Dialogue
+        scenes use it once per voice of the cast."""
+        if not jobs:
+            return []
         if not self.python.is_file():
             raise TTSError(f"Supertonic venv not found at {self.python} (see README: .venv-tts)")
-        job = {"voice": self.voice, "speed": self.speed, "steps": self.steps, "gap": self.gap,
-               "items": [{"sentences": sentences, "out": str(out_path)}]}
+        split = [split_sentences(text) or [text] for text, _ in jobs]
+        job = {"voice": voice or self.voice, "speed": self.speed, "steps": self.steps, "gap": self.gap,
+               "items": [{"sentences": s, "out": str(out)} for s, (_, out) in zip(split, jobs)]}
         proc = self.runner([str(self.python), str(self.WORKER)], input=json.dumps(job, ensure_ascii=False),
                            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=600)
         if proc.returncode != 0:
             raise TTSError(f"supertonic worker failed: {(proc.stderr or '').strip()[-800:]}")
         try:
-            spans = json.loads(proc.stdout)["items"][0]["sentences"]
-        except (ValueError, KeyError, IndexError) as exc:
+            items = json.loads(proc.stdout)["items"]
+            spans = [items[k]["sentences"] for k in range(len(jobs))]
+        except (ValueError, KeyError, IndexError, TypeError) as exc:
             raise TTSError(f"supertonic worker returned no timings: {exc}") from None
-        if len(spans) != len(sentences):
-            raise TTSError("supertonic worker returned a different number of sentences")
-        return [(s["start"], s["end"], t) for s, t in zip(spans, sentences)]
+        out = []
+        for got, sentences in zip(spans, split):
+            if len(got) != len(sentences):
+                raise TTSError("supertonic worker returned a different number of sentences")
+            out.append([(s["start"], s["end"], t) for s, t in zip(got, sentences)])
+        return out
 
     def synthesize(self, text: str, out_path: str | Path) -> None:
         self.synthesize_sentences(text, out_path)

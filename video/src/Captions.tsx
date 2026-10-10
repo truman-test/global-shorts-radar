@@ -1,5 +1,6 @@
 import React from "react";
 import {spring, useCurrentFrame, useVideoConfig} from "remotion";
+import {SpeakerChip, useCast} from "./dialogue";
 import {CAPTION} from "./themes";
 import {CaptionPage} from "./types";
 
@@ -15,10 +16,12 @@ const Outlined: React.FC<{text: string; color: string}> = ({text, color}) => (
   </span>
 );
 
-/** Word-synced captions: the page of words being spoken, the current word in yellow and slightly larger. */
+/** Word-synced captions: the page of words being spoken, the current word in yellow and slightly larger; in a
+ * dialogue scene the speaker's chip sits above the page. */
 export const Captions: React.FC<{pages: CaptionPage[]; instantFirst?: boolean}> = ({pages, instantFirst}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
+  const cast = useCast();
   const t = (frame / fps) * 1000;
   // instantFirst: the opening caption is already on screen during a lead-in (e.g. the phone rings first), so frame 0
   // shows the hook sentence even when the voice starts a moment later
@@ -27,8 +30,17 @@ export const Captions: React.FC<{pages: CaptionPage[]; instantFirst?: boolean}> 
   if (!page) return null;
   const pageFrame = Math.round(((t - page.startMs) / 1000) * fps);
   // the very first page of the video is on screen from frame 0 (no pop-in), so the opening frame is complete
-  const pop = instantFirst && page === pages[0] && (page.startMs === 0 || t <= page.startMs + 50) ? 1 : spring({frame: pageFrame, fps, config: {damping: 13, mass: 0.5}});
+  // (it was already on screen during a lead-in, so it must not pop again when its own start time comes)
+  const pop = instantFirst && page === pages[0] ? 1 : spring({frame: pageFrame, fps, config: {damping: 13, mass: 0.5}});
+  // dialogue: the speaker chip pops in with the line's first page and stays while the line's pages turn
+  const member = page.speaker ? cast[page.speaker] : undefined;
+  const lineStart = pages.find((p) => p.line === page.line && p.speaker === page.speaker) ?? page;
+  const chip = member ? (
+    <SpeakerChip member={member} fromMs={lineStart.startMs} instant={instantFirst && lineStart === pages[0]} />
+  ) : null;
   return (
+    <>
+    {chip}
     <div style={{position: "absolute", top: 1255, left: 70, right: 150, display: "flex", flexWrap: "wrap",
       justifyContent: "center", alignItems: "baseline", columnGap: 36, rowGap: 6, fontSize: 82, fontWeight: 800,
       lineHeight: 1.15, transform: `scale(${0.9 + 0.1 * pop})`, opacity: pop}}>
@@ -43,5 +55,6 @@ export const Captions: React.FC<{pages: CaptionPage[]; instantFirst?: boolean}> 
         );
       })}
     </div>
+    </>
   );
 };

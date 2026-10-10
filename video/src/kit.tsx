@@ -1,7 +1,7 @@
 import React, {useLayoutEffect, useRef} from "react";
 import {interpolate, useCurrentFrame} from "remotion";
 import {handBox, handLine, markerStyle, seedOf} from "./hand";
-import {Anchor, Face, fade, fadeOut, IN_AT, IN_DUR, spr, useMorphIn, useScene} from "./motion";
+import {Anchor, Face, fade, fadeOut, IN_AT, IN_DUR, spr, useMorphIn, useRealFrame, useScene} from "./motion";
 import {BRAND, isNotebook, muted, NOTE, Theme, Tone, TYPE, useTheme, useTone} from "./themes";
 import {SceneProps} from "./types";
 
@@ -33,7 +33,7 @@ export type ShellStyle = "slide" | "swipe" | "fade";
  * element (icon chip / avatar) travels between scenes (see Traveller in Short.tsx).
  */
 export const useShell = (style: ShellStyle): React.CSSProperties => {
-  const frame = useCurrentFrame();
+  const frame = useRealFrame(); // a frozen twist scene still fades out on time
   const s = useScene();
   const cont = s.mode === "continuity";
   const classicExit = interpolate(frame, [s.frames - 7, s.frames], [1, 0], clamp);

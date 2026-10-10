@@ -63,48 +63,6 @@
    ],
    "produced_at": "2026-10-10T09:32:24+00:00"
   },
-  "2026-10-09-discord-bot-breach": {
-   "stage": "notebook",
-   "theme": "desk-spread",
-   "category": "security",
-   "luminance": "light",
-   "mascot": true,
-   "visual_group": "desk",
-   "layouts": [
-    "card",
-    "card",
-    "card",
-    "card",
-    "card"
-   ],
-   "middle": [
-    "card",
-    "card",
-    "card"
-   ],
-   "produced_at": "2026-10-10T06:14:53+00:00"
-  },
-  "2026-10-09-ai-crocodile-hoax": {
-   "stage": "alert",
-   "theme": "scan",
-   "category": "ai",
-   "luminance": "dark",
-   "mascot": false,
-   "visual_group": "cards",
-   "layouts": [
-    "card",
-    "card",
-    "card",
-    "card",
-    "card"
-   ],
-   "middle": [
-    "card",
-    "card",
-    "card"
-   ],
-   "produced_at": "2026-10-10T06:19:16+00:00"
-  },
   "2026-10-09-kid-tap-payment": {
    "stage": "notebook",
    "theme": "graph",
@@ -188,27 +146,6 @@
     "stat"
    ],
    "produced_at": "2026-10-10T10:00:02+00:00"
-  },
-  "2026-10-09-airbnb-fake-damage-photo": {
-   "stage": "notebook",
-   "theme": "kraft-board",
-   "category": "ai",
-   "luminance": "light",
-   "mascot": true,
-   "visual_group": "evidence",
-   "layouts": [
-    "card",
-    "stat",
-    "card",
-    "card",
-    "checklist"
-   ],
-   "middle": [
-    "stat",
-    "card",
-    "card"
-   ],
-   "produced_at": "2026-10-10T06:33:21+00:00"
   },
   "2026-10-09-kid-password": {
    "stage": "notebook",

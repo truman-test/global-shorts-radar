@@ -1,10 +1,10 @@
 import React from "react";
 import {TriangleAlert, User} from "lucide-react";
-import {interpolate, useCurrentFrame} from "remotion";
+import {interpolate, useCurrentFrame, useVideoConfig} from "remotion";
 import {Avatar, clamp, PhonePanel, SceneHeader, SceneShell} from "./kit";
 import {BRAND, muted, TONES, useTheme} from "./themes";
-import {spr} from "./motion";
-import {SMS_ARRIVE, SMS_FLAG} from "./schedule";
+import {spr, useScene} from "./motion";
+import {smsBeats} from "./schedule";
 import {SceneProps} from "./types";
 
 // Links reach us already masked by the Python validator ("http://●●●●.kr/…").
@@ -15,8 +15,10 @@ const LINK_RE = /((?:https?:\/\/)?●+[^\s]*)/;
  * boxed in red with a pulsing "의심 링크" tag pointing at it.
  */
 export const SmsScene: React.FC<{scene: SceneProps}> = ({scene}) => {
-  const frame = useCurrentFrame();
+  const visual = useCurrentFrame();
+  const {fps} = useVideoConfig();
   const t = useTheme();
+  const s = useScene();
   const red = TONES.danger.fill; // marks
   const pill = TONES.danger.solid; // white text on it: >= 7:1
   const text = scene.smsText ?? "";
@@ -24,10 +26,28 @@ export const SmsScene: React.FC<{scene: SceneProps}> = ({scene}) => {
     const m = LINK_RE.exec(text);
     return m ? [text.slice(0, m.index), m[1], text.slice(m.index + m[1].length)] : [text, "", ""];
   })();
-  const arrive = spr(frame, SMS_ARRIVE, 13, 0.03);
-  const flag = spr(frame, SMS_FLAG, 12, 0.04);
-  const pulse = frame >= SMS_FLAG ? (Math.sin((frame - SMS_FLAG) / 5) + 1) / 2 : 0;
-  const mark = interpolate(frame, [SMS_FLAG - 6, SMS_FLAG + 4], [0, 1], clamp);
+  const b = smsBeats(scene, fps);
+  // dialogue: the message lands with the other side's first line (speech time); the poster already shows it
+  const frame = b.speech ? visual - (s.shift ?? 0) : visual;
+  const at = b.speech && s.first ? Math.min(b.arrive, -(s.shift ?? 0)) : b.arrive;
+  const flagAt = at + (b.flag - b.arrive);
+  const arrive = spr(frame, at, 13, 0.03);
+  const flag = spr(frame, flagAt, 12, 0.04);
+  const pulse = frame >= flagAt ? (Math.sin((frame - flagAt) / 5) + 1) / 2 : 0;
+  const mark = interpolate(frame, [flagAt - 6, flagAt + 4], [0, 1], clamp);
+  const replies = b.replies.map((r, k) => {
+    if (frame < r.at) return null;
+    const p = spr(frame, r.at, 12, 0.03);
+    const me = r.from === "me";
+    return (
+      <div key={k} style={{alignSelf: me ? "flex-end" : "flex-start", maxWidth: "78%", opacity: Math.min(1, p * 1.3),
+        transform: `translateY(${(1 - p) * 24}px) scale(${0.85 + 0.15 * p})`, transformOrigin: me ? "100% 100%" : "0% 100%"}}>
+        <div style={{padding: "20px 30px 22px", borderRadius: 34, [me ? "borderBottomRightRadius" : "borderBottomLeftRadius"]: 10,
+          background: me ? t.bubbleMe : t.bubble, fontSize: 40, fontWeight: 700, lineHeight: 1.3,
+          boxShadow: "0 8px 24px rgba(0,0,0,0.3)"}}>{r.text}</div>
+      </div>
+    );
+  });
 
   return (
     <SceneShell>
@@ -78,6 +98,7 @@ export const SmsScene: React.FC<{scene: SceneProps}> = ({scene}) => {
               </div>
             </div>
           ) : null}
+          {replies}
         </div>
       </PhonePanel>
     </SceneShell>

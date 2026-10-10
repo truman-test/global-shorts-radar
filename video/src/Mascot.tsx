@@ -13,7 +13,8 @@ import {checklistRowY} from "./ChecklistScene";
 import {flowNodeCenters} from "./FlowScene";
 import {bodyBox} from "./kit";
 import {spr} from "./motion";
-import {ALERT_LAND, chatBeats, checklistTicks, compareBeats, dotBeats, flowBeats, SMS_FLAG, STAT_COUNT,
+import {activeLine, lineLevel, linesStarted} from "./dialogue";
+import {ALERT_LAND, chatBeats, chatFollowsLines, checklistTicks, compareBeats, dotBeats, flowBeats, smsBeats, STAT_COUNT,
   timelineBeats, TOGGLE_CIRCLE, toggleTaps} from "./schedule";
 import {toggleRowY} from "./ToggleScene";
 import {MASCOT_PALETTES, MascotPalette, MascotSlot, mascotPaletteFor, Theme, useTheme} from "./themes";
@@ -41,6 +42,7 @@ export type Pose = {
   walk: number; // waddle phase (radians), 0 = standing
   clipY?: number; // hide everything below this y (peeking up from behind a card edge)
   opacity: number;
+  talk?: number; // 0..1 mouth open: 도치 is speaking its own dialogue line (driven by the line's loudness)
 };
 
 
@@ -167,6 +169,11 @@ export const Dochi: React.FC<{pose: Pose; blink: number; frame: number; palette?
   const mouth = (() => {
     const mx = 0.43 * S;
     const my = -0.355 * S;
+    const talk = Math.min(1, Math.max(0, pose.talk ?? 0));
+    if (talk > 0.04) {
+      // speaking: an open mouth whose height follows the voice
+      return <ellipse cx={mx} cy={my + 0.008 * S} rx={0.034 * S} ry={(0.008 + 0.034 * talk) * S} fill={INK} />;
+    }
     switch (pose.expr) {
       case "happy": return <path d={`M${mx - 0.07 * S} ${my - 0.01 * S} Q${mx} ${my + 0.07 * S} ${mx + 0.06 * S} ${my - 0.02 * S}`} />;
       case "alarmed": return <ellipse cx={mx} cy={my + 0.012 * S} rx={0.026 * S} ry={0.034 * S} fill={INK} />;
@@ -270,7 +277,8 @@ const CARD_SPOT = {x: 182, y: 712, size: 176}; // on the explainer card's top-le
 export const DEFAULT_SLOT: MascotSlot = {x: 114, minY: 700, maxY: 1232};
 
 const pose0 = (x: number, y: number, size = SIZE): Pose => ({x, y, size, lookX: 0.8, lookY: 0, expr: "neutral",
-  paw: "none", pawAngle: 0, tilt: 0, bristle: 0, shiver: 0, curl: 0, sweat: false, sy: 1, lift: 0, walk: 0, opacity: 1});
+  paw: "none", pawAngle: 0, tilt: 0, bristle: 0, shiver: 0, curl: 0, sweat: false, sy: 1, lift: 0, walk: 0, opacity: 1,
+  talk: 0});
 
 const withHop = (p: Pose, h: ReturnType<typeof hop>): Pose => ({...p, sy: p.sy * h.sy, lift: p.lift + h.lift});
 
@@ -289,12 +297,37 @@ const settle = (p: Pose, f: number, at: number): Pose =>
 
 const happy = (p: Pose): Pose => ({...p, expr: "happy", bristle: 0, sweat: false});
 
+/**
+ * Dialogue call: 도치 watches nervously from the margin. It looks up at the caller while they talk and over at the
+ * "me" row while the victim answers, its spikes rise a little with every line of the other side (a small flinch as
+ * each one starts), and at the twist it curls into a ball while the stamp lands. `ms` is speech time.
+ */
+const watchCall = (scene: SceneProps, p0: Pose, f: number, ms: number, fps: number, shift: number): Pose => {
+  const lines = scene.lines ?? [];
+  const k = activeLine(lines, ms);
+  const side = k >= 0 ? lines[k].side : undefined;
+  const them = linesStarted(scene, ms, (l) => l.side === "them");
+  const lastThem = [...lines].reverse().find((l) => l.side === "them" && ms >= l.startMs);
+  const flinch = lastThem ? (ms - lastThem.startMs) / 1000 * fps : 1e9;
+  let p: Pose = {...p0, expr: "worried", sweat: them > 0, bristle: Math.min(0.75, 0.12 + 0.2 * them),
+    shiver: flinch < 10 ? 0.6 * (1 - flinch / 10) : 0,
+    lookX: side === "me" ? 0.95 : 0.55, lookY: side === "me" ? -0.3 : -0.85, tilt: side === "them" ? -4 : 0};
+  if (scene.twist) {
+    const at = Math.round((scene.twist.atMs / 1000) * fps) + shift;
+    p = alarm(p, f, at - 1, true);
+  }
+  return p;
+};
+
 /** The pose at scene-local frame f (f includes the poster lead for the first scene), in the stage's slot. */
 export const scenePose = (scene: SceneProps, f: number, fps: number, first = false,
-  slot: MascotSlot = DEFAULT_SLOT): Pose => {
+  slot: MascotSlot = DEFAULT_SLOT, shift = 0): Pose => {
   const mx = slot.x;
   // a margin spot: feet clamped to the stage's range
   const base = (x: number, y: number, size = SIZE) => pose0(x, Math.min(slot.maxY, Math.max(slot.minY, y)), size);
+  if (scene.layout === "call" && scene.lines?.length) {
+    return watchCall(scene, base(mx, 1232), f, ((f - shift) / fps) * 1000, fps, shift);
+  }
   switch (scene.layout) {
     case "card": {
       // first scene: peeks up from behind the card's corner; then sits on it looking at the headline
@@ -324,14 +357,16 @@ export const scenePose = (scene: SceneProps, f: number, fps: number, first = fal
     }
     case "alert":
     case "sms": {
-      const at = scene.layout === "alert" ? ALERT_LAND - 2 : SMS_FLAG - 2;
+      const sms = smsBeats(scene, fps);
+      const at = scene.layout === "alert" ? ALERT_LAND - 2 : sms.flag + (sms.speech ? shift : 0) - 2;
       let p = base(mx, 1196);
       p.lookY = -0.7;
       p = alarm(p, f, at, true); // the suspicious item: spikes up, then a quick curl into a ball
       return settle(p, f, at + 40);
     }
     case "chat": {
-      const beats = chatBeats(scene, fps).map((b) => b.showAt);
+      const lead = chatFollowsLines(scene) ? shift : 0; // dialogue bubbles are timed in speech time
+      const beats = chatBeats(scene, fps).map((b) => b.showAt + lead);
       let p = base(mx, 1196);
       p.lookY = -0.3;
       const last = beats[beats.length - 1] ?? 1e9;
@@ -455,14 +490,25 @@ export const MascotTrack: React.FC<{props: ShortProps; spans: {from: number; fra
   const end = spans[n - 1].from + spans[n - 1].frames;
   const local = (i: number, f: number) => f - spans[i].from + (i === 0 ? poster : 0);
   const slot = theme.mascotSlot;
-  const poseAt = (i: number, f: number) => scenePose(props.scenes[i], local(i, f), fps, i === 0, slot);
+  const cast = props.cast ?? {};
+  // 도치 speaking its own dialogue line: the mouth follows the line's loudness at a syllable-ish flap (~6 Hz); it
+  // stays uncurled and facing out while it talks
+  const speaking = (i: number, f: number, p: Pose): Pose => {
+    const lines = (props.scenes[i].lines ?? []).filter((l) => cast[l.speaker]?.role === "dochi");
+    if (!lines.length) return p;
+    const ms = ((f - spans[i].from) / fps) * 1000;
+    const level = lines.reduce((m, l) => Math.max(m, lineLevel(l, ms)), 0);
+    return {...p, curl: 0, talk: level * (0.35 + 0.65 * Math.abs(Math.sin(f * 0.63)))};
+  };
+  const poseAt = (i: number, f: number) => speaking(i, f,
+    scenePose(props.scenes[i], local(i, f), fps, i === 0, slot, i === 0 ? poster : 0));
   // palette per scene (mood-sky: night under its night sky); the rim light fades over the first frames of a scene
   const paletteOf = (i: number) => mascotPaletteFor(theme, props.scenes[i].accent, i === n - 1);
   const rimOf = (i: number) => (paletteOf(i) === "night" ? 1 : 0);
   let pose: Pose | null;
   let rim = rimOf(0);
   if (frame >= end) {
-    pose = mascotOn(props.scenes[0], theme) ? scenePose(props.scenes[0], poster, fps, true, slot) : null;
+    pose = mascotOn(props.scenes[0], theme) ? scenePose(props.scenes[0], poster, fps, true, slot, poster) : null;
   } else {
     let i = spans.findIndex((s) => frame < s.from + s.frames);
     if (i < 0) i = n - 1;

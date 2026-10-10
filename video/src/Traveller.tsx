@@ -14,7 +14,8 @@ export const Traveller: React.FC<{
   index: number; // boundary between scene `index` and `index + 1`
   from: AnchorSpec;
   to: AnchorSpec;
-}> = ({index, from, to}) => {
+  hideFrom?: boolean; // the outgoing look stays hidden (a twist stamp covers it): only the incoming look flies out
+}> = ({index, from, to, hideFrom}) => {
   const frame = useCurrentFrame();
   const box = useRef<HTMLDivElement>(null);
   const layerA = useRef<HTMLDivElement>(null);
@@ -23,7 +24,7 @@ export const Traveller: React.FC<{
   const p = spr(frame, 0, 10, 0.015);
   const s = Math.min(1.01, spr(frame, 1, 9, 0.01));
   const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
-  const opA = 1 - clamp01((p - 0.3) / 0.4);
+  const opA = hideFrom ? 0 : 1 - clamp01((p - 0.3) / 0.4);
   const opB = clamp01(p / 0.4);
   const blur = (2.5 * Math.sin(Math.PI * clamp01(p))).toFixed(2);
 

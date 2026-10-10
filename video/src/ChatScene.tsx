@@ -2,8 +2,8 @@ import React from "react";
 import {interpolate, useCurrentFrame, useVideoConfig} from "remotion";
 import {Avatar, clamp, PhonePanel, SceneHeader, SceneShell} from "./kit";
 import {muted, useTheme} from "./themes";
-import {spr} from "./motion";
-import {chatBeats} from "./schedule";
+import {spr, useScene} from "./motion";
+import {chatBeats, chatFollowsLines, chatMessages} from "./schedule";
 import {SceneProps} from "./types";
 
 const FONT_SIZE = 42;
@@ -33,16 +33,22 @@ const TypingDots: React.FC<{frame: number}> = ({frame}) => {
  * each incoming one), newest at the bottom, older ones scrolling up and fading under the header.
  */
 export const ChatScene: React.FC<{scene: SceneProps}> = ({scene}) => {
-  const frame = useCurrentFrame();
+  const visual = useCurrentFrame();
   const t = useTheme();
   const {fps} = useVideoConfig();
-  const msgs = scene.messages ?? [];
+  const ctx = useScene();
+  const msgs = chatMessages(scene);
   const beats = chatBeats(scene, fps);
   const title = scene.chatTitle ?? "대화";
+  // dialogue: bubbles land with the voices (speech time); the poster already shows the first one
+  const speech = chatFollowsLines(scene);
+  const lead = ctx.shift ?? 0;
+  const frame = speech ? visual - lead : visual;
 
   const rows: React.ReactNode[] = [];
   msgs.forEach((m, k) => {
-    const {typingFrom, showAt} = beats[k];
+    const posterBubble = speech && ctx.first && k === 0;
+    const {typingFrom, showAt} = posterBubble ? {typingFrom: null, showAt: -lead} : beats[k];
     const me = m.from === "me";
     if (typingFrom !== null && frame >= typingFrom && frame < showAt) {
       const t = spr(frame, typingFrom, 12);

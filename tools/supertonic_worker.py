@@ -19,7 +19,7 @@ import numpy as np
 
 
 def main() -> None:
-    job = json.loads(sys.stdin.read())
+    job = json.loads(sys.stdin.buffer.read().decode("utf-8"))   # UTF-8 whatever the console code page is
     from supertonic import TTS  # imported late so `--help`-style failures are cheap
 
     tts = TTS(model="supertonic-3", auto_download=True)

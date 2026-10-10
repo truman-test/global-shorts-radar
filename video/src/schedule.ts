@@ -1,7 +1,7 @@
 // Frame schedules shared by the scene components and the SFX track in Short.tsx, so every
 // pop/ding lands exactly when its bubble, tick or banner appears. All frames are scene-relative.
 
-import {SceneProps} from "./types";
+import {ChatMessage, SceneProps} from "./types";
 
 const fr = (ms: number, fps: number) => Math.round((ms / 1000) * fps);
 
@@ -19,8 +19,29 @@ export const beats = (scene: SceneProps, n: number, fps: number, first = 8): num
 
 export type ChatBeat = {typingFrom: number | null; showAt: number};
 
+/**
+ * Dialogue chat: the scene has no messages of its own, so every line with a side becomes a bubble that lands when
+ * its speaker starts talking. Its beats are in speech time (frames of the audio; the first scene's visuals subtract
+ * their poster lead, see dialogue.useSpeechMs).
+ */
+export const chatFollowsLines = (scene: SceneProps) =>
+  !(scene.messages ?? []).length && (scene.lines ?? []).some((l) => l.side);
+
+/** The chat's bubbles: its own messages, or one per dialogue line on the speaker's side. */
+export const chatMessages = (scene: SceneProps): ChatMessage[] =>
+  chatFollowsLines(scene)
+    ? (scene.lines ?? []).filter((l) => l.side).map((l) => ({from: l.side === "me" ? "me" : "them", text: l.text}))
+    : scene.messages ?? [];
+
 /** Chat: each bubble gets a beat; "them" bubbles are preceded by typing dots. */
 export const chatBeats = (scene: SceneProps, fps: number): ChatBeat[] => {
+  if (chatFollowsLines(scene)) {
+    const typing = fr(300, fps); // the dots fill the short gap before the other side speaks
+    return (scene.lines ?? []).filter((l) => l.side).map((l) => {
+      const at = fr(l.startMs, fps);
+      return l.side === "them" ? {typingFrom: Math.max(0, at - typing), showAt: at} : {typingFrom: null, showAt: at};
+    });
+  }
   const msgs = scene.messages ?? [];
   const typing = msgs.length > 1 ? Math.min(fr(600, fps), Math.max(8, (fr(scene.speechMs, fps) / msgs.length) * 0.45)) : 14;
   return beats(scene, msgs.length, fps, 6 + typing).map((at, k) =>
@@ -30,6 +51,24 @@ export const chatBeats = (scene: SceneProps, fps: number): ChatBeat[] => {
 
 export const SMS_ARRIVE = 8; // the message bubble lands
 export const SMS_FLAG = 24; // the "의심 링크" tag appears
+
+export type SmsBeats = {arrive: number; flag: number; replies: {text: string; from: "me" | "them"; at: number}[];
+  speech: boolean};
+
+/**
+ * SMS: the message lands at SMS_ARRIVE and is flagged at SMS_FLAG. In a dialogue scene (`speech`: frames in speech
+ * time) it lands when the other side's first line starts, and every later line with a side adds a bubble below it
+ * (the victim's replies on the right).
+ */
+export const smsBeats = (scene: SceneProps, fps: number): SmsBeats => {
+  const sided = (scene.lines ?? []).filter((l) => l.side);
+  const first = sided.findIndex((l) => l.side === "them");
+  if (first < 0) return {arrive: SMS_ARRIVE, flag: SMS_FLAG, replies: [], speech: false};
+  const arrive = fr(sided[first].startMs, fps);
+  return {arrive, flag: arrive + (SMS_FLAG - SMS_ARRIVE), speech: true,
+    replies: sided.filter((_, k) => k !== first).map((l) => ({text: l.text, from: l.side === "me" ? "me" : "them",
+      at: fr(l.startMs, fps)}))};
+};
 export const ALERT_LAND = 12; // the banner settles (ding)
 export const STAT_COUNT = [6, 40] as const; // the number counts up between these frames
 
