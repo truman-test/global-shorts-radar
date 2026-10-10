@@ -45,7 +45,7 @@ The only thing left to the owner is **uploading in YouTube Studio**. Talk to the
      published/used source ids (`published` table, existing scripts) and off-topic items;
    - use the specialist agents defined in `.claude/agents/` (spawn them as general-purpose agents told to read
      and follow their file if the named types are not available): `fact-researcher` writes the fact sheet
-     `content/week*/<video_id>.md`; `script-writer` writes `content/scripts/<yyyy-mm-dd>-<slug>.json` (must pass
+     `content/week*/<video_id>.md`; `story-writer` (drama/re-enactment episodes with senior protagonists — the default from 2026-10-11) or `script-writer` (explainers/curiosity facts) writes `content/scripts/<yyyy-mm-dd>-<slug>.json` (must pass
      `radar script-check --allow-unverified`); `hook-editor` then tightens the hook, poster, title, loop and length
      (no warnings: the estimate is the final video length, target 30-35 s); then a DIFFERENT agent acting as `fact-checker` writes
      `content/week*/<video_id>.review.md`. Apply the checker's fixes to the script yourself and re-run script-check.
