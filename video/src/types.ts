@@ -15,6 +15,10 @@ export type SpeakerRole = "scammer" | "victim" | "narrator" | "dochi" | "neutral
  * drawn as an invented presenter inside the TV frame of watch_ad. */
 export type CharacterId = "father" | "mother" | "daughter" | "son" | "scammer" | "fake_banker" | "ad";
 
+/** The cast's skin over the same rig and stagings (composition.json "castStyles"): drawn humans (Character.tsx) or
+ * our animal cast (Animal.tsx: 진돗개 family, 여우 callers). Default human. */
+export type CastStyle = "human" | "animal";
+
 /** Character expressions (the 8 of the brief + "excited", the lured look). */
 export type Expression = "neutral" | "worried" | "shocked" | "panicked" | "relieved" | "suspicious" | "smug" | "fakeKind"
   | "excited";
@@ -117,6 +121,7 @@ export type ShortProps = {
   shareLine?: string; // handwritten under the closing checklist only, e.g. "부모님께도 보내 주세요" (visual only)
   cta?: string; // value chip with a bell in the last ~1.2 s before the poster tail, e.g. "매일 1장, 생존노트"
   cast?: Record<string, CastMember>; // dialogue speakers (only when a scene has lines)
+  castStyle?: CastStyle; // skin of the rigged characters (script cast_style); default human
   scenes: SceneProps[];
 };
 

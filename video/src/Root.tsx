@@ -2,6 +2,7 @@ import React from "react";
 import {CalculateMetadataFunction, Composition} from "remotion";
 import {Short} from "./Short";
 import type {ShortProps} from "./types";
+import {CELL, Lineup, LineupProps} from "./Lineup";
 
 export const FPS = 30;
 
@@ -33,15 +34,35 @@ const calculateMetadata: CalculateMetadataFunction<ShortProps> = ({props}) => ({
     + Math.round(((props.posterTailMs ?? 0) / 1000) * FPS)),
 });
 
+const lineup: LineupProps = {castStyle: "animal", ids: ["father", "mother", "daughter", "son", "scammer", "fake_banker", "ad"],
+  rows: [{expr: "neutral", gesture: "rest"}, {expr: "worried", gesture: "phoneEar"}, {expr: "shocked", gesture: "handsOnCheeks"}]};
+
+const lineupMetadata: CalculateMetadataFunction<LineupProps> = ({props}) => ({
+  width: CELL.w * props.ids.length, height: CELL.h * props.rows.length,
+});
+
 export const RemotionRoot: React.FC = () => (
-  <Composition
-    id="Short"
-    component={Short}
-    width={1080}
-    height={1920}
-    fps={FPS}
-    durationInFrames={FPS * 8}
-    defaultProps={sample}
-    calculateMetadata={calculateMetadata}
-  />
+  <>
+    <Composition
+      id="Short"
+      component={Short}
+      width={1080}
+      height={1920}
+      fps={FPS}
+      durationInFrames={FPS * 8}
+      defaultProps={sample}
+      calculateMetadata={calculateMetadata}
+    />
+    {/* review sheet of the cast (A/B of the skins), never rendered by the pipeline */}
+    <Composition
+      id="CastLineup"
+      component={Lineup}
+      width={CELL.w * 7}
+      height={CELL.h * 3}
+      fps={FPS}
+      durationInFrames={1}
+      defaultProps={lineup}
+      calculateMetadata={lineupMetadata}
+    />
+  </>
 );

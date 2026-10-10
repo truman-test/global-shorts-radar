@@ -16,6 +16,7 @@ import {CallScene, callAvatar} from "./CallScene";
 import {BADGE, CardScene} from "./CardScene";
 import {CastContext, useCast} from "./dialogue";
 import {CastScene} from "./CastScene";
+import {CastStyleContext} from "./Actor";
 import {isDrama, SPEC, stagingOf} from "./rig";
 import {Stamp} from "./Handwriting";
 import {CHIP} from "./kit";
@@ -369,6 +370,7 @@ export const Short: React.FC<ShortProps> = (props) => {
     <ThemeContext.Provider value={theme}>
     <SeedContext.Provider value={seed}>
     <CastContext.Provider value={props.cast ?? {}}>
+    <CastStyleContext.Provider value={props.castStyle === "animal" ? "animal" : "human"}>
     <CategoryContext.Provider value={categoryFor(props.category)}>
     <AbsoluteFill style={{fontFamily: FONT, color: "#fff", wordBreak: "keep-all"}}>
       <Backdrop props={props} />
@@ -475,6 +477,7 @@ export const Short: React.FC<ShortProps> = (props) => {
       </Sequence>
     </AbsoluteFill>
     </CategoryContext.Provider>
+    </CastStyleContext.Provider>
     </CastContext.Provider>
     </SeedContext.Provider>
     </ThemeContext.Provider>

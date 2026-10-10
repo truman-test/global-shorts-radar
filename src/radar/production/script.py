@@ -50,6 +50,8 @@ and a dialogue scene whose speakers include one is staged with characters instea
 (default from the layout: call -> pip_call, chat/sms -> over_shoulder_chat, a card with an ad voice -> watch_ad;
 dochi_explains, the explainer beside the family, is opt-in). A line may carry acting notes: "face" (one of
 EXPRESSIONS), "gesture" (one of GESTURES) and "bubble", a keyword speech bubble of <= 8 characters taken from the line.
+The script-level "cast_style" picks the characters' skin over the same rig and stagings: "human" (default, drawn
+people) or "animal" (our own animal cast, video/src/Animal.tsx: a 진돗개 family and 여우 callers); role ids stay the same.
 Dialogue is an invented re-enactment: the disclaimer must say 재연, and every line passes the same checks as the
 narration (speakable, no URLs, masked numbers, no brand names).
 """
@@ -85,6 +87,7 @@ STAGINGS = ("pip_call", "split_call", "solo", "over_shoulder_chat", "watch_ad", 
 EXPRESSIONS = ("neutral", "worried", "shocked", "panicked", "relieved", "suspicious", "smug", "fakeKind", "excited")
 GESTURES = ("rest", "phoneEar", "phoneRead", "phoneType", "handOnHead", "handsOnCheeks", "point", "palmOut",
             "clutchChest")
+CAST_STYLES = ("human", "animal")   # the characters' skin (composition.json "castStyles"); default human
 KEYWORD_BUBBLE_MAX_CHARS = 8   # a speech bubble keyword in a staging (not a chat bubble, see BUBBLE_MAX_CHARS)
 EXPLAINER_LAYOUTS = ("card", "stat", "timeline", "checklist", "compare", "toggle", "flow", "dots")
 # which layouts each staging can play (the picture it reuses or replaces)
@@ -187,6 +190,7 @@ class Script:
     path: str = ""
     extra: dict = field(default_factory=dict)
     cast: dict = field(default_factory=dict)   # dialogue speakers: {"id": {"voice", "label", "role"}} (see cast_of)
+    cast_style: str = ""        # the characters' skin (CAST_STYLES); "" = human
 
 
 def speaker_role(speaker: str) -> str:
@@ -309,6 +313,7 @@ def load_script(path: str | Path) -> Script:
                       sources=[dict(s) for s in data.get("sources", [])], author=str(data.get("author", "")),
                       music=str(data.get("music", "")).strip(), theme=str(data.get("theme", "")).strip(),
                       category=str(data.get("category", "")).strip(), path=str(path), cast=_cast(data.get("cast")),
+                      cast_style=str(data.get("cast_style", "")).strip(),
                       extra={"pilot": str(data["pilot"]).strip()} if data.get("pilot") else {})
     except (KeyError, TypeError, AttributeError) as exc:
         raise ScriptError(f"{path}: missing or malformed field {exc}") from exc
@@ -509,6 +514,8 @@ def _character_errors(script: Script) -> list[str]:
         ch = entry.get("character", "")
         if ch and ch not in CHARACTERS:
             errors.append(f"cast '{key}': unknown character '{ch}' (use {', '.join(CHARACTERS)})")
+    if script.cast_style and script.cast_style not in CAST_STYLES:
+        errors.append(f"unknown cast_style '{script.cast_style}' (use {', '.join(CAST_STYLES)})")
     victim = victim_character(cast)
     callers = [k for k, e in cast.items() if e.get("character") in CALLERS]
     for i, sc in enumerate(script.scenes, start=1):

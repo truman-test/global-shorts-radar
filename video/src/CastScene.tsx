@@ -6,7 +6,8 @@
 import React, {useMemo} from "react";
 import {interpolate, useCurrentFrame, useVideoConfig} from "remotion";
 import {Phone} from "lucide-react";
-import {CharPose, Character, Fx, INK} from "./Character";
+import {Character} from "./Actor";
+import {CharPose, Fx, INK} from "./Character";
 import {lineLevel, useCast, useSpeechMs, Waveform} from "./dialogue";
 import {clamp, useShell} from "./kit";
 import {fadeOut, SceneContext, spr, useRealFrame, useScene} from "./motion";

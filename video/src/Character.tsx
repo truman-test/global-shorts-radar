@@ -12,9 +12,9 @@ import {RIG} from "./rig";
 import {CharacterId, Expression, Gesture} from "./types";
 
 export const INK = "#2B2620";
-const MOUTH_IN = "#5A2C2E";
-const TONGUE = "#D9837A";
-const SWEAT = "#8CC8FF";
+export const MOUTH_IN = "#5A2C2E";
+export const TONGUE = "#D9837A";
+export const SWEAT = "#8CC8FF";
 
 export type Fx = "sweat" | "sweat2" | "shockLines" | "blush" | "tears" | "question" | "sparkle" | "gloom" | "puff"
   | "vein";
@@ -51,7 +51,7 @@ export type CharPose = {
   monitor?: number; // 0..1 teal monitor light on the scammer's jaw and chest
 };
 
-type Look = {skin: string; hair: string; brow: string; top: string; inner: string; accent: string;
+export type Look = {skin: string; hair: string; brow: string; top: string; inner: string; accent: string;
   face: "round" | "square" | "oval"; build: number; age: boolean};
 
 /** Costume palettes: mid-saturation neutrals that never collide with the danger red or the category accents. */
@@ -80,7 +80,7 @@ export const shade = (hex: string, f = 0.12) => {
 };
 
 const H = RIG.head;
-const P = (pts: [number, number][]) => "M" + pts.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join(" L") + " Z";
+export const P = (pts: [number, number][]) => "M" + pts.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join(" L") + " Z";
 
 /** Face outline: a superellipse, squarer at the jaw for the father, narrower at the chin for the oval faces. */
 const facePath = (shape: Look["face"]) => {
@@ -102,18 +102,18 @@ const facePath = (shape: Look["face"]) => {
 const FACES = {round: facePath("round"), square: facePath("square"), oval: facePath("oval")};
 
 /** Torso silhouette (waist-up, runs off below the frame / behind the captions). */
-const torsoPath = (b: number) => `M -44 -16 C ${-74 * b} 22 ${-150 * b} 26 ${-206 * b} 44 C ${-262 * b} 62 ${-276 * b} 126
+export const torsoPath = (b: number) => `M -44 -16 C ${-74 * b} 22 ${-150 * b} 26 ${-206 * b} 44 C ${-262 * b} 62 ${-276 * b} 126
   ${-278 * b} 210 L ${-288 * b} 1700 L ${288 * b} 1700 L ${278 * b} 210 C ${276 * b} 126 ${262 * b} 62 ${206 * b} 44
   C ${150 * b} 26 ${74 * b} 22 44 -16 Z`;
 
-const SLEEVE = 70;
-const LW = 6;
+export const SLEEVE = 70;
+export const LW = 6;
 
-type Pt = [number, number];
-type ArmSpec = {el: Pt; ha: Pt; shape: string};
+export type Pt = [number, number];
+export type ArmSpec = {el: Pt; ha: Pt; shape: string};
 
 /** Arms of a gesture (L = viewer's left, R = viewer's right); rest arms hang behind the torso. */
-const armsOf = (g: Gesture, mirror: boolean, free: Gesture | undefined, typing: number): {L?: ArmSpec; R?: ArmSpec} => {
+export const armsOf = (g: Gesture, mirror: boolean, free: Gesture | undefined, typing: number): {L?: ArmSpec; R?: ArmSpec} => {
   const hands = RIG.hands as unknown as Record<string, {L?: Pt; R?: Pt}>;
   const elbows = RIG.elbows as unknown as Record<string, {L?: Pt; R?: Pt}>;
   const shapeOf = (gg: Gesture, side: "L" | "R") => {
@@ -244,7 +244,7 @@ const Arm: React.FC<{spec: ArmSpec; side: number; b: number; color: string; skin
 
 /* ------------------------------------------------------------------ face parts */
 
-const browSet = (e: Expression): [[number, number], [number, number]] => {
+export const browSet = (e: Expression): [[number, number], [number, number]] => {
   // [inner y, outer y] for the viewer's left brow and right brow
   switch (e) {
     case "worried": return [[-270, -244], [-270, -244]];
@@ -259,7 +259,7 @@ const browSet = (e: Expression): [[number, number], [number, number]] => {
   }
 };
 
-const Eye: React.FC<{cx: number; cy: number; e: Expression; blink: number; look: [number, number]; far: number;
+export const Eye: React.FC<{cx: number; cy: number; e: Expression; blink: number; look: [number, number]; far: number;
   side: number}> = ({cx, cy, e, blink, look, far, side}) => {
   const sx = 1 - 0.16 * far;
   const lx = look[0] * 7;
@@ -310,7 +310,7 @@ const Eye: React.FC<{cx: number; cy: number; e: Expression; blink: number; look:
 };
 
 /** The mouth: the talking viseme (0..4) shaped by the expression, or the expression's resting mouth. */
-const Mouth: React.FC<{e: Expression; talking: boolean; v: number; mx: number; my: number; light?: boolean}> = ({e,
+export const Mouth: React.FC<{e: Expression; talking: boolean; v: number; mx: number; my: number; light?: boolean}> = ({e,
   talking, v, mx, my, light}) => {
   const ink = light ? "#0E0F13" : INK;
   const inside = light ? "#E8E0D4" : MOUTH_IN;
@@ -368,7 +368,7 @@ const Mouth: React.FC<{e: Expression; talking: boolean; v: number; mx: number; m
 /* ------------------------------------------------------------------ hair and heads */
 
 /** Union of circles with one outline: all outlines first, then all fills (the perm, the hood's curls). */
-const Cloud: React.FC<{circles: [number, number, number][]; fill: string; extra?: React.ReactNode}> = ({circles, fill,
+export const Cloud: React.FC<{circles: [number, number, number][]; fill: string; extra?: React.ReactNode}> = ({circles, fill,
   extra}) => (
   <g>
     {circles.map(([x, y, r], i) => <circle key={`o${i}`} cx={x} cy={y} r={r} fill={INK} stroke={INK}
@@ -525,7 +525,7 @@ const HairFront: React.FC<{id: CharacterId; L: Look; dx: number; back: boolean}>
 };
 
 /** Costume layer over the torso (front or back). */
-const Costume: React.FC<{id: CharacterId; L: Look; b: number; back: boolean; uid: string}> = ({id, L, b, back}) => {
+export const Costume: React.FC<{id: CharacterId; L: Look; b: number; back: boolean; uid: string}> = ({id, L, b, back}) => {
   const st = {stroke: INK, strokeWidth: LW, strokeLinejoin: "round" as const, strokeLinecap: "round" as const};
   const thin = {stroke: INK, strokeWidth: 3.5, strokeLinecap: "round" as const, fill: "none"};
   if (back) {
@@ -620,7 +620,7 @@ const Costume: React.FC<{id: CharacterId; L: Look; b: number; back: boolean; uid
 
 /* ------------------------------------------------------------------ emotion symbols */
 
-const FxLayer: React.FC<{fx: Fx[]; dx: number; light: boolean; frame: number}> = ({fx, dx, light, frame}) => {
+export const FxLayer: React.FC<{fx: Fx[]; dx: number; light: boolean; frame: number}> = ({fx, dx, light, frame}) => {
   const on = (f: Fx) => fx.includes(f);
   const drop = (x: number, y: number, s = 1) => (
     <path transform={`translate(${x} ${y}) scale(${s})`} d="M 0 -30 C 8 -14 22 4 22 16 A 22 22 0 0 1 -22 16 C -22 4 -8 -14 0 -30 Z"
@@ -697,7 +697,7 @@ const FxLayer: React.FC<{fx: Fx[]; dx: number; light: boolean; frame: number}> =
 
 /* ------------------------------------------------------------------ the character */
 
-const Phone2: React.FC<{screen?: CharPose["screen"]; glow: boolean}> = ({screen, glow}) => (
+export const Phone2: React.FC<{screen?: CharPose["screen"]; glow: boolean}> = ({screen, glow}) => (
   <g>
     <rect x={-60} y={-100} width={120} height={200} rx={20} fill="#2D323C" stroke={INK} strokeWidth={LW} />
     {screen ? (

@@ -10,6 +10,9 @@
  "expressions": ["neutral", "worried", "shocked", "panicked", "relieved", "suspicious", "smug", "fakeKind", "excited"],
  "gestures": ["rest", "phoneEar", "phoneRead", "phoneType", "handOnHead", "handsOnCheeks", "point", "palmOut", "clutchChest"],
  "bubbleMaxChars": 8,
+ "castStyles": ["human", "animal"],
+ "_castStyles": "A skin over the same rig and stagings (script field cast_style, default human): human = Character.tsx, animal = Animal.tsx (진돗개 family: father white, mother tan with a perm; 여우 callers: scammer in a hoodie and headset, fake_banker in a suit with a blank badge, ad presenter in a shiny suit). The animal head keeps to the rig's head box: ear tips no higher than rig.head.top, half width (with cheek fur) within rig.head.rx + 34, the jowl/chin no lower than rig.head.chin; eyes and mouth on rig.eyeY / rig.mouthY.",
+ "animal": {"earTip": -414, "skullTop": -352, "halfWidth": 192, "jowl": -38, "muzzle": {"cy": -106, "rx": 100, "ry": 64}, "nose": -142, "kidHead": 0.96},
  "rig": {
   "head": {"cx": 0, "cy": -205, "rx": 160, "ry": 172, "top": -415, "chin": -33},
   "back": {"phone": [206, -160], "hand": [168, -92], "elbow": [262, 150]},

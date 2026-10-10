@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from radar.production.remotion_render import cast_props, lines_props, scene_props
-from radar.production.script import (KEYWORD_BUBBLE_MAX_CHARS, CALLERS, CHARACTERS, EXPRESSIONS, FAMILY, GESTURES,
+from radar.production.remotion_render import build_props, cast_props, cast_style_of, lines_props, scene_props
+from radar.production.script import (CAST_STYLES, KEYWORD_BUBBLE_MAX_CHARS, CALLERS, CHARACTERS, EXPRESSIONS, FAMILY, GESTURES,
                                      STAGING_LAYOUTS, STAGINGS, Line, Scene, Script, cast_of, default_staging,
                                      load_script, validate, victim_character)
 
@@ -280,3 +280,59 @@ def test_dochi_explains_keeps_the_cards_beside_the_family():
     assert c["scale"] >= 0.7                                           # explainer text stays readable
     d = de["dochi"]
     assert d["y"] < FRAME["captionBand"][0] and d["x"] + d["size"] * 0.6 < FRAME["rightColumn"]["x"]
+
+
+# ------------------------------------------------------------------ cast styles (skins over the same rig)
+
+ANIMAL_TSX = (ROOT / "video" / "src" / "Animal.tsx").read_text(encoding="utf-8")
+
+
+def test_cast_styles_are_the_same_in_python_json_and_typescript():
+    assert list(CAST_STYLES) == COMP["castStyles"] == _ts_union("CastStyle") == ["human", "animal"]
+    assert re.search(r"castStyle\?: CastStyle;", TYPES)
+
+
+def test_cast_style_is_validated_and_defaults_to_human():
+    s = _script()
+    assert s.cast_style == "" and _errors(s) == []
+    s.cast_style = "animal"
+    assert _errors(s) == []
+    s.cast_style = "puppet"
+    assert any("unknown cast_style 'puppet'" in e for e in _errors(s))
+
+
+def test_props_carry_the_cast_style_only_with_rigged_characters():
+    s = _script()
+    assert build_props(s, [], "ch")["castStyle"] == "human"      # the default stays human
+    s.cast_style = "animal"
+    assert build_props(s, [], "ch")["castStyle"] == "animal" == cast_style_of(s)
+    plain = _script()
+    for entry in plain.cast.values():
+        entry.pop("character", None)
+    assert "castStyle" not in build_props(plain, [], "ch")
+
+
+def test_the_animal_head_keeps_to_the_rig_head_box():
+    """The animal skin is drawn in the same rig: its ears, cheek fur and jaw stay inside the head box the composition
+    rules check, so every staging's shots hold for both skins."""
+    a, head = COMP["animal"], RIG["head"]
+    assert a["earTip"] >= head["top"]                       # the ear tips never above the humans' hair line
+    assert a["halfWidth"] <= head["rx"] + 34                # the face box's half width (with ears / cheek fur)
+    assert a["jowl"] <= head["chin"]                        # the jaw never lower than the human chin (stamp, captions)
+    m = a["muzzle"]
+    assert m["cy"] + m["ry"] <= head["chin"] and m["cy"] - m["ry"] > RIG["eyeY"]   # the muzzle sits under the eyes
+    assert RIG["eyeY"] < a["nose"] < RIG["mouthY"]
+    assert 0.9 <= a["kidHead"] <= 1
+    # every character has an animal design: the family are dogs (진돗개), the callers and the ad foxes (여우)
+    for c in CHARACTERS:
+        assert re.search(rf"\b{c}: {{species: \"(dog|fox)\"", ANIMAL_TSX), c
+    family = re.findall(r"\b(father|mother|daughter|son): \{species: \"(\w+)\"", ANIMAL_TSX)
+    callers = re.findall(r"\b(scammer|fake_banker|ad): \{species: \"(\w+)\"", ANIMAL_TSX)
+    assert {sp for _, sp in family} == {"dog"} and {sp for _, sp in callers} == {"fox"}
+
+
+def test_every_staging_draws_through_the_skin_switch():
+    cast_scene = (ROOT / "video" / "src" / "CastScene.tsx").read_text(encoding="utf-8")
+    short = (ROOT / "video" / "src" / "Short.tsx").read_text(encoding="utf-8")
+    assert 'import {Character} from "./Actor";' in cast_scene
+    assert "CastStyleContext.Provider" in short and 'props.castStyle === "animal"' in short

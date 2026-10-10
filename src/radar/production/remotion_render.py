@@ -16,8 +16,8 @@ from pathlib import Path
 from radar.config import PROJECT_ROOT
 from radar.production.assemble import (TRIM, ProductionError, ProductionResult, ffmpeg_exe, media_info, run_ffmpeg,
                                        write_meta)
-from radar.production.script import (LINE_GAP, TWIST_DELAY, TWIST_HOLD, Script, cast_of, caption_chunks,
-                                     default_staging, line_voice, mockup_side)
+from radar.production.script import (CAST_STYLES, LINE_GAP, TWIST_DELAY, TWIST_HOLD, Script, cast_of,
+                                     caption_chunks, default_staging, line_voice, mockup_side)
 from radar.production.textnorm import speakable_length, split_sentences
 from radar.production.themes import episode_number, record_style, resolve_style_report
 from radar.production.tts import TTSError
@@ -334,7 +334,14 @@ def build_props(script: Script, scenes: list[dict], channel_name: str, sfx: bool
     cast = cast_props(script)
     if cast:
         props["cast"] = cast
+        if any(c.get("character") for c in cast.values()):
+            props["castStyle"] = cast_style_of(script)   # the skin of the rigged characters (Actor.tsx)
     return props
+
+
+def cast_style_of(script: Script) -> str:
+    """The characters' skin: the script's cast_style, else human."""
+    return script.cast_style if script.cast_style in CAST_STYLES else "human"
 
 
 def meta_extra(style, transition: str, render_seconds: float, episode_no: int | None,
@@ -487,6 +494,8 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
     extra = meta_extra(style, transition, render_seconds, episode_no, music_item)
     if any(scene.lines for scene in script.scenes):
         extra["cast"] = {s: {"voice": line_voice(script, s), **c} for s, c in cast_props(script).items()}
+        if "castStyle" in props:
+            extra["cast_style"] = props["castStyle"]
     meta = write_meta(out_dir, script, duration, size, tts, warnings, extra=extra)
     return ProductionResult(video, out_dir / "thumb.png", meta, round(duration, 2), size, bool(tts.publishable), warnings)
 
