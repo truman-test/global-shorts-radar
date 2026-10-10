@@ -227,6 +227,7 @@ const PipCall: React.FC<{c: Ctx; shot: string; zoom: number}> = ({c, shot, zoom}
   const spec = shotSpec("pip_call", shot) as {chars: CharSpot[]; window?: {x: number; y: number; w: number; h: number;
     scale: number}};
   const callerTalks = talkWeight(c.scene, c.caller, c.msA) > 0.5;
+  if (shot === "other") return <Solo c={c} shot="other" zoom={zoom} variant="living" />;
   if (shot === "caller") {
     const spot = spec.chars[0];
     const fake = c.caller ? c.cast[c.caller]?.character === "fake_banker" : false;
@@ -301,7 +302,7 @@ const SplitCall: React.FC<{c: Ctx; zoom: number}> = ({c, zoom}) => {
   );
 };
 
-const Solo: React.FC<{c: Ctx; shot: string; zoom: number}> = ({c, shot, zoom}) => {
+const Solo: React.FC<{c: Ctx; shot: string; zoom: number; variant?: HomeVariant}> = ({c, shot, zoom, variant}) => {
   const spot = shotSpec("solo", shot).chars[0];
   if (shot === "caller") {
     const fake = c.caller ? c.cast[c.caller]?.character === "fake_banker" : false;
@@ -319,7 +320,7 @@ const Solo: React.FC<{c: Ctx; shot: string; zoom: number}> = ({c, shot, zoom}) =
     : "phoneRead", look: [0.2, -0.1]});
   return (
     <Camera zoom={zoom} fx={spot.x} fy={spot.eyeY}>
-      <HomeSet mode={c.mode} variant={shot === "other" ? "work" : "living"} />
+      <HomeSet mode={c.mode} variant={variant ?? (shot === "other" ? "work" : "living")} />
       <Character pose={pose} uid={`ov${c.index}`} frame={c.frameA} />
     </Camera>
   );

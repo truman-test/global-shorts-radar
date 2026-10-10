@@ -86,7 +86,9 @@
     },
     {
      "speaker": "daughter",
-     "text": "엄마, 이거 사기야!"
+     "text": "엄마, 이거 사기야!",
+     "gesture": "palmOut",
+     "face": "panicked"
     }
    ],
    "twist": "사기였습니다"

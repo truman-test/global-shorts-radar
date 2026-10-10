@@ -204,7 +204,13 @@ export const planShots = (scene: SceneProps, cast: Record<string, CastMember>, s
       const rot = {caller: ["wide", "caller", "wide", "close"], victim: ["close", "wide"]};
       let kc = 0;
       let kv = 0;
+      // a family member in the room with the victim (the daughter of "엄마, 이거 사기야!") gets her own shot
+      const other = otherOf(scene, cast, victim);
       lines.forEach((l, i) => {
+        if (l.speaker === other) {
+          push("other", l.startMs, until(i));
+          return;
+        }
         const caller = l.speaker !== victim;
         const pick = () => (caller ? rot.caller[kc++ % rot.caller.length] : rot.victim[kv++ % rot.victim.length]);
         const end = until(i);

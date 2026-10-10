@@ -96,7 +96,7 @@
   },
   {
    "layout": "call",
-   "caller": "아들?",
+   "caller": "진짜 아들",
    "caller_sub": "저장된 번호",
    "call_label": "발신 전화",
    "headline": "끊고, 저장된 번호로",
@@ -114,7 +114,8 @@
      "text": "나 회사인데, 무슨 사고?"
     }
    ],
-   "twist": "사기였습니다"
+   "twist": "사기였습니다",
+   "staging": "solo"
   },
   {
    "headline": "목소리가 같아도 가짜일 수 있어요",
