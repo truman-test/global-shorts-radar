@@ -161,6 +161,24 @@
     "card"
    ],
    "produced_at": "2026-10-10T00:34:51+00:00"
+  },
+  "2026-10-08-deepfake-cfo": {
+   "stage": "alert",
+   "theme": "aurora",
+   "category": "ai",
+   "layouts": [
+    "call",
+    "card",
+    "card",
+    "card",
+    "card"
+   ],
+   "middle": [
+    "card",
+    "card",
+    "card"
+   ],
+   "produced_at": "2026-10-10T04:53:02+00:00"
   }
  },
  "_doc": "Visual style of every produced episode, written by `radar produce` (Remotion engine). themes.resolve_style keeps logged stages in the schedule walk; `radar script-check` warns when the middle scenes repeat the previous episode's layout sequence."
