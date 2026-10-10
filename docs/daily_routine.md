@@ -79,3 +79,9 @@ The only thing left to the owner is **uploading in YouTube Studio**. Talk to the
 13. **Checkpoints:** D7 2026-10-16, D14 2026-10-23, D21 2026-10-30 — compare against the report's scenario table and
     state plainly in the weekly report whether the 11-07 goal is still possible; if the D14 gate fails, recommend moving
     the public target to Dec-Jan while keeping daily uploads.
+
+14. **Recreation track (2026-10-10, owner: "재창조를 더 세게"):** each week pick 3-5 of the strongest overseas scam
+    STORY Shorts (skits, animated stories, POV) and recreate them for Korea in a clean room: a `story-analyst` writes an
+    abstract beat sheet (content/week*/recreate_<id>.md, no quoted/translated lines); a different `story-writer`
+    writes the Korean drama from the beat sheet + a verified Korean fact sheet only (never the original); the
+    fact-checker also confirms no line is a translation of the original. Ideas/structure are reused, expression never.
