@@ -61,3 +61,20 @@ The only thing left to the owner is **uploading in YouTube Studio**. Talk to the
    title and that `media/upload/업로드_예정.txt` is ready; or a problem that needs them. Mention new approvals in one line ("새 소재 N건 승인"). Send the notepad and today's thumbnail with SendUserFile if available.
 8. **Weekly (Mondays):** have a `growth-analyst` agent write a short Korean review in `reports/weekly_<yyyymmdd>.md`: subscribers, views per
    video, which hooks/topics did best, and what to change in the next batch (topics, hook style, length).
+
+## Growth tasks (from reports/구독자 1천명 외부 성장 전략.md, 2026-10-10)
+9. **News first (24-48 h):** when 경찰청/금감원/금융위/KISA/방통위 publish a new scam method or alert (check their press
+   pages and the radar report daily), put a verified Short about it at the front of the schedule within 48 hours. Never
+   lower the fact-check standard for speed; if the full staff flow can't finish in time, skip it.
+10. **Upload extras in the notepad:** for each upcoming video add (a) "관련 동영상" = the best earlier episode on the same
+    topic (title + URL from content/schedule.json), (b) a pinned-comment text (one experience question, the official
+    source, 112/1332 신고 안내), (c) a Threads post pair in 도치's casual voice (morning text thread ending with the
+    Short link; evening video caption) and (d) a Naver Clip title/description/keywords. Owner posts manually.
+11. **Comment reply drafts:** read new comments on our videos (YouTube Data API commentThreads.list with the API key,
+    read-only) and write suggested replies to media/upload/댓글_답글_초안_<yyyymmdd>.txt (polite, factual, no links
+    except official sources; flag scam-link spam for the owner to remove). Never post replies yourself.
+12. **Weekly (Mondays):** search for open scam-prevention video contests (금감원/금융위/경찰청/KISA, 씽굿·위비티·올콘) and
+    add any open call with deadline and rights clauses to the weekly report.
+13. **Checkpoints:** D7 2026-10-16, D14 2026-10-23, D21 2026-10-30 — compare against the report's scenario table and
+    state plainly in the weekly report whether the 11-07 goal is still possible; if the D14 gate fails, recommend moving
+    the public target to Dec-Jan while keeping daily uploads.
