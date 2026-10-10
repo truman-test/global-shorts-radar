@@ -17,7 +17,7 @@ import {AnchorSpec, MORPH, SceneContext, Transition} from "./motion";
 import {Backdrop} from "./Backdrop";
 import {BRAND, CATEGORIES, CategoryContext, categoryFor, ThemeContext, themeFor, useCategory, useTheme} from "./themes";
 import {Traveller} from "./Traveller";
-import {MascotTrack} from "./Mascot";
+import {MascotTrack, mascotOn} from "./Mascot";
 import {Captions} from "./Captions";
 import {AlertScene} from "./AlertScene";
 import {ChatScene} from "./ChatScene";
@@ -212,8 +212,10 @@ export const Short: React.FC<ShortProps> = (props) => {
   const n = props.scenes.length;
   const end = n ? spans[n - 1].from + spans[n - 1].frames : 0;
   const tail = Math.round(((props.posterTailMs ?? 0) / 1000) * fps);
+  const theme = themeFor(props.theme);
+  const on = props.scenes.map((s) => mascotOn(s, theme));
   return (
-    <ThemeContext.Provider value={themeFor(props.theme)}>
+    <ThemeContext.Provider value={theme}>
     <CategoryContext.Provider value={categoryFor(props.category)}>
     <AbsoluteFill style={{fontFamily: FONT, color: "#fff", wordBreak: "keep-all"}}>
       <Backdrop props={props} />
@@ -230,12 +232,12 @@ export const Short: React.FC<ShortProps> = (props) => {
                 // Poster start: the first scene's visuals run POSTER frames ahead, so frame 0 (the feed preview,
                 // and the moment viewers decide to swipe) already shows the finished hook, not an empty screen.
                 <Sequence from={-POSTER} layout="none">
-                  <SceneContext.Provider value={{mode, index: i, frames: frames + POSTER, first: true, last}}>
+                  <SceneContext.Provider value={{mode, index: i, frames: frames + POSTER, first: true, last, mascot: on[i]}}>
                     <SceneBody scene={scene} />
                   </SceneContext.Provider>
                 </Sequence>
               ) : (
-                <SceneContext.Provider value={{mode, index: i, frames, first: false, last}}>
+                <SceneContext.Provider value={{mode, index: i, frames, first: false, last, mascot: on[i]}}>
                   <SceneBody scene={scene} />
                 </SceneContext.Provider>
               )}
@@ -248,7 +250,7 @@ export const Short: React.FC<ShortProps> = (props) => {
           </Sequence>
         )) : null}
       </div>
-      {/* 노트 the mascot: one continuous track over the whole video (in the margin, never on text or captions) */}
+      {/* 도치 the mascot: one continuous track over the whole video (in the margin, never on text or captions) */}
       <MascotTrack props={props} spans={spans} poster={POSTER} />
       {/* narration, captions and SFX keep the exact scene spans in both modes */}
       {props.scenes.map((scene, i) => {
@@ -276,7 +278,7 @@ export const Short: React.FC<ShortProps> = (props) => {
               so the scene is shifted by POSTER and frozen at its local frame 0 = the opening frame's POSTER */}
           <Sequence from={-POSTER} layout="none">
             <Freeze frame={0}>
-              <SceneContext.Provider value={{mode, index: 0, frames: spans[0].frames + POSTER, first: true, last: false}}>
+              <SceneContext.Provider value={{mode, index: 0, frames: spans[0].frames + POSTER, first: true, last: false, mascot: on[0]}}>
                 <SceneBody scene={props.scenes[0]} />
               </SceneContext.Provider>
             </Freeze>

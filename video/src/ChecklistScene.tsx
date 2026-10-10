@@ -1,7 +1,8 @@
 import React from "react";
 import {interpolate, interpolateColors, useCurrentFrame, useVideoConfig} from "remotion";
 import {handCheck, drawn, seedOf} from "./hand";
-import {BODY_BOTTOM, BODY_TOP, clamp, NoteCard, SceneHeader, SceneShell} from "./kit";
+import {Handwrite} from "./Handwriting";
+import {BODY_BOTTOM, BODY_TOP, clamp, markedWords, NoteCard, SceneHeader, SceneShell, useBody} from "./kit";
 import {spr, useScene} from "./motion";
 import {rng} from "./hand";
 import {checklistTicks} from "./schedule";
@@ -16,7 +17,9 @@ const BOX = 72;
  * Two short bursts of paper flecks from the card's side edges at frame `at` (drawn behind the card, so they never
  * cover text): seeded, gravity, gone within ~1.3 s and kept above the captions.
  */
-const Confetti: React.FC<{at: number; y: number; colors: string[]}> = ({at, y, colors}) => {
+const Confetti: React.FC<{at: number; y: number; left: number; right: number; colors: string[]}> = ({
+  at, y, left, right, colors,
+}) => {
   const frame = useCurrentFrame();
   const t = frame - at;
   if (t < 0 || t > 40) return null;
@@ -25,7 +28,7 @@ const Confetti: React.FC<{at: number; y: number; colors: string[]}> = ({at, y, c
     <svg width={1080} height={1920} style={{position: "absolute", inset: 0, pointerEvents: "none"}}>
       {Array.from({length: 24}, (_, k) => {
         const side = k % 2 ? 1 : -1;
-        const x = side > 0 ? 975 : 105;
+        const x = side > 0 ? right + 5 : left - 5;
         const ang = -Math.PI / 2 + side * (0.35 + r() * 0.9);
         const v = 15 + r() * 15;
         const spin = (r() - 0.5) * 30;
@@ -68,11 +71,14 @@ export const ChecklistScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   const trail = (k: number) => spr(frame, ticks[k] - 3, 17, 0);
   const hlTop = PAD_Y + 10 + ticks.slice(1).reduce((a, _, j) => a + ROW_H * trail(j + 1), 0);
   const hlBottom = PAD_Y + ROW_H - 10 + ticks.slice(1).reduce((a, _, j) => a + ROW_H * lead(j + 1), 0);
-  const hlWidth = items.length ? 22 + BOX + (860 - 40 - 22 - BOX) * lead(0) : 0;
+  const body = useBody();
+  const hlWidth = items.length ? 22 + BOX + (body.width - 40 - 22 - BOX) * lead(0) : 0;
 
   // paper stage, closing scene: the page warms up as the list fills, a few confetti flecks on the final tick
   const finale = t.family === "paper" && s.last && items.length > 0;
   const lastTick = ticks[items.length - 1] ?? 0;
+  const marked = markedWords(scene.headline, scene.mark);
+  const signOff = scene.headline.split(" ").filter((_, i) => marked.has(i)).join(" ");
   const warm = finale ? interpolate(frame, [lastTick - 30, lastTick + 12], [0, 1], clamp) : 0;
   return (
     <SceneShell>
@@ -81,9 +87,9 @@ export const ChecklistScene: React.FC<{scene: SceneProps}> = ({scene}) => {
           background: "radial-gradient(ellipse 90% 70% at 50% 45%, rgba(255,214,150,0.30), rgba(255,170,110,0.22))"}} />
       ) : null}
       <SceneHeader scene={scene} />
-      {finale ? <Confetti at={lastTick + 2} y={top + PAD_Y + (items.length - 1) * ROW_H + ROW_H / 2}
+      {finale ? <Confetti at={lastTick + 2} left={body.left} right={body.left + body.width} y={top + PAD_Y + (items.length - 1) * ROW_H + ROW_H / 2}
         colors={[tone.fill, TONES.caution.fill, CATEGORIES[cat].fill, "#FF8FA3"]} /> : null}
-      <NoteCard box={{top, left: 110, width: 860, height}} fold={50}>
+      <NoteCard box={{top, left: body.left, width: body.width, height}} fold={50}>
         {items.length ? (
           <div style={{position: "absolute", left: 20, top: hlTop, width: hlWidth, height: hlBottom - hlTop,
             borderRadius: 26, background: tone.tint, opacity: Math.min(1, lead(0) * 1.5)}} />
@@ -109,13 +115,19 @@ export const ChecklistScene: React.FC<{scene: SceneProps}> = ({scene}) => {
                     <path {...drawn(check, draw)} stroke={NOTE.ink} strokeWidth={7} />
                   </svg>
                 </div>
-                <div style={{fontSize: 48, fontWeight: 800, lineHeight: 1.2,
+                <div style={{fontSize: body.width < 800 ? 44 : 48, fontWeight: 800, lineHeight: 1.2,
                   color: interpolateColors(f, [0, 1], [NOTE.muted, NOTE.ink])}}>{text}</div>
               </div>
             );
           })}
         </div>
       </NoteCard>
+      {/* the sign-off: the headline's key phrase, handwritten under the list next to 도치 (only if it fits above
+          the captions) */}
+      {finale && top + height + 16 + 92 <= 1240 ? (
+        <Handwrite text={signOff} x={body.left + 24} y={top + height + 16} size={78} color={tone.ink} underline={tone.fill}
+          at={lastTick + 12} dur={14} rotate={-3} />
+      ) : null}
     </SceneShell>
   );
 };

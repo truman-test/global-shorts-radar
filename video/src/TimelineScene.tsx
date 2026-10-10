@@ -1,6 +1,6 @@
 import React from "react";
 import {useCurrentFrame, useVideoConfig} from "remotion";
-import {BODY_BOTTOM, BODY_TOP, NoteCard, SceneHeader, SceneShell} from "./kit";
+import {BODY_BOTTOM, BODY_TOP, NoteCard, SceneHeader, SceneShell, useBody} from "./kit";
 import {spr} from "./motion";
 import {timelineBeats} from "./schedule";
 import {NOTE, useTone} from "./themes";
@@ -18,6 +18,7 @@ export const TimelineScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   const {fps} = useVideoConfig();
   const tone = useTone(scene.accent);
   const steps = scene.steps ?? [];
+  const body = useBody();
   const beats = timelineBeats(scene, fps);
   const cardTop = BODY_TOP + 10;
   const cardH = BODY_BOTTOM - 10 - cardTop;
@@ -37,7 +38,7 @@ export const TimelineScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   return (
     <SceneShell>
       <SceneHeader scene={scene} />
-      <NoteCard box={{top: cardTop, left: 110, width: 860, height: cardH}} fold={50}>
+      <NoteCard box={{top: cardTop, left: body.left, width: body.width, height: cardH}} fold={50}>
         <div style={{position: "absolute", left: RAIL_X - 4, top: y(0) + 22, width: 8,
           height: Math.max(0, (steps.length ? y(steps.length - 1) : 0) - y(0)), borderRadius: 4, background: NOTE.rule}} />
         <div style={{position: "absolute", left: RAIL_X - 4, top: y(0) + 22, width: 8, height: Math.max(0, railTo - y(0)),

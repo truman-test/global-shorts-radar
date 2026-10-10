@@ -1,13 +1,13 @@
 import React from "react";
 import {interpolate, useCurrentFrame} from "remotion";
 import {Icon} from "./icons";
-import {BODY_TOP, clamp, SceneHeader, SceneShell} from "./kit";
+import {BODY_TOP, clamp, SceneHeader, SceneShell, useBody} from "./kit";
 import {spr} from "./motion";
 import {ALERT_LAND} from "./schedule";
 import {useTheme} from "./themes";
 import {SceneProps} from "./types";
 
-const PHONE_W = 820;
+
 const BEZEL = 14;
 
 /**
@@ -18,6 +18,8 @@ const BEZEL = 14;
 export const AlertScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   const frame = useCurrentFrame();
   const t = useTheme();
+  const body = useBody();
+  const PHONE_W = Math.min(820, body.width - 10);
   const accent = t.accents[scene.accent];
   const slide = spr(frame, ALERT_LAND - 8, 14);
   const dim = interpolate(frame, [ALERT_LAND - 4, ALERT_LAND + 8], [0, 0.62], clamp);
@@ -27,7 +29,7 @@ export const AlertScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   return (
     <SceneShell>
       <SceneHeader scene={scene} />
-      <div style={{position: "absolute", top: BODY_TOP + 10, left: (1080 - PHONE_W) / 2, width: PHONE_W, height: 1500,
+      <div style={{position: "absolute", top: BODY_TOP + 10, left: body.left + (body.width - PHONE_W) / 2, width: PHONE_W, height: 1500,
         borderRadius: 86, background: "#0a0e18", border: "3px solid rgba(255,255,255,0.18)", padding: BEZEL,
         boxShadow: "0 40px 90px rgba(0,0,0,0.6)", transform: `translateX(${buzz}px)`}}>
         <div style={{position: "relative", width: "100%", height: "100%", borderRadius: 72, overflow: "hidden",

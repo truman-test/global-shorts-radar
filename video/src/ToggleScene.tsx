@@ -2,7 +2,7 @@ import React from "react";
 import {ChevronRight, Pointer} from "lucide-react";
 import {interpolate, interpolateColors, useCurrentFrame, useVideoConfig} from "remotion";
 import {HandCircle, rng, seedOf} from "./hand";
-import {BODY_BOTTOM, BODY_TOP, clamp, PhonePanel, SceneHeader, SceneShell, TEXT} from "./kit";
+import {BODY_BOTTOM, BODY_TOP, clamp, PhonePanel, SceneHeader, SceneShell, TEXT, useBody} from "./kit";
 import {spr} from "./motion";
 import {TOGGLE_CIRCLE, toggleTaps} from "./schedule";
 import {muted, TONES, useTheme, useTone} from "./themes";
@@ -11,7 +11,6 @@ import {SceneProps} from "./types";
 const ROW_H = 104;
 const CONTENT_H = BODY_BOTTOM - BODY_TOP - 112; // screen area under the panel header
 const HEADER = 112; // PhonePanel header height
-const PANEL_W = 860;
 const SW = {w: 112, h: 62};
 
 // Generic menu rows around the real path (no real OS's wording or icons).
@@ -71,6 +70,7 @@ export const ToggleScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   const {fps} = useVideoConfig();
   const t = useTheme();
   const tone = useTone(scene.accent);
+  const PANEL_W = useBody().width;
   const path = scene.path ?? [];
   const setting = scene.setting ?? "";
   const to = scene.toggleTo !== "off";

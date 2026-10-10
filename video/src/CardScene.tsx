@@ -1,6 +1,7 @@
 import React from "react";
 import {interpolate, useCurrentFrame} from "remotion";
 import {DoodleProp} from "./Doodles";
+import {Handwrite} from "./Handwriting";
 import {clamp, Headline, NoteCard, useShell} from "./kit";
 import {Anchor, Face, MORPH, spr, useMorphIn} from "./motion";
 import {chipRadius, NOTE, TYPE, useTheme, useTone} from "./themes";
@@ -49,7 +50,12 @@ export const CardScene: React.FC<{scene: SceneProps}> = ({scene}) => {
       {t.family === "paper" ? (
         <>
           <DoodleProp which={0} x={858} y={520} size={150} at={4} tilt={8} />
-          <DoodleProp which={1} x={250} y={452} size={118} at={7} tilt={-8} />
+          <DoodleProp which={1} x={196} y={438} size={104} at={7} tilt={-8} />
+          {/* a handwritten tone label writes itself above the card's right half (위험! / 주의! / 안전!) */}
+          {scene.accent !== "blue" ? (
+            <Handwrite text={`${tone.label}!`} x={738} y={618} size={70} color={tone.ink} underline={tone.fill} at={9}
+              dur={10} rotate={-7} />
+          ) : null}
         </>
       ) : null}
       {/* the note card with the headline */}

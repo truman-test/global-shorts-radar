@@ -57,7 +57,7 @@ export type SceneProps = {
   total?: number; // dots: how many people the grid stands for
   stages?: DotStage[]; // dots: 2-4 stages
   unit?: string; // dots: counter unit, default "명"
-  mascot?: boolean; // 노트 the mascot in this scene; default: on for paper stages, off for dark ones
+  mascot?: boolean; // 도치 the hedgehog mascot in this scene; default: on for paper stages, off for dark ones
 };
 
 export type Music = {

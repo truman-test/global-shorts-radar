@@ -36,7 +36,8 @@ export const OUT = 6; // the rest of scene N fades out over this many frames aft
 export const IN_AT = 2; // scene N+1's content starts fading in this many frames after the boundary
 export const IN_DUR = 9;
 
-export type SceneCtx = {mode: Transition; index: number; frames: number; first: boolean; last: boolean};
+// mascot: 도치 is on in this scene (the layouts then leave the left margin free for it, see kit.useBody)
+export type SceneCtx = {mode: Transition; index: number; frames: number; first: boolean; last: boolean; mascot?: boolean};
 
 // Standalone renders (Studio sample, stills) behave like the classic single scene.
 export const SceneContext = createContext<SceneCtx>({mode: "classic", index: 0, frames: 1e9, first: true, last: true});

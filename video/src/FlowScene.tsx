@@ -1,15 +1,15 @@
 import React from "react";
 import {interpolate, useCurrentFrame, useVideoConfig} from "remotion";
 import {drawn, handBox, handLine, seedOf, Stroke} from "./hand";
-import {BODY_BOTTOM, BODY_TOP, clamp, NoteCard, SceneHeader, SceneShell} from "./kit";
+import {BODY_BOTTOM, BODY_TOP, clamp, NoteCard, SceneHeader, SceneShell, useBody} from "./kit";
 import {flowBeats} from "./schedule";
 import {CATEGORIES, NOTE, Tone, useCategory, useTone} from "./themes";
 import {FlowNode, SceneProps} from "./types";
 
-const CARD = {top: BODY_TOP + 6, left: 110, width: 860};
-const CARD_H = BODY_BOTTOM - 6 - CARD.top;
-const MAIN = {x: 40, w: 470};
-const SIDE = {x: 590, w: 230};
+const CARD_TOP = BODY_TOP + 6;
+const CARD_H = BODY_BOTTOM - 6 - CARD_TOP;
+/** The main column and the side-branch column inside a card of width w. */
+const cols = (w: number) => ({MAIN: {x: 36, w: Math.round(w * 0.545)}, SIDE: {x: Math.round(w * 0.68), w: Math.round(w * 0.27)}});
 const PAD_Y = 36;
 
 /** Characters per line at font size f inside a box of width w (Hangul ~0.98em, with 36 px padding). */
@@ -19,7 +19,8 @@ const linesOf = (text: string, w: number, f: number) => Math.ceil(text.replace(/
 type Placed = {node: FlowNode; y: number; h: number; side?: {text: string; label: string; y: number; h: number}};
 
 /** Node boxes laid out top to bottom with even gaps; the font shrinks if five two-line nodes would not fit. */
-const layout = (nodes: FlowNode[]): {placed: Placed[]; font: number} => {
+const layout = (nodes: FlowNode[], width: number): {placed: Placed[]; font: number} => {
+  const {MAIN, SIDE} = cols(width);
   const avail = CARD_H - PAD_Y * 2;
   for (const font of [40, 37, 34, 31]) {
     const boxH = (text: string, w: number) => 34 + linesOf(text, w, font) * font * 1.25;
@@ -47,8 +48,8 @@ const layout = (nodes: FlowNode[]): {placed: Placed[]; font: number} => {
 };
 
 /** Screen y of each node's centre (the mascot hops down the margin beside them). */
-export const flowNodeCenters = (scene: SceneProps) =>
-  layout(scene.nodes ?? []).placed.map((p) => CARD.top + p.y + p.h / 2);
+export const flowNodeCenters = (scene: SceneProps, width: number) =>
+  layout(scene.nodes ?? [], width).placed.map((p) => CARD_TOP + p.y + p.h / 2);
 
 /** Arrow: a hand-drawn shaft and a two-stroke head, drawn in with p. */
 const Arrow: React.FC<{x1: number; y1: number; x2: number; y2: number; p: number; color: string; seed: number}> = ({
@@ -80,15 +81,17 @@ export const FlowScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   const cat: Tone = CATEGORIES[useCategory()];
   const nodes = scene.nodes ?? [];
   const beats = flowBeats(scene, fps);
-  const {placed, font} = layout(nodes);
+  const body = useBody();
+  const {MAIN, SIDE} = cols(body.width);
+  const {placed, font} = layout(nodes, body.width);
   const seed = seedOf(scene.headline);
   const pr = (at: number, dur: number) => interpolate(frame, [at, at + dur], [0, 1], clamp);
 
   return (
     <SceneShell>
       <SceneHeader scene={scene} />
-      <NoteCard box={{...CARD, height: CARD_H}} fold={50}>
-        <svg width={CARD.width} height={CARD_H} style={{position: "absolute", inset: 0, overflow: "visible"}}>
+      <NoteCard box={{top: CARD_TOP, left: body.left, width: body.width, height: CARD_H}} fold={50}>
+        <svg width={body.width} height={CARD_H} style={{position: "absolute", inset: 0, overflow: "visible"}}>
           {placed.map((pl, k) => {
             const at = beats[k];
             const last = k === placed.length - 1;

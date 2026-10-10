@@ -1,6 +1,6 @@
 import React from "react";
 import {Easing, interpolate, useCurrentFrame} from "remotion";
-import {BODY_BOTTOM, BODY_TOP, clamp, NoteCard, SceneHeader, SceneShell} from "./kit";
+import {BODY_BOTTOM, BODY_TOP, clamp, NoteCard, SceneHeader, SceneShell, useBody} from "./kit";
 import {NOTE, useTone} from "./themes";
 import {spr} from "./motion";
 import {STAT_COUNT} from "./schedule";
@@ -50,19 +50,20 @@ export const StatScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   const [a, b] = STAT_COUNT;
   const t = interpolate(frame, [a, b], [0, 1], {...clamp, easing: Easing.out(Easing.cubic)});
   const shown = countUp(full, t);
-  const size = Math.min(200, Math.floor(760 / Math.max(1, emWidth(full))));
+  const size = Math.min(200, Math.floor((useBody().width - 100) / Math.max(1, emWidth(full))));
   const punch = spr(frame, b, 10, 0.03);
   const scale = frame < b ? 0.9 + 0.1 * t : 1 + 0.06 * Math.sin(Math.min(1, punch) * Math.PI);
   const labelIn = spr(frame, b - 6, 14);
   const subIn = interpolate(frame, [b + 4, b + 14], [0, 1], clamp);
   const meter = interpolate(frame, [a, b], [0, 1], {...clamp, easing: Easing.out(Easing.cubic)});
-  const METER_W = 600;
+  const body = useBody();
+  const METER_W = Math.min(600, body.width - 160);
   const cardTop = BODY_TOP + 10;
 
   return (
     <SceneShell>
       <SceneHeader scene={{...scene, sub: ""}} />
-      <NoteCard box={{top: cardTop, left: 110, width: 860, height: BODY_BOTTOM - 10 - cardTop}} fold={50}>
+      <NoteCard box={{top: cardTop, left: body.left, width: body.width, height: BODY_BOTTOM - 10 - cardTop}} fold={50}>
         <div style={{position: "absolute", inset: "30px 50px", display: "flex", flexDirection: "column",
           alignItems: "center", justifyContent: "center", gap: 0}}>
           <div style={{fontSize: size, fontWeight: 900, letterSpacing: -size * 0.02, lineHeight: 1.12, color: tone.ink,

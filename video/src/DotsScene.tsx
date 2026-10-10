@@ -1,7 +1,7 @@
 import React, {useMemo} from "react";
 import {interpolate, interpolateColors, useCurrentFrame, useVideoConfig} from "remotion";
 import {rng, seedOf} from "./hand";
-import {BODY_BOTTOM, BODY_TOP, clamp, NoteCard, SceneHeader, SceneShell} from "./kit";
+import {BODY_BOTTOM, BODY_TOP, clamp, NoteCard, SceneHeader, SceneShell, useBody} from "./kit";
 import {spr} from "./motion";
 import {dotBeats} from "./schedule";
 import {CATEGORIES, NOTE, TONES, useCategory, useTone} from "./themes";
@@ -67,16 +67,17 @@ export const DotsScene: React.FC<{scene: SceneProps}> = ({scene}) => {
 
   const cardTop = BODY_TOP + 6;
   const cardH = BODY_BOTTOM - 6 - cardTop;
-  const GRID_W = 700;
+  const body = useBody();
+  const GRID_W = Math.min(700, body.width - 130);
   const GRID_H = 300;
   const pitch = Math.min(GRID_W / cols, GRID_H / rows);
   const r0 = pitch * 0.36;
-  const gx = (860 - pitch * cols) / 2;
+  const gx = (body.width - pitch * cols) / 2;
 
   return (
     <SceneShell>
       <SceneHeader scene={scene} />
-      <NoteCard box={{top: cardTop, left: 110, width: 860, height: cardH}} fold={50}>
+      <NoteCard box={{top: cardTop, left: body.left, width: body.width, height: cardH}} fold={50}>
         {/* counter */}
         <div style={{position: "absolute", top: 34, left: 0, right: 0, display: "flex", alignItems: "baseline",
           justifyContent: "center", gap: 22}}>
@@ -87,7 +88,7 @@ export const DotsScene: React.FC<{scene: SceneProps}> = ({scene}) => {
         <div style={{position: "absolute", top: 152, left: 0, right: 0, textAlign: "center", fontSize: 40, fontWeight: 800,
           color: labelColor}}>{label}</div>
         {/* the grid */}
-        <svg width={860} height={GRID_H + 20} style={{position: "absolute", left: 0, top: 218, opacity: gridIn}}>
+        <svg width={body.width} height={GRID_H + 20} style={{position: "absolute", left: 0, top: 218, opacity: gridIn}}>
           {Array.from({length: D}, (_, i) => {
             const rank = order[i];
             let k = -1;

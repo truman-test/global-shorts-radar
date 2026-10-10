@@ -19,6 +19,12 @@ export const TEXT = BRAND.panelText;
 
 export const CHIP = 98; // header icon chip (outer size), the shared element of the mockup layouts
 
+/** Horizontal extent of the body (panels, cards) under the header: full width, or narrowed so 도치 has the margin. */
+export const BODY = {left: 110, width: 860};
+export const ROOM = {left: 206, width: 766}; // 도치 stands in x ~16-196; right edge stays at 972
+export const bodyBox = (mascot?: boolean) => (mascot ? ROOM : BODY);
+export const useBody = () => bodyBox(useScene().mascot);
+
 export type ShellStyle = "slide" | "swipe" | "fade";
 
 /**
@@ -273,8 +279,9 @@ export const SceneHeader: React.FC<{scene: SceneProps; top?: number; height?: nu
 export const PhonePanel: React.FC<{header: React.ReactNode; children: React.ReactNode; top?: number;
   bottom?: number}> = ({header, children, top = BODY_TOP, bottom = BODY_BOTTOM}) => {
   const t = useTheme();
+  const body = useBody();
   return (
-    <div style={{position: "absolute", top, left: 110, width: 860, height: bottom - top, borderRadius: 48,
+    <div style={{position: "absolute", top, left: body.left, width: body.width, height: bottom - top, borderRadius: 48,
       background: t.panel, border: "2px solid rgba(255,255,255,0.12)", boxShadow: "0 30px 80px rgba(0,0,0,0.45)",
       overflow: "hidden", display: "flex", flexDirection: "column", color: TEXT}}>
       <div style={{flex: "0 0 auto", height: 112, display: "flex", alignItems: "center", gap: 22, padding: "0 30px",

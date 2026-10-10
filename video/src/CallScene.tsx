@@ -1,7 +1,7 @@
 import React from "react";
 import {useCurrentFrame} from "remotion";
 import {Phone, PhoneOff} from "lucide-react";
-import {TEXT, useShell} from "./kit";
+import {TEXT, useBody, useShell} from "./kit";
 import {Anchor, Face} from "./motion";
 import {muted, useTheme} from "./themes";
 import {SceneProps} from "./types";
@@ -9,7 +9,7 @@ import {SceneProps} from "./types";
 export const CALL_AVATAR = 260;
 
 // the phone screen the call sits in (dark on every stage, so it reads the same on paper)
-const SCREEN = {top: 246, height: 990, left: 110, width: 860};
+const SCREEN = {top: 246, height: 990};
 
 /**
  * Generic incoming-call screen for re-enactments, inside a phone screen panel. Deliberately not a copy of any
@@ -20,6 +20,7 @@ export const CallScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   const frame = useCurrentFrame();
   const t = useTheme();
   const shell = useShell("fade");
+  const body = useBody();
   const buzzing = frame % 30 < 16;
   const shake = buzzing ? Math.sin(frame * 2.6) * 6 : 0;
   const caller = scene.caller ?? "알 수 없음";
@@ -37,7 +38,7 @@ export const CallScene: React.FC<{scene: SceneProps}> = ({scene}) => {
 
   return (
     <div style={{position: "absolute", inset: 0, ...shell}}>
-      <div style={{position: "absolute", ...SCREEN, borderRadius: 64, background: t.panel, color: TEXT,
+      <div style={{position: "absolute", ...SCREEN, left: body.left, width: body.width, borderRadius: 64, background: t.panel, color: TEXT,
         border: "3px solid rgba(255,255,255,0.14)", boxShadow: "0 36px 90px rgba(0,0,0,0.45)", overflow: "hidden",
         transform: `translateX(${shake * 0.4}px)`}}>
         <div style={{position: "absolute", top: 62, width: "100%", textAlign: "center"}}>
@@ -47,7 +48,7 @@ export const CallScene: React.FC<{scene: SceneProps}> = ({scene}) => {
           <div style={{fontSize: 40, fontWeight: 700, color: muted(t, 0.75), marginTop: 4}}>{scene.callerSub ?? "휴대전화"}</div>
         </div>
         {/* avatar with ripples, buzzing like a vibrating phone */}
-        <div style={{position: "absolute", left: (860 - CALL_AVATAR) / 2, top: 400, width: CALL_AVATAR,
+        <div style={{position: "absolute", left: (body.width - CALL_AVATAR) / 2, top: 400, width: CALL_AVATAR,
           height: CALL_AVATAR, transform: `translateX(${shake}px)`}}>
           {rings}
           <Anchor size={CALL_AVATAR} style={{position: "absolute", inset: 0}}>

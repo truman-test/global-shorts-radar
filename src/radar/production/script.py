@@ -32,7 +32,7 @@ Scene layouts ("layout"; every layout keeps headline/sub/icon/accent):
   dots       seeded dot simulation: total=1000, stages=[{"label": "링크 클릭", "count": 120}, ...] (2-4, a funnel:
              each count <= the previous; every number must come from the script's sources), unit="명"
 Every scene may set "mark": the headline's key phrase (a substring) that gets the highlighter / underline, and
-"mascot": false / true to hide / show 노트 the mascot (default: on for paper stages, off for dark ones).
+"mascot": false / true to hide / show 도치 the hedgehog mascot (default: on for paper stages, off for dark ones).
 Mockup text never contains real phone numbers, real-looking links or brand names.
 """
 from __future__ import annotations
@@ -98,7 +98,7 @@ class Scene:
     total: int = 0              # dots: people the grid stands for
     stages: list[dict] = field(default_factory=list)     # dots: [{"label", "count"}]
     unit: str = "명"            # dots: counter unit
-    mascot: object = None       # 노트 the mascot: True / False, None = by stage (on for paper, off for dark)
+    mascot: object = None       # 도치 the hedgehog mascot: True / False, None = by stage (on for paper, off for dark)
 
     def tts_text(self) -> str:
         return self.tts.strip() or normalize_for_tts(self.narration)

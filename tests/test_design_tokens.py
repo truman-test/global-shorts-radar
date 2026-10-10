@@ -173,3 +173,10 @@ def test_python_and_token_names_match():
 def test_captions_component_uses_the_tokens():
     src = (ROOT / "video" / "src" / "Captions.tsx").read_text(encoding="utf-8")
     assert "CAPTION.highlight" in src and "CAPTION.fill" in src and "CAPTION.outline" in src
+
+
+def test_handwriting_font_is_only_used_for_accents():
+    """Gaegu (HAND) may only be loaded in fonts.ts and used by Handwriting.tsx, never by captions/headlines/mockups."""
+    src = ROOT / "video" / "src"
+    users = sorted(p.name for p in src.glob("*.ts*") if re.search(r"\bHAND\b|Gaegu", p.read_text(encoding="utf-8")))
+    assert users == ["Handwriting.tsx", "fonts.ts"], users
