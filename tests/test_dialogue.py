@@ -307,3 +307,13 @@ def test_stamp_sfx_is_generated(tmp_path):
     from radar.production.remotion_render import ensure_sfx
     seconds, _ = media_info(ensure_sfx(tmp_path) / "stamp.wav")
     assert 0.2 < seconds < 0.5
+
+
+def test_dochi_lines_force_a_mascot_stage():
+    """If 도치 speaks, it must be visible: automatic stage choice only picks stages that show the mascot."""
+    from radar.production.script import load_script
+    from radar.production.themes import STAGES, dochi_speaks, pick_style
+    s = load_script("content/scripts/2026-10-11-drama-compensation-sms.json")
+    assert dochi_speaks(s)
+    s.theme = ""
+    assert STAGES[pick_style(s).theme].mascot

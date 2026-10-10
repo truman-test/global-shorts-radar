@@ -260,6 +260,13 @@ def candidates(category: str) -> list[StageSpec]:
     return [STAGES[t] for t in CANDIDATES.get(category, CANDIDATES[DEFAULT_CATEGORY])]
 
 
+def dochi_speaks(script) -> bool:
+    """True when the mascot 도치 has dialogue lines (then it has to be visible)."""
+    cast = getattr(script, "cast", None) or {}
+    ids = {sid for sid, c in cast.items() if (c or {}).get("role") == "dochi"} | {"dochi", "도치"}
+    return any(line.speaker in ids for scene in script.scenes for line in (getattr(scene, "lines", None) or []))
+
+
 def pick_style(script, history: list[Style] | None = None) -> Style:
     """Stage + category for `script` given the earlier episodes (oldest first)."""
     return pick_style_report(script, history)[0]
@@ -277,6 +284,13 @@ def pick_style_report(script, history: list[Style] | None = None) -> tuple[Style
     primary = [s.theme for s in candidates(category)]
     dark = next((t for c, _f, t, _w in TOPICS if c == category), ())
     tiers = [primary, [t for t in (*dark, *ROTATION) if t not in primary]]
+    if dochi_speaks(script):
+        # 도치 has lines: it must be on screen, so only stages that show the mascot qualify
+        auto = {t for specs in CANDIDATES.values() for t in specs} | set(ROTATION)
+        with_mascot = [name for name, spec in STAGES.items() if spec.mascot and name in auto]
+        tiers = [[x for x in tier if x in with_mascot] for tier in tiers] + [[x for x in with_mascot
+                 if all(x not in tier for tier in tiers)]]
+        tiers = [tier for tier in tiers if tier]
 
     def as_style(t: str) -> Style:
         return style_of(t, category, script_mascot(script, t))
