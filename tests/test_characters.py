@@ -20,6 +20,9 @@ DRAMAS = {name: ROOT / "content" / "scripts" / f"2026-10-11-drama-{name}.json"
           for name in ("bank-caller", "compensation-sms", "invest-ad")}
 FRAME = COMP["frame"]
 RIG = COMP["rig"]
+BODIES = COMP["bodies"]
+HEAD_H = RIG["head"]["chin"] - RIG["head"]["top"]          # 382 local units
+HEAD_W = 2 * RIG["head"]["rx"]                              # 320
 
 
 # ------------------------------------------------------------------ one vocabulary in Python, JSON and TypeScript
@@ -173,15 +176,35 @@ def _face_box(spot):
     return spot["x"] - half, n + RIG["head"]["top"] * k, spot["x"] + half, n + RIG["head"]["chin"] * k
 
 
-def _hand_boxes(spot):
+def _who_characters(spot) -> list[str]:
+    """The characters that can stand on a spot: the family for the victim / another member, the callers, the ad."""
+    return {"victim": COMP["family"], "other": COMP["family"], "caller": COMP["callers"],
+            "presenter": ["ad"]}[spot["who"]]
+
+
+def _prop_top(spec, spot) -> float | None:
+    prop = spec.get("prop")
+    if not prop or prop.get("for", spot["who"]) != spot["who"]:
+        return None
+    return prop["top"]
+
+
+def _hand_boxes(spot, prop_top=None):
+    """Every hand a shot can show: the gestures' hands plus the resting paw of a side the gesture leaves free (a hand
+    whose box starts below a foreground prop's top edge is hidden by the prop and skipped)."""
     k, n = spot["k"], _neck(spot)
     r = RIG["handR"] * k * 1.15
-    sides = [-1] if spot.get("mirror") else [1]   # mirror: the gestures are drawn on the other side
+    side = -1 if spot.get("mirror") else 1   # mirror: the gestures are drawn on the other side
     for g in spot["gestures"]:
-        for side in sides:
-            for hx, hy in RIG["hands"].get(g, {}).values():
-                x, y = spot["x"] + side * hx * k, n + hy * k
-                yield g, (x - r, y - r, x + r, y + r)
+        hands = dict(RIG["hands"].get(g, {}))
+        for s in ("L", "R"):
+            if s not in hands:
+                hands[s] = RIG["hands"]["rest"][s]
+        for hx, hy in hands.values():
+            x, y = spot["x"] + side * hx * k, n + hy * k
+            if prop_top is not None and y - r >= prop_top:
+                continue
+            yield g, (x - r, y - r, x + r, y + r)
 
 
 def _forbidden(box) -> list[str]:
@@ -208,7 +231,10 @@ def _shots():
 def test_faces_and_hands_stay_out_of_the_caption_band_bottom_and_right_column(staging, shot, spec):
     for spot in spec["chars"]:
         assert _forbidden(_face_box(spot)) == [], (staging, shot, spot["who"], "face")
-        for g, box in _hand_boxes(spot):
+        cover = _prop_top(spec, spot)
+        if spot.get("panel") == "top":   # split_call: the caller's panel ends at the border
+            cover = COMP["stagings_spec"][staging]["border"]["y"]
+        for g, box in _hand_boxes(spot, cover):
             assert _forbidden(box) == [], (staging, shot, spot["who"], g)
 
 
@@ -225,9 +251,12 @@ def test_eye_lines_and_sizes(staging, shot, spec):
             continue   # the over-the-shoulder back of the head has no eyes
         lo, hi = band.get(spot["who"], FRAME["eyeBand"])
         assert lo <= spot["eyeY"] <= hi, (staging, shot, spot["who"])
-        # visible height: hair top to the waist or the frame / panel edge
+        # visible height: hair top to the feet, a foreground prop's edge or the frame / panel edge
         n, k = _neck(spot), spot["k"]
-        top, bottom = n + RIG["head"]["top"] * k, min(FRAME["h"], n + RIG["waist"] * k)
+        sole = min(BODIES[c]["sole"] for c in _who_characters(spot))
+        top, bottom = n + RIG["head"]["top"] * k, min(FRAME["h"], n + sole * k)
+        if _prop_top(spec, spot) is not None:
+            bottom = min(bottom, _prop_top(spec, spot))
         if split and spot["who"] == "caller":
             top, bottom = max(top, 236), min(bottom, COMP["stagings_spec"]["split_call"]["border"]["y"])
         if split and spot["who"] == "victim":
@@ -246,13 +275,15 @@ def test_eye_lines_and_sizes(staging, shot, spec):
 def test_the_first_frame_is_the_victims_face():
     """Every drama staging opens (its first shot) on the victim's face, eyes in the eye band, face >= 30% wide."""
     for name in ("pip_call", "over_shoulder_chat", "watch_ad"):
-        first = {"pip_call": "close", "over_shoulder_chat": "face", "watch_ad": "face"}[name]
+        first = {"pip_call": "hook", "over_shoulder_chat": "face", "watch_ad": "face"}[name]
         spot = COMP["stagings_spec"][name]["shots"][first]["chars"][0]
         assert spot["who"] == "victim" and spot.get("view", "front") == "front"
         assert FRAME["eyeBand"][0] <= spot["eyeY"] <= FRAME["eyeBand"][1]
         assert 2 * RIG["head"]["rx"] * spot["k"] / FRAME["w"] >= 0.3
     rig = (ROOT / "video" / "src" / "rig.ts").read_text(encoding="utf-8")
-    assert 'push("close", -1e9, first)' in rig and 'push("face", -1e9, first)' in rig
+    assert 'push(posterMs > 0 ? "hook" : "close", -1e9, first)' in rig and 'push("face", -1e9, first)' in rig
+    hook = COMP["stagings_spec"]["pip_call"]["shots"]["hook"]
+    assert hook["size"] == "ecu" and "window" not in hook       # the poster: the face alone, the window comes on the cut
 
 
 def test_twist_close_up_and_stamp():
@@ -320,7 +351,8 @@ def test_the_animal_head_keeps_to_the_rig_head_box():
     assert a["halfWidth"] <= head["rx"] + 34                # the face box's half width (with ears / cheek fur)
     assert a["jowl"] <= head["chin"]                        # the jaw never lower than the human chin (stamp, captions)
     m = a["muzzle"]
-    assert m["cy"] + m["ry"] <= head["chin"] and m["cy"] - m["ry"] > RIG["eyeY"]   # the muzzle sits under the eyes
+    assert m["bottom"] <= head["chin"] and m["top"] > RIG["eyeY"]   # the muzzle runs from between the eyes to the chin
+    assert (m["bottom"] - m["top"]) / HEAD_H >= 0.35                # long enough to read as a dog, not a bear
     assert RIG["eyeY"] < a["nose"] < RIG["mouthY"]
     assert 0.9 <= a["kidHead"] <= 1
     # every character has an animal design: the family are dogs (진돗개), the callers and the ad foxes (여우)
@@ -336,3 +368,80 @@ def test_every_staging_draws_through_the_skin_switch():
     short = (ROOT / "video" / "src" / "Short.tsx").read_text(encoding="utf-8")
     assert 'import {Character} from "./Actor";' in cast_scene
     assert "CastStyleContext.Provider" in short and 'props.castStyle === "animal"' in short
+
+
+# ------------------------------------------------------------------ SD proportions and shot sizes (2026-10-11 study)
+
+def test_bodies_are_sd_proportions():
+    """research_notes/character_shorts_style: head-heavy characters keep chin -> waist 0.6-0.75 head, the torso at
+    most 1.05-1.2 head widths, parents ~2.7 heads tall, the grown-up children ~2.9, the fox callers ~3.0."""
+    assert set(BODIES) == set(COMP["characters"])
+    tall = {"father": 2.7, "mother": 2.7, "daughter": 2.9, "son": 2.9, "scammer": 3.0, "fake_banker": 3.0, "ad": 3.0}
+    for c, b in BODIES.items():
+        assert 0.6 <= (b["waistY"] - RIG["head"]["chin"]) / HEAD_H <= 0.75, c
+        widest = max(b["sh"], b["w"], b["hip"], (b.get("skirt") or [0, 0])[1])
+        assert 1.05 <= 2 * widest / HEAD_W <= 1.2, (c, round(2 * widest / HEAD_W, 3))
+        assert abs((b["sole"] - RIG["head"]["top"]) / HEAD_H - tall[c]) <= 0.05, c
+        assert b["waistY"] < b["hemY"] < b["crotch"] < b["sole"] and b["legX"] > b["legW"]   # two legs with a gap
+    # the old pillar is gone: nothing in the rig runs to y=1700 any more
+    for f in ("Character.tsx", "Animal.tsx", "Body.tsx"):
+        assert "1700" not in (ROOT / "video" / "src" / f).read_text(encoding="utf-8"), f
+
+
+@pytest.mark.parametrize("staging,shot,spec", list(_shots()), ids=lambda v: v if isinstance(v, str) else "")
+def test_shot_sizes(staging, shot, spec):
+    """Head height (hair line to chin) as a share of the frame height per shot size: extreme close-up 45-55%,
+    close-up 35-42%, bust 28-35% (always with a foreground prop), medium 18-25%, full 18-22%."""
+    size = spec.get("size")
+    if not spec["chars"] or size == "panel":
+        return
+    lo, hi = COMP["shotSizes"][size]
+    for spot in spec["chars"]:
+        share = HEAD_H * spot["k"] / FRAME["h"]
+        assert lo <= share <= hi, (staging, shot, size, round(share, 3))
+    if size == "bust":
+        assert spec.get("prop", {}).get("kind") in COMP["props"], (staging, shot)
+
+
+@pytest.mark.parametrize("staging,shot,spec", list(_shots()), ids=lambda v: v if isinstance(v, str) else "")
+def test_body_length_rule(staging, shot, spec):
+    """Without visible feet the body seen below the chin (down to the bottom-UI line or a foreground prop's edge) is at
+    most 1.1 head; a full shot shows the feet (of every character that can stand there) above the bottom-UI line."""
+    rule = COMP["bodyRule"]
+    for spot in spec["chars"]:
+        n, k = _neck(spot), spot["k"]
+        chin = n + RIG["head"]["chin"] * k
+        if spec.get("size") == "full":
+            for c in _who_characters(spot):
+                assert n + BODIES[c]["sole"] * k <= rule["line"], (staging, shot, c, "feet below the UI line")
+            continue
+        bottom = rule["line"]
+        if _prop_top(spec, spot) is not None:
+            bottom = min(bottom, _prop_top(spec, spot))
+        if spot.get("panel") == "top":
+            bottom = min(bottom, COMP["stagings_spec"][staging]["border"]["y"])
+        below = (bottom - chin) / (HEAD_H * k)
+        assert below <= rule["maxBelowChin"], (staging, shot, spot["who"], round(below, 2))
+
+
+def test_outline_is_fixed_on_screen_and_faces_read_at_bust_size():
+    assert 7 <= COMP["outlinePx"] <= 9
+    for f in ("Character.tsx", "Animal.tsx"):
+        src = (ROOT / "video" / "src" / f).read_text(encoding="utf-8")
+        assert "inkFor(p.px ?? p.k)" in src and "<InkContext.Provider value={ink}>" in src, f
+        assert not re.search(r"strokeWidth=\{LW\}|\bLW\b", src), f
+    a = COMP["animal"]
+    assert 0.15 <= 2 * a["eye"]["ry"] / HEAD_H <= 0.2                    # eyes 15-20% of the head height
+    for sp, half in a["shockedMouth"].items():
+        assert 0.3 <= 2 * half / a["faceWidth"] <= 0.4, sp                # shocked mouth 30-40% of the face wide
+    animal = ANIMAL_TSX
+    assert 'if (e === "shocked" || e === "panicked") blink = 0;' in animal   # the twist never freezes on a blink
+    assert re.search(r'fake_banker: \{species: "fox", fur: "#([0-9A-F]{6})"', animal).group(1) != \
+        re.search(r'scammer: \{species: "fox", fur: "#([0-9A-F]{6})"', animal).group(1)
+
+
+def test_cheap_motion_stays_small():
+    m = COMP["motion"]
+    assert m["punchIn"] == 1.12 and 3 <= m["punchFrames"] <= 6
+    assert 8 <= m["shakePx"] <= 12 and m["shakeFrames"] <= 10
+    assert len(m["squash"]) == 4 and m["squash"][-1] == 1

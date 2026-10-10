@@ -1,5 +1,5 @@
 {
- "_doc": "Character system (드라마 등장인물): the rig's geometry in local units and every staging's shots in screen px. One source of truth for video/src/rig.ts, Character.tsx, CastScene.tsx and tests/test_characters.py, which checks the composition rules: eyes in the eye band, faces and hands never in the caption band / bottom 20% / right UI column, size minimums, at most 3 characters per shot. Local rig units: origin at the base of the neck, y down; a character drawn with scale k at (x, eyeY) has its neck at (x, eyeY - rig.eyeY * k).",
+ "_doc": "Character system (드라마 등장인물): the rig's geometry in local units and every staging's shots in screen px. One source of truth for video/src/rig.ts, Body.tsx, Character.tsx, Animal.tsx, CastScene.tsx and tests/test_characters.py, which checks the composition rules: eyes in the eye band, faces and hands never in the caption band / bottom 20% / right UI column (unless a foreground prop hides them), shot sizes, the body-length rule, at most 3 characters per shot. Local rig units: origin at the base of the neck, y down; a character drawn with scale k at (x, eyeY) has its neck at (x, eyeY - rig.eyeY * k).",
  "frame": {"w": 1080, "h": 1920, "captionBand": [1255, 1500], "bottomSafe": 1536, "rightColumn": {"x": 930, "y": [900, 1700]},
   "eyeBand": [560, 860], "maxCharacters": 3, "minHeight": {"single": 0.42, "twoShot": 0.28, "window": 0.2}},
  "characters": ["father", "mother", "daughter", "son", "scammer", "fake_banker", "ad"],
@@ -11,54 +11,80 @@
  "gestures": ["rest", "phoneEar", "phoneRead", "phoneType", "handOnHead", "handsOnCheeks", "point", "palmOut", "clutchChest"],
  "bubbleMaxChars": 8,
  "castStyles": ["human", "animal"],
- "_castStyles": "A skin over the same rig and stagings (script field cast_style, default human): human = Character.tsx, animal = Animal.tsx (진돗개 family: father white, mother tan with a perm; 여우 callers: scammer in a hoodie and headset, fake_banker in a suit with a blank badge, ad presenter in a shiny suit). The animal head keeps to the rig's head box: ear tips no higher than rig.head.top, half width (with cheek fur) within rig.head.rx + 34, the jowl/chin no lower than rig.head.chin; eyes and mouth on rig.eyeY / rig.mouthY.",
- "animal": {"earTip": -414, "skullTop": -352, "halfWidth": 192, "jowl": -38, "muzzle": {"cy": -106, "rx": 100, "ry": 64}, "nose": -142, "kidHead": 0.96},
+ "_castStyles": "A skin over the same rig and stagings (script field cast_style, default human): human = Character.tsx, animal = Animal.tsx (진돗개 family: father white, mother tan with a perm; 여우 callers: scammer in a hoodie and headset, fake_banker a silver-grey fox in a suit with a blank badge, ad presenter in a shiny suit). Both skins share the body (Body.tsx, 'bodies'). The animal head keeps to the rig's head box: ear tips no higher than rig.head.top, half width (with cheek fur) within rig.head.rx + 34, the jowl/chin no lower than rig.head.chin; eyes and mouth on rig.eyeY / rig.mouthY.",
+ "animal": {"earTip": -414, "skullTop": -352, "halfWidth": 192, "jowl": -38,
+  "muzzle": {"top": -176, "bottom": -36, "halfWidth": 104}, "nose": -136, "kidHead": 0.96,
+  "eye": {"rx": 27, "ry": 33}, "shockedMouth": {"dog": 54, "fox": 48}, "faceWidth": 316},
+ "_animal": "eye: the white of an animal eye in local units (height 2*ry = 17% of the head height); shockedMouth: half width of the shocked mouth (2x = 30-40% of faceWidth), with teeth and tongue",
+ "outlinePx": 7.5,
+ "_outlinePx": "the ink outline in screen px, the same at every shot size: the rig's stroke widths are divided by the character's on-screen scale",
  "rig": {
   "head": {"cx": 0, "cy": -205, "rx": 160, "ry": 172, "top": -415, "chin": -33},
-  "back": {"phone": [206, -160], "hand": [168, -92], "elbow": [262, 150]},
-  "eyeY": -190, "eyeDX": 62, "mouthY": -100, "shoulderX": 212, "shoulderY": 44, "waist": 470, "handR": 46,
-  "_hands": "hand centres per gesture and side (L = viewer's left, R = viewer's right); rest arms hang behind the torso (no hand drawn)",
+  "back": {"phone": [206, -160], "hand": [168, -92], "elbow": [236, 130]},
+  "eyeY": -190, "eyeDX": 62, "mouthY": -100, "handR": 46,
+  "_hands": "hand centres per gesture and side (L = viewer's left, R = viewer's right); a side a gesture leaves free hangs at rest (paw at the hip)",
   "hands": {
-   "rest": {},
+   "rest": {"L": [-178, 262], "R": [178, 262]},
    "back": {"R": [168, -92]},
    "phoneEar": {"R": [166, -150]},
-   "phoneRead": {"L": [-64, 140], "R": [64, 140]},
-   "phoneType": {"L": [-64, 140], "R": [64, 140]},
+   "phoneRead": {"L": [-62, 118], "R": [62, 118]},
+   "phoneType": {"L": [-62, 118], "R": [62, 118]},
    "handOnHead": {"R": [96, -350]},
-   "handsOnCheeks": {"L": [-150, -120], "R": [150, -120]},
-   "point": {"R": [330, -60]},
-   "palmOut": {"R": [150, 30], "L": [-64, 140]},
-   "clutchChest": {"R": [60, 120]}
+   "handsOnCheeks": {"L": [-140, -120], "R": [140, -120]},
+   "point": {"R": [320, -60]},
+   "palmOut": {"R": [150, 30], "L": [-62, 118]},
+   "clutchChest": {"R": [50, 110]}
   },
   "elbows": {
-   "back": {"R": [262, 150]},
-   "phoneEar": {"R": [262, 150]},
-   "phoneRead": {"L": [-222, 236], "R": [222, 236]},
-   "phoneType": {"L": [-222, 236], "R": [222, 236]},
-   "handOnHead": {"R": [300, -40]},
-   "handsOnCheeks": {"L": [-250, 130], "R": [250, 130]},
-   "point": {"R": [250, 150]},
-   "palmOut": {"R": [292, 170], "L": [-222, 236]},
-   "clutchChest": {"R": [236, 230]}
+   "rest": {"L": [-198, 168], "R": [198, 168]},
+   "back": {"R": [236, 130]},
+   "phoneEar": {"R": [232, 120]},
+   "phoneRead": {"L": [-200, 190], "R": [200, 190]},
+   "phoneType": {"L": [-200, 190], "R": [200, 190]},
+   "handOnHead": {"R": [280, -40]},
+   "handsOnCheeks": {"L": [-236, 110], "R": [236, 110]},
+   "point": {"R": [236, 120]},
+   "palmOut": {"R": [262, 140], "L": [-200, 190]},
+   "clutchChest": {"R": [214, 180]}
   }
  },
- "_shots": "Per staging, the shots it cuts between. A character entry: who (victim | caller | other | presenter), x (neck x), eyeY, k (scale), turn (-1..1, face turned to the viewer's left/right), gesture used in that shot (for the hand checks; the performance may vary it among those listed in gestures), view (front | back). windows: framed insets in screen px.",
+ "_bodies": "SD body per character (local units, half widths; head height H = 382, head width 320): sh shoulders, w the torso's widest, waistY/waistW the waist, hemY the top's hem, hip, crotch, sole (the feet's bottom), legX/legW the legs' centre and half width, skirt (bottom y, half width). Chin->waist 0.6-0.75 H, torso 1.05-1.2 x the head width, parents ~2.7 heads tall, the children ~2.9, the fox callers ~3.0 (lankier = more threatening).",
+ "bodies": {
+  "father": {"sh": 170, "w": 186, "waistY": 228, "waistW": 176, "hemY": 262, "hip": 182, "crotch": 330, "sole": 616, "legX": 82, "legW": 60},
+  "mother": {"sh": 158, "w": 176, "waistY": 226, "waistW": 164, "hemY": 258, "hip": 178, "crotch": 330, "sole": 616, "legX": 70, "legW": 46, "skirt": [468, 190]},
+  "daughter": {"sh": 160, "w": 172, "waistY": 240, "waistW": 160, "hemY": 274, "hip": 170, "crotch": 350, "sole": 693, "legX": 74, "legW": 52},
+  "son": {"sh": 170, "w": 180, "waistY": 240, "waistW": 170, "hemY": 278, "hip": 176, "crotch": 350, "sole": 693, "legX": 78, "legW": 56},
+  "scammer": {"sh": 176, "w": 178, "waistY": 250, "waistW": 166, "hemY": 296, "hip": 168, "crotch": 362, "sole": 731, "legX": 72, "legW": 48},
+  "fake_banker": {"sh": 178, "w": 178, "waistY": 250, "waistW": 160, "hemY": 304, "hip": 166, "crotch": 362, "sole": 731, "legX": 72, "legW": 48},
+  "ad": {"sh": 176, "w": 176, "waistY": 250, "waistW": 160, "hemY": 304, "hip": 166, "crotch": 362, "sole": 731, "legX": 72, "legW": 48}
+ },
+ "_shotSizes": "head height (hair line to chin) as a share of the 1920 frame height, per shot size. The body-length rule (tests): without visible feet, the body below the chin down to bodyRule.line (or a foreground prop's top) is at most bodyRule.maxBelowChin heads; a 'full' shot shows the feet above that line instead.",
+ "shotSizes": {"ecu": [0.45, 0.55], "cu": [0.35, 0.42], "bust": [0.28, 0.35], "medium": [0.18, 0.25], "full": [0.18, 0.22]},
+ "bodyRule": {"maxBelowChin": 1.1, "line": 1536},
+ "props": ["table", "desk", "ccDesk"],
+ "_props": "foreground props drawn in front of the characters (Sets.tsx ForegroundProp): table = the home's table edge (living room, sofa corner), desk = the office desk (work), ccDesk = the call centre's desk. top = the prop's top edge in screen px; it hides the body and the resting paws below it.",
+ "_shots": "Per staging, the shots it cuts between. A character entry: who (victim | caller | other | presenter), x (neck x), eyeY, k (scale), turn (-1..1, face turned to the viewer's left/right), gestures used in that shot (for the hand checks; the performance may vary it among those listed in gestures), view (front | back). size: the shot size (shotSizes); prop: the foreground prop; windows: framed insets in screen px.",
  "stagings_spec": {
   "pip_call": {
    "shots": {
-    "wide": {"chars": [{"who": "victim", "x": 380, "eyeY": 770, "k": 1.0, "turn": 0.3, "gestures": ["phoneEar", "clutchChest"]}],
+    "hook": {"size": "ecu", "chars": [{"who": "victim", "x": 425, "eyeY": 760, "k": 2.3, "turn": 0.2, "gestures": ["phoneEar"]}],
+     "prop": {"kind": "table", "top": 1480}},
+    "wide": {"size": "full", "chars": [{"who": "victim", "x": 380, "eyeY": 605, "k": 1.05, "turn": 0.3, "gestures": ["phoneEar", "clutchChest"]}],
      "window": {"x": 612, "y": 246, "w": 420, "h": 450, "scale": 1.0}},
-    "close": {"chars": [{"who": "victim", "x": 410, "eyeY": 735, "k": 1.3, "turn": 0.3, "gestures": ["phoneEar"]}],
-     "window": {"x": 612, "y": 246, "w": 420, "h": 450, "scale": 0.86}},
-    "caller": {"chars": [{"who": "caller", "x": 520, "eyeY": 760, "k": 1.45, "turn": -0.2, "gestures": ["rest"]}]}
+    "close": {"size": "cu", "chars": [{"who": "victim", "x": 360, "eyeY": 770, "k": 1.85, "turn": 0.3, "gestures": ["phoneEar"]}],
+     "window": {"x": 612, "y": 246, "w": 420, "h": 450, "scale": 0.86}, "prop": {"kind": "table", "top": 1430}},
+    "caller": {"size": "bust", "chars": [{"who": "caller", "x": 520, "eyeY": 740, "k": 1.65, "turn": -0.2, "gestures": ["rest"]}],
+     "prop": {"kind": "ccDesk", "top": 1300}}
    },
+   "_hook": "the opening shot (the poster and thumbnail): the victim's extreme close-up with the phone at the ear; the caller's window springs in on the first cut",
    "windowChar": {"x": 210, "eyeY": 220, "k": 0.62},
    "bubble": {"caller": [770, 770], "victim": [250, 345]}
   },
   "split_call": {
    "shots": {
-    "split": {"chars": [{"who": "caller", "x": 540, "eyeY": 560, "k": 1.45, "turn": -0.1, "gestures": ["rest"]},
-      {"who": "victim", "x": 520, "eyeY": 1000, "k": 1.05, "turn": 0.2, "gestures": ["phoneEar"]}]}
+    "split": {"size": "panel", "chars": [{"who": "caller", "x": 540, "eyeY": 560, "k": 1.45, "turn": -0.1, "gestures": ["rest"], "panel": "top"},
+      {"who": "victim", "x": 520, "eyeY": 1000, "k": 1.05, "turn": 0.2, "gestures": ["phoneEar"], "panel": "bottom"}],
+     "prop": {"kind": "table", "top": 1380, "for": "victim"}}
    },
    "_split": "the caller's panel is the top part (y 236 to the border), the victim's the bottom (border to 1250); the border is tilted 3 degrees",
    "border": {"y": 800, "tilt": 3},
@@ -66,44 +92,54 @@
   },
   "solo": {
    "shots": {
-    "victim": {"chars": [{"who": "victim", "x": 540, "eyeY": 670, "k": 1.5, "turn": 0.1, "gestures": ["phoneEar", "phoneRead", "clutchChest"]}]},
-    "caller": {"chars": [{"who": "caller", "x": 540, "eyeY": 740, "k": 1.55, "turn": -0.1, "gestures": ["rest"]}]},
-    "other": {"chars": [{"who": "other", "x": 540, "eyeY": 690, "k": 1.45, "turn": -0.1, "gestures": ["phoneEar", "phoneRead", "phoneType", "palmOut"]}]}
+    "victim": {"size": "bust", "chars": [{"who": "victim", "x": 540, "eyeY": 680, "k": 1.55, "turn": 0.1, "gestures": ["phoneEar", "phoneRead", "clutchChest"]}],
+     "prop": {"kind": "table", "top": 1290}},
+    "caller": {"size": "bust", "chars": [{"who": "caller", "x": 540, "eyeY": 740, "k": 1.65, "turn": -0.1, "gestures": ["rest"]}],
+     "prop": {"kind": "ccDesk", "top": 1300}},
+    "other": {"size": "bust", "chars": [{"who": "other", "x": 540, "eyeY": 680, "k": 1.55, "turn": -0.1, "gestures": ["phoneEar", "phoneRead", "phoneType", "palmOut"]}],
+     "prop": {"kind": "desk", "top": 1290}}
    }
   },
   "over_shoulder_chat": {
    "shots": {
-    "over": {"chars": [{"who": "victim", "x": 280, "eyeY": 1050, "k": 1.2, "view": "back", "gestures": ["back"]}],
-     "panel": {"x": 196, "y": 236, "scale": 0.86}},
-    "face": {"chars": [{"who": "victim", "x": 520, "eyeY": 760, "k": 1.2, "turn": 0.1, "gestures": ["phoneRead", "phoneType"]}]},
-    "other": {"chars": [{"who": "other", "x": 540, "eyeY": 720, "k": 1.35, "turn": -0.15, "gestures": ["phoneRead", "phoneType", "palmOut"]}]},
-    "caller": {"chars": [{"who": "caller", "x": 540, "eyeY": 700, "k": 1.4, "turn": -0.15, "gestures": ["phoneType"]}]}
+    "over": {"size": "medium", "chars": [{"who": "victim", "x": 280, "eyeY": 1050, "k": 1.2, "view": "back", "gestures": ["back"]}],
+     "panel": {"x": 196, "y": 236, "scale": 0.86}, "prop": {"kind": "table", "top": 1480}},
+    "face": {"size": "bust", "chars": [{"who": "victim", "x": 520, "eyeY": 690, "k": 1.55, "turn": 0.1, "gestures": ["phoneRead", "phoneType"]}],
+     "prop": {"kind": "table", "top": 1300}},
+    "other": {"size": "bust", "chars": [{"who": "other", "x": 540, "eyeY": 690, "k": 1.55, "turn": -0.15, "gestures": ["phoneRead", "phoneType", "palmOut"]}],
+     "prop": {"kind": "desk", "top": 1300}},
+    "caller": {"size": "bust", "chars": [{"who": "caller", "x": 540, "eyeY": 690, "k": 1.55, "turn": -0.15, "gestures": ["phoneType"]}],
+     "prop": {"kind": "ccDesk", "top": 1300}}
    },
    "_over": "back view: the eye line stands for the back of the head (no face); the phone glows in the hand and the mockup panel floats above it",
    "reactionMs": 600
   },
   "watch_ad": {
    "shots": {
-    "wide": {"chars": [{"who": "victim", "x": 730, "eyeY": 830, "k": 1.0, "turn": -0.45, "gestures": ["rest", "point"],
+    "wide": {"size": "medium", "chars": [{"who": "victim", "x": 730, "eyeY": 830, "k": 1.0, "turn": -0.45, "gestures": ["rest", "point"],
       "mirror": true}],
-     "tv": {"x": 48, "y": 250, "w": 600, "h": 400}},
-    "face": {"chars": [{"who": "victim", "x": 600, "eyeY": 760, "k": 1.4, "turn": -0.35, "gestures": ["rest"]}]},
+     "tv": {"x": 48, "y": 250, "w": 600, "h": 400}, "prop": {"kind": "table", "top": 1220}},
+    "face": {"size": "bust", "chars": [{"who": "victim", "x": 600, "eyeY": 760, "k": 1.6, "turn": -0.35, "gestures": ["rest"]}],
+     "prop": {"kind": "table", "top": 1330}},
     "tv": {"chars": [], "tv": {"x": 40, "y": 330, "w": 1000, "h": 660}}
    },
    "presenter": {"eyeYFrac": 0.42, "kFrac": 0.0016}
   },
   "twist_closeup": {
    "shots": {
-    "twist": {"chars": [{"who": "victim", "x": 540, "eyeY": 640, "k": 1.75, "turn": 0, "gestures": ["handsOnCheeks"]}]}
+    "twist": {"size": "ecu", "chars": [{"who": "victim", "x": 482, "eyeY": 720, "k": 2.3, "turn": 0, "gestures": ["handsOnCheeks"]}],
+     "prop": {"kind": "table", "top": 1480}}
    },
-   "stamp": {"x": 540, "y": 1092, "h": 196}
+   "stamp": {"x": 540, "y": 1150, "h": 196}
   },
   "dochi_explains": {
    "shots": {
-    "explain": {"chars": [{"who": "victim", "x": 190, "eyeY": 700, "k": 0.98, "turn": 0.55, "gestures": ["rest", "handOnHead", "clutchChest"]}]}
+    "explain": {"size": "full", "chars": [{"who": "victim", "x": 200, "eyeY": 660, "k": 0.95, "turn": 0.55, "gestures": ["rest", "handOnHead", "clutchChest"]}]}
    },
    "content": {"scale": 0.72, "x": 277, "y": 170},
    "dochi": {"x": 660, "y": 1236, "size": 220}
   }
- }
+ },
+ "motion": {"punchIn": 1.12, "punchFrames": 4, "releaseFrames": 8, "shakePx": 10, "shakeFrames": 8, "squash": [0.92, 1.05, 1.015, 1]},
+ "_motion": "cheap motion, all pure functions of the frame: a punch-in on the scene's keyword (the line's bubble, else the scene's mark when a line says it), a camera shake as a shocked/panicked line starts, a 4-frame squash when a face changes"
 }

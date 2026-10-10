@@ -200,7 +200,8 @@ export const planShots = (scene: SceneProps, cast: Record<string, CastMember>, s
     shots.push({name, startMs: shots.length ? Math.max(a, first) : a, endMs: b});
   switch (staging) {
     case "pip_call": {
-      push("close", -1e9, first);
+      // the opening scene opens on the extreme close-up (the poster); later scenes on the close-up
+      push(posterMs > 0 ? "hook" : "close", -1e9, first);
       const rot = {caller: ["wide", "caller", "wide", "close"], victim: ["close", "wide"]};
       let kc = 0;
       let kv = 0;
@@ -378,6 +379,55 @@ export const talkWeight = (scene: SceneProps, id: string | undefined, ms: number
   if (!id) return 0;
   return (scene.lines ?? []).reduce((m, l) => (l.speaker !== id ? m
     : Math.max(m, Math.min(1, (ms - l.startMs + 100) / 200, (l.endMs + 100 - ms) / 200))), 0);
+};
+
+/* ------------------------------------------------------------------ cheap camera motion (pure) */
+
+export const MOTION = COMP.motion;
+
+/**
+ * The scene's keyword moment for the punch-in: the first line with a bubble (from its start), else the moment a line
+ * says the scene's mark (the headline's key phrase), from the word that starts it. At most one per scene.
+ */
+export const punchOf = (scene: SceneProps): {atMs: number; endMs: number} | undefined => {
+  const lines = scene.lines ?? [];
+  const withBubble = lines.find((l) => bubbleOf(l));
+  if (withBubble) return {atMs: withBubble.startMs, endMs: withBubble.endMs};
+  const mark = scene.mark?.trim();
+  if (!mark) return undefined;
+  const i = lines.findIndex((l) => l.text.includes(mark));
+  if (i < 0) return undefined;
+  const head = mark.split(/\s+/)[0];
+  const words = scene.pages.filter((p) => p.line === i || (p.line === undefined && p.speaker === lines[i].speaker
+    && p.startMs >= lines[i].startMs - 50 && p.endMs <= lines[i].endMs + 400)).flatMap((p) => p.words);
+  const w = words.find((x) => x.text.includes(head));
+  return {atMs: w ? w.startMs : lines[i].startMs, endMs: lines[i].endMs};
+};
+
+/** Camera zoom factor of the punch-in at `ms`: 1 -> motion.punchIn over punchFrames (ease-out), held to the line's
+ * end, released over releaseFrames. */
+export const punchZoom = (scene: SceneProps, ms: number, fps: number) => {
+  const p = punchOf(scene);
+  if (!p || ms < p.atMs) return 1;
+  const f = ((ms - p.atMs) / 1000) * fps;
+  const inn = 1 - (1 - Math.min(1, f / MOTION.punchFrames)) ** 3;
+  const r = ((ms - p.endMs) / 1000) * fps;
+  const out = r <= 0 ? 1 : Math.max(0, 1 - r / MOTION.releaseFrames);
+  const o = out * out * (3 - 2 * out);
+  return 1 + (MOTION.punchIn - 1) * inn * o;
+};
+
+/** Camera shake (screen px) as a shocked / panicked line starts: a damped sine over shakeFrames. */
+export const shockShake = (scene: SceneProps, cast: Record<string, CastMember>, ms: number, fps: number) => {
+  const lines = scene.lines ?? [];
+  const k = activeLine(lines, ms);
+  if (k < 0) return 0;
+  const l = lines[k];
+  const face = lineFace(l, cast[l.speaker]);
+  if (face !== "shocked" && face !== "panicked") return 0;
+  const f = ((ms - l.startMs) / 1000) * fps;
+  if (f < 0 || f >= MOTION.shakeFrames) return 0;
+  return Math.sin(f * 2.7) * MOTION.shakePx * (1 - f / MOTION.shakeFrames);
 };
 
 /** The bubble keyword of the active line (a part of the line, at most bubbleMaxChars). */

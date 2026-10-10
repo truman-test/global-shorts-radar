@@ -167,3 +167,40 @@ export const FocusLines: React.FC<{cx: number; cy: number; color: string; opacit
     })}
   </svg>
 );
+
+export type PropKind = "table" | "desk" | "ccDesk";
+
+/**
+ * A foreground prop in front of the characters (composition.json "props"): its top edge at `top` (screen px), opaque
+ * down to the frame's bottom, so a bust shot's body ends at a table / desk edge instead of running down the frame.
+ * table = the home's table, desk = the office desk, ccDesk = the call centre's desk (always dark, a teal-lit edge).
+ * Plain surfaces only (no cups or keyboards): the edge sits in or near the caption band, nothing there may compete
+ * with the captions. Light stages: warm flat tones with an ink edge; dark stages: dim tones with a light rim.
+ */
+export const ForegroundProp: React.FC<{kind: PropKind; top: number; mode: SetMode; w?: number; h?: number}> = ({kind,
+  top, mode, w = 1080, h = 1920}) => {
+  const dark = mode === "dark" || kind === "ccDesk";
+  const pal = kind === "ccDesk" ? {top: "#1E2531", front: "#141A24", rim: "#5FD3C8", line: "#05070A"}
+    : kind === "desk" ? (dark ? {top: "#2A3242", front: "#1E2532", rim: "#8C9BB4", line: "#0E1118"}
+      : {top: "#D9E0E8", front: "#B9C4D0", rim: "#FFFFFF", line: INK})
+      : dark ? {top: "#4A3A2E", front: "#33281F", rim: "#7A6250", line: "#17120F"}
+        : {top: "#E9D6B4", front: "#D3B88E", rim: "#FFF6E6", line: INK};
+  const depth = 46;
+  const edge = {stroke: pal.line, strokeWidth: 6, strokeLinejoin: "round" as const};
+  return (
+    <svg width={w} height={h} style={{position: "absolute", left: 0, top: 0, pointerEvents: "none"}}>
+      <rect x={-20} y={top + depth} width={w + 40} height={h - top} fill={pal.front} />
+      <path d={`M -20 ${top} H ${w + 20} V ${top + depth} H -20 Z`} fill={pal.top} {...edge} />
+      <path d={`M -20 ${top + depth} H ${w + 20}`} {...edge} />
+      <path d={`M -20 ${top + 9} H ${w + 20}`} stroke={pal.rim} strokeWidth={4} opacity={kind === "ccDesk" ? 0.7 : 0.55} />
+      {/* a soft shadow the top casts down the front */}
+      <rect x={-20} y={top + depth + 3} width={w + 40} height={26} fill="#000" opacity={0.08} />
+      {kind === "table" ? [0, 1].map((i) => (
+        // two faint wood-grain strokes low on the front, under the caption band
+        <path key={i} d={`M ${120 + i * 380} ${Math.max(top + depth + 60, 1560) + i * 46} q 160 -10 320 0`}
+          stroke={pal.line} strokeWidth={3} opacity={0.16} fill="none" strokeLinecap="round" />
+      )) : null}
+    </svg>
+  );
+};
+

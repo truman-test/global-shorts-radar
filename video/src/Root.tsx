@@ -2,7 +2,7 @@ import React from "react";
 import {CalculateMetadataFunction, Composition} from "remotion";
 import {Short} from "./Short";
 import type {ShortProps} from "./types";
-import {CELL, Lineup, LineupProps} from "./Lineup";
+import {CELL, FULL, Lineup, LineupProps} from "./Lineup";
 
 export const FPS = 30;
 
@@ -37,9 +37,9 @@ const calculateMetadata: CalculateMetadataFunction<ShortProps> = ({props}) => ({
 const lineup: LineupProps = {castStyle: "animal", ids: ["father", "mother", "daughter", "son", "scammer", "fake_banker", "ad"],
   rows: [{expr: "neutral", gesture: "rest"}, {expr: "worried", gesture: "phoneEar"}, {expr: "shocked", gesture: "handsOnCheeks"}]};
 
-const lineupMetadata: CalculateMetadataFunction<LineupProps> = ({props}) => ({
-  width: CELL.w * props.ids.length, height: CELL.h * props.rows.length,
-});
+const lineupMetadata: CalculateMetadataFunction<LineupProps> = ({props}) => (props.full
+  ? {width: FULL.ruler + FULL.w * props.ids.length, height: FULL.h}
+  : {width: CELL.w * props.ids.length, height: CELL.h * props.rows.length});
 
 export const RemotionRoot: React.FC = () => (
   <>

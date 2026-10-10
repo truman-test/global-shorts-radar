@@ -1,17 +1,21 @@
-// The drama cast (드라마 등장인물): our own flat-vector characters, 2.8-3 heads tall, drawn waist-up. One SVG rig for
-// everyone: a head (face shape, ears, hair back/front, eyes, brows, nose, mouth, accessories), a torso with a costume
-// layer, two arms (shoulder -> elbow -> hand) and emotion symbols; each character only swaps colours, hair and costume.
-// Style: 6 px #2B2620 outline with round joins (도치's ink), flat fills plus one shadow tone (the same colour 12% darker,
+// The drama cast (드라마 등장인물): our own flat-vector characters, SD bodies 2.7-3 heads tall (Body.tsx). One SVG rig
+// for everyone: a head (face shape, ears, hair back/front, eyes, brows, nose, mouth, accessories), a short torso with
+// a costume layer, legs and shoes, two arms (shoulder -> elbow -> hand) and emotion symbols; each character only swaps
+// colours, hair and costume.
+// Style: a #2B2620 outline of a fixed on-screen width (Body.tsx InkContext) with round joins (도치's ink), flat fills
+// plus one shadow tone (the same colour 12% darker,
 // light from the top left), a neutral rim light on dark stages. Age is shown only by hair, glasses and two strokes at
 // the eye corners, never by caricature. No red in clothes or props (red means danger on this channel), no logos,
 // no uniforms of real institutions.
 // Every value comes from the pose (a pure function of the frame, see rig.ts/CastScene.tsx).
 import React from "react";
+import {BodySpec, bodyOf, FloorShadow, INK, InkContext, inkFor, LEG_LOOKS, Legs, shoulderOf, torsoPath,
+  useInk} from "./Body";
 import {FONT} from "./fonts";
 import {RIG} from "./rig";
 import {CharacterId, Expression, Gesture} from "./types";
 
-export const INK = "#2B2620";
+export {INK};
 export const MOUTH_IN = "#5A2C2E";
 export const TONGUE = "#D9837A";
 export const SWEAT = "#8CC8FF";
@@ -23,7 +27,8 @@ export type CharPose = {
   id: CharacterId;
   x: number; // neck base, in the svg's coordinates
   y: number;
-  k: number; // scale (1 = the standard waist-up victim of pip_call)
+  k: number; // scale (local unit -> svg px)
+  px?: number; // screen px per local unit when the svg itself is scaled (an inset); default k
   view?: "front" | "back";
   turn?: number; // -1..1: the face turned to the viewer's left / right
   tilt?: number; // head tilt, degrees
@@ -49,6 +54,7 @@ export type CharPose = {
   screen?: {bg: string; rows: string[]}; // the phone's screen when we can see it (back view)
   silhouette?: boolean; // the scammer's faceless hood
   monitor?: number; // 0..1 teal monitor light on the scammer's jaw and chest
+  tail?: boolean; // animal skin: draw the fox's tail (full figures only)
 };
 
 export type Look = {skin: string; hair: string; brow: string; top: string; inner: string; accent: string;
@@ -101,18 +107,13 @@ const facePath = (shape: Look["face"]) => {
 };
 const FACES = {round: facePath("round"), square: facePath("square"), oval: facePath("oval")};
 
-/** Torso silhouette (waist-up, runs off below the frame / behind the captions). */
-export const torsoPath = (b: number) => `M -44 -16 C ${-74 * b} 22 ${-150 * b} 26 ${-206 * b} 44 C ${-262 * b} 62 ${-276 * b} 126
-  ${-278 * b} 210 L ${-288 * b} 1700 L ${288 * b} 1700 L ${278 * b} 210 C ${276 * b} 126 ${262 * b} 62 ${206 * b} 44
-  C ${150 * b} 26 ${74 * b} 22 44 -16 Z`;
-
 export const SLEEVE = 70;
-export const LW = 6;
 
 export type Pt = [number, number];
 export type ArmSpec = {el: Pt; ha: Pt; shape: string};
 
-/** Arms of a gesture (L = viewer's left, R = viewer's right); rest arms hang behind the torso. */
+/** Arms of a gesture (L = viewer's left, R = viewer's right); a side the gesture leaves free hangs at rest, the paw at
+ * the hip (rig.hands.rest). */
 export const armsOf = (g: Gesture, mirror: boolean, free: Gesture | undefined, typing: number): {L?: ArmSpec; R?: ArmSpec} => {
   const hands = RIG.hands as unknown as Record<string, {L?: Pt; R?: Pt}>;
   const elbows = RIG.elbows as unknown as Record<string, {L?: Pt; R?: Pt}>;
@@ -142,6 +143,11 @@ export const armsOf = (g: Gesture, mirror: boolean, free: Gesture | undefined, t
     const e = elbows[free]?.R;
     if (h && e) out.L = {el: [-e[0], e[1]], ha: [-h[0], h[1]], shape: free === "handOnHead" ? "onHead" : "fist"};
   }
+  for (const side of ["L", "R"] as const) {
+    const h = hands.rest[side];
+    const e = elbows.rest[side];
+    if (!out[side] && h && e) out[side] = {el: [e[0], e[1]], ha: [h[0], h[1]], shape: "rest"};
+  }
   if (mirror) {
     const m = (a?: ArmSpec): ArmSpec | undefined => (a ? {el: [-a.el[0], a.el[1]], ha: [-a.ha[0], a.ha[1]],
       shape: a.shape} : undefined);
@@ -151,17 +157,18 @@ export const armsOf = (g: Gesture, mirror: boolean, free: Gesture | undefined, t
 };
 
 const Hand: React.FC<{at: Pt; from: Pt; shape: string; skin: string; side: number}> = ({at, from, shape, skin, side}) => {
+  const {lw, ks} = useInk();
   const [x, y] = at;
   const ang = (Math.atan2(y - from[1], x - from[0]) * 180) / Math.PI;
   const R = RIG.handR;
-  const sk = {fill: skin, stroke: INK, strokeWidth: LW, strokeLinejoin: "round" as const};
+  const sk = {fill: skin, stroke: INK, strokeWidth: lw, strokeLinejoin: "round" as const};
   switch (shape) {
     case "point":
       return (
         <g transform={`translate(${x} ${y}) rotate(${ang})`}>
           <rect x={R * 0.4} y={-13} width={R * 1.55} height={27} rx={13} {...sk} />
           <circle r={R * 0.9} {...sk} />
-          <path d={`M ${R * 0.2} ${-R * 0.55} q ${R * 0.35} ${R * 0.2} 0 ${R * 0.5}`} stroke={INK} strokeWidth={3.5}
+          <path d={`M ${R * 0.2} ${-R * 0.55} q ${R * 0.35} ${R * 0.2} 0 ${R * 0.5}`} stroke={INK} strokeWidth={3.5 * ks}
             fill="none" strokeLinecap="round" />
         </g>
       );
@@ -174,7 +181,7 @@ const Hand: React.FC<{at: Pt; from: Pt; shape: string; skin: string; side: numbe
           <rect x={-R * 1.15} y={-R * 0.55} width={20} height={R * 0.95} rx={10} {...sk}
             transform={`rotate(-38 ${-R * 1.05} 0)`} />
           <ellipse rx={R * 0.95} ry={R * 0.88} {...sk} />
-          <path d={`M -14 -6 q 14 10 28 0`} stroke={shade(skin, 0.25)} strokeWidth={3.5} fill="none"
+          <path d={`M -14 -6 q 14 10 28 0`} stroke={shade(skin, 0.25)} strokeWidth={3.5 * ks} fill="none"
             strokeLinecap="round" />
         </g>
       );
@@ -183,7 +190,7 @@ const Hand: React.FC<{at: Pt; from: Pt; shape: string; skin: string; side: numbe
         <g transform={`translate(${x} ${y}) rotate(${side * 10})`}>
           <ellipse rx={R * 0.95} ry={R * 0.85} {...sk} />
           <path d={`M ${-R * 0.5} ${-R * 0.25} h ${R} M ${-R * 0.45} ${R * 0.15} h ${R * 0.9}`} stroke={INK}
-            strokeWidth={3.5} strokeLinecap="round" />
+            strokeWidth={3.5 * ks} strokeLinecap="round" />
         </g>
       );
     case "cheek":
@@ -191,7 +198,7 @@ const Hand: React.FC<{at: Pt; from: Pt; shape: string; skin: string; side: numbe
         <g transform={`translate(${x} ${y}) rotate(${-side * 8})`}>
           <ellipse rx={R * 0.82} ry={R * 1.08} {...sk} />
           <path d={`M ${-side * R * 0.15} ${-R * 0.75} v ${R * 0.7} M ${side * R * 0.25} ${-R * 0.7} v ${R * 0.6}`}
-            stroke={shade(skin, 0.25)} strokeWidth={3.5} strokeLinecap="round" />
+            stroke={shade(skin, 0.25)} strokeWidth={3.5 * ks} strokeLinecap="round" />
         </g>
       );
     case "onHead":
@@ -199,7 +206,15 @@ const Hand: React.FC<{at: Pt; from: Pt; shape: string; skin: string; side: numbe
         <g transform={`translate(${x} ${y}) rotate(${side * -30})`}>
           <ellipse rx={R * 1.05} ry={R * 0.78} {...sk} />
           <path d={`M ${-R * 0.5} ${R * 0.05} h ${R * 0.9} M ${-R * 0.4} ${R * 0.38} h ${R * 0.7}`}
-            stroke={shade(skin, 0.25)} strokeWidth={3.5} strokeLinecap="round" />
+            stroke={shade(skin, 0.25)} strokeWidth={3.5 * ks} strokeLinecap="round" />
+        </g>
+      );
+    case "rest":
+      // hanging at the hip, the thumb to the front
+      return (
+        <g transform={`translate(${x} ${y})`}>
+          <ellipse cx={-side * R * 0.55} cy={-R * 0.1} rx={R * 0.34} ry={R * 0.3} {...sk} />
+          <ellipse rx={R * 0.8} ry={R * 0.92} {...sk} />
         </g>
       );
     default:
@@ -212,9 +227,10 @@ const Hand: React.FC<{at: Pt; from: Pt; shape: string; skin: string; side: numbe
   }
 };
 
-const Arm: React.FC<{spec: ArmSpec; side: number; b: number; color: string; skin: string}> = ({spec, side, b, color,
+const Arm: React.FC<{spec: ArmSpec; side: number; B: BodySpec; color: string; skin: string}> = ({spec, side, B, color,
   skin}) => {
-  const sh: Pt = [side * (RIG.shoulderX - 8) * b, RIG.shoulderY + 22];
+  const {lw} = useInk();
+  const sh: Pt = shoulderOf(B, side);
   const d = `M ${sh[0]} ${sh[1]} L ${spec.el[0]} ${spec.el[1]} L ${spec.ha[0]} ${spec.ha[1]}`;
   // the cuff: the last part of the forearm, a shade lighter, ending a little before the hand
   const cx = spec.ha[0] + (spec.el[0] - spec.ha[0]) * 0.34;
@@ -222,19 +238,19 @@ const Arm: React.FC<{spec: ArmSpec; side: number; b: number; color: string; skin
   const hand = spec.shape === "phoneEar" || spec.shape === "hold" || spec.shape === "holdOne" ? "mitten" : spec.shape;
   return (
     <g>
-      <path d={d} stroke={INK} strokeWidth={SLEEVE + LW * 2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <path d={d} stroke={INK} strokeWidth={SLEEVE + lw * 2} fill="none" strokeLinecap="round" strokeLinejoin="round" />
       <path d={d} stroke={color} strokeWidth={SLEEVE} fill="none" strokeLinecap="round" strokeLinejoin="round" />
       <path d={`M ${spec.el[0]} ${spec.el[1]} L ${cx} ${cy}`} stroke={shade(color)} strokeWidth={SLEEVE * 0.42}
         fill="none" strokeLinecap="round" opacity={0.7} transform={`translate(${side * 12} 6)`} />
       {spec.shape === "phoneEar" ? (
         <g transform={`translate(${spec.ha[0] - side * 22} ${spec.ha[1] - 46}) rotate(${side * -14})`}>
-          <rect x={-31} y={-66} width={62} height={128} rx={14} fill="#2D323C" stroke={INK} strokeWidth={LW} />
+          <rect x={-31} y={-66} width={62} height={128} rx={14} fill="#2D323C" stroke={INK} strokeWidth={lw} />
           <rect x={-22} y={-56} width={8} height={30} rx={4} fill="#59606E" />
         </g>
       ) : null}
       {spec.shape === "holdOne" ? (
         <g transform={`translate(${spec.ha[0] + 6} ${spec.ha[1] - 58}) rotate(-8)`}>
-          <rect x={-46} y={-80} width={92} height={150} rx={16} fill="#2D323C" stroke={INK} strokeWidth={LW} />
+          <rect x={-46} y={-80} width={92} height={150} rx={16} fill="#2D323C" stroke={INK} strokeWidth={lw} />
         </g>
       ) : null}
       <Hand at={spec.ha} from={spec.el} shape={hand} skin={skin} side={side} />
@@ -261,23 +277,24 @@ export const browSet = (e: Expression): [[number, number], [number, number]] => 
 
 export const Eye: React.FC<{cx: number; cy: number; e: Expression; blink: number; look: [number, number]; far: number;
   side: number}> = ({cx, cy, e, blink, look, far, side}) => {
+  const {ks} = useInk();
   const sx = 1 - 0.16 * far;
   const lx = look[0] * 7;
   const ly = look[1] * 6;
-  const stroke = {stroke: INK, strokeWidth: 7, fill: "none", strokeLinecap: "round" as const};
+  const stroke = {stroke: INK, strokeWidth: 7 * ks, fill: "none", strokeLinecap: "round" as const};
   const closed = <path d={`M ${-17} 2 Q 0 11 17 2`} {...stroke} />;
   const g = (child: React.ReactNode) => <g transform={`translate(${cx} ${cy}) scale(${sx} 1)`}>{child}</g>;
   if (e === "relieved" || e === "fakeKind") return g(<path d={`M -18 6 Q 0 -15 18 6`} {...stroke} />);
   if (e === "shocked" || e === "panicked") {
     return g(
       <>
-        <ellipse rx={26} ry={30} fill="#FFFFFF" stroke={INK} strokeWidth={5} />
+        <ellipse rx={26} ry={30} fill="#FFFFFF" stroke={INK} strokeWidth={5 * ks} />
         {e === "shocked" ? <circle cx={lx * 0.8} cy={ly * 0.8} r={6.5} fill={INK} /> : (
           <>
             <ellipse cx={lx * 0.6} cy={3 + ly * 0.6} rx={13} ry={16} fill={INK} />
             <circle cx={lx * 0.6 - 5} cy={-3 + ly * 0.6} r={5} fill="#fff" />
             <circle cx={lx * 0.6 + 5} cy={9 + ly * 0.6} r={2.6} fill="#fff" />
-            <path d="M -20 18 Q 0 30 20 18" stroke={SWEAT} strokeWidth={5} fill="none" strokeLinecap="round" />
+            <path d="M -20 18 Q 0 30 20 18" stroke={SWEAT} strokeWidth={5 * ks} fill="none" strokeLinecap="round" />
           </>
         )}
       </>,
@@ -291,7 +308,7 @@ export const Eye: React.FC<{cx: number; cy: number; e: Expression; blink: number
       <>
         <path d={`M -16 -2 A 16 ${19 * (1 - blink * 0.6)} 0 0 0 16 -2 Z`} fill={INK}
           transform={`translate(${lx * 0.9 + (e === "suspicious" ? 5 * side : 0)} ${2})`} />
-        <path d={`M -21 ${-3 + lid} L 21 ${-3 - lid}`} {...stroke} strokeWidth={7} />
+        <path d={`M -21 ${-3 + lid} L 21 ${-3 - lid}`} {...stroke} strokeWidth={7 * ks} />
       </>,
     );
   }
@@ -312,9 +329,10 @@ export const Eye: React.FC<{cx: number; cy: number; e: Expression; blink: number
 /** The mouth: the talking viseme (0..4) shaped by the expression, or the expression's resting mouth. */
 export const Mouth: React.FC<{e: Expression; talking: boolean; v: number; mx: number; my: number; light?: boolean}> = ({e,
   talking, v, mx, my, light}) => {
+  const {lw, ks} = useInk();
   const ink = light ? "#0E0F13" : INK;
   const inside = light ? "#E8E0D4" : MOUTH_IN;
-  const st = {stroke: ink, strokeWidth: LW, strokeLinecap: "round" as const, strokeLinejoin: "round" as const};
+  const st = {stroke: ink, strokeWidth: lw, strokeLinecap: "round" as const, strokeLinejoin: "round" as const};
   const happy = e === "fakeKind" || e === "excited" || e === "smug" || e === "relieved";
   const sad = e === "worried" || e === "panicked";
   const open = (w: number, h: number, tongue: boolean, teeth: boolean) => happy ? (
@@ -349,14 +367,14 @@ export const Mouth: React.FC<{e: Expression; talking: boolean; v: number; mx: nu
     case "panicked": return (
       <g transform={`translate(${mx} ${my})`}>
         <path d="M -30 -6 Q 0 -14 30 -6 L 24 20 Q 12 14 0 20 Q -12 14 -24 20 Z" fill={light ? inside : MOUTH_IN} {...st} />
-        {light ? null : <path d="M -22 -6 Q 0 -11 22 -6" stroke="#fff" strokeWidth={6} fill="none" />}
+        {light ? null : <path d="M -22 -6 Q 0 -11 22 -6" stroke="#fff" strokeWidth={6 * ks} fill="none" />}
       </g>
     );
     case "relieved": return line("M -30 -4 Q 0 18 30 -4");
     case "suspicious": return line("M 2 2 Q 16 -4 30 -6 M 2 2 l -4 3");
     case "smug": return light ? (
       <g transform={`translate(${mx} ${my})`}>
-        <path d="M -40 -8 Q 0 34 46 -22 Q 8 12 -40 -8 Z" fill={inside} stroke={ink} strokeWidth={4} strokeLinejoin="round" />
+        <path d="M -40 -8 Q 0 34 46 -22 Q 8 12 -40 -8 Z" fill={inside} stroke={ink} strokeWidth={4 * ks} strokeLinejoin="round" />
       </g>
     ) : line("M -24 2 Q 6 10 28 -12");
     case "fakeKind": return open(40, 26, false, true);
@@ -369,14 +387,17 @@ export const Mouth: React.FC<{e: Expression; talking: boolean; v: number; mx: nu
 
 /** Union of circles with one outline: all outlines first, then all fills (the perm, the hood's curls). */
 export const Cloud: React.FC<{circles: [number, number, number][]; fill: string; extra?: React.ReactNode}> = ({circles, fill,
-  extra}) => (
+  extra}) => {
+  const {lw} = useInk();
+  return (
   <g>
     {circles.map(([x, y, r], i) => <circle key={`o${i}`} cx={x} cy={y} r={r} fill={INK} stroke={INK}
-      strokeWidth={LW * 2} />)}
+      strokeWidth={lw * 2} />)}
     {circles.map(([x, y, r], i) => <circle key={`f${i}`} cx={x} cy={y} r={r} fill={fill} />)}
     {extra}
   </g>
-);
+  );
+};
 
 const permBack = (): [number, number, number][] => {
   const out: [number, number, number][] = [[0, -235, 150], [-70, -210, 140], [70, -210, 140]];
@@ -393,7 +414,8 @@ const PERM_FRONT: [number, number, number][] = [[-118, -322, 36], [-74, -346, 36
 const HOOD_RIM = "M -176 -250 C -190 -120 -124 -20 0 -12 C 124 -20 190 -120 176 -250";
 
 const HairBack: React.FC<{id: CharacterId; L: Look; back: boolean}> = ({id, L, back}) => {
-  const st = {stroke: INK, strokeWidth: LW, strokeLinejoin: "round" as const};
+  const {lw, ks} = useInk();
+  const st = {stroke: INK, strokeWidth: lw, strokeLinejoin: "round" as const};
   switch (id) {
     case "mother":
       return <Cloud circles={back ? [...PERM_BACK, [0, -150, 120] as [number, number, number]] : PERM_BACK} fill={L.hair} />;
@@ -409,7 +431,7 @@ const HairBack: React.FC<{id: CharacterId; L: Look; back: boolean}> = ({id, L, b
           {/* the grey horseshoe round the back of a bald head: high at the ears, low at the nape */}
           <path d="M -172 -276 C -110 -196 110 -196 172 -276 C 184 -190 168 -96 120 -58 Q 104 -40 84 -52 Q 60 -34 34 -46
             Q 8 -30 -18 -46 Q -44 -32 -66 -50 Q -96 -38 -114 -58 C -166 -96 -184 -190 -172 -276 Z" fill={L.hair} {...st} />
-          <g stroke={shade(L.hair, 0.18)} strokeWidth={4} fill="none" strokeLinecap="round">
+          <g stroke={shade(L.hair, 0.18)} strokeWidth={4 * ks} fill="none" strokeLinecap="round">
             <path d="M -120 -190 q 10 50 4 92" /><path d="M -60 -170 q 8 50 2 96" /><path d="M 0 -164 q 6 50 0 100" />
             <path d="M 60 -170 q 6 50 -2 96" /><path d="M 120 -190 q 6 50 -6 92" />
           </g>
@@ -427,7 +449,8 @@ const HairBack: React.FC<{id: CharacterId; L: Look; back: boolean}> = ({id, L, b
 };
 
 const HairFront: React.FC<{id: CharacterId; L: Look; dx: number; back: boolean}> = ({id, L, dx, back}) => {
-  const st = {stroke: INK, strokeWidth: LW, strokeLinejoin: "round" as const, strokeLinecap: "round" as const};
+  const {lw, ks} = useInk();
+  const st = {stroke: INK, strokeWidth: lw, strokeLinejoin: "round" as const, strokeLinecap: "round" as const};
   const hl = shade(L.hair, -0.25);
   if (back) {
     switch (id) {
@@ -449,9 +472,9 @@ const HairFront: React.FC<{id: CharacterId; L: Look; dx: number; back: boolean}>
               ${s * 160} -146 ${s * 150} -150 C ${s * 158} -186 ${s * 150} -236 ${s * 118} -268 Z`} fill={L.hair} {...st} />
           ))}
           <path d={`M ${-46 + dx * 0.4} -372 C ${-10 + dx * 0.4} -386 ${30 + dx * 0.4} -384 ${62 + dx * 0.4} -366`}
-            stroke={shade(L.hair, 0.15)} strokeWidth={4} fill="none" strokeLinecap="round" />
+            stroke={shade(L.hair, 0.15)} strokeWidth={4 * ks} fill="none" strokeLinecap="round" />
           <path d={`M ${-30 + dx * 0.4} -360 C ${0 + dx * 0.4} -372 ${26 + dx * 0.4} -370 ${46 + dx * 0.4} -358`}
-            stroke={shade(L.hair, 0.15)} strokeWidth={4} fill="none" strokeLinecap="round" />
+            stroke={shade(L.hair, 0.15)} strokeWidth={4 * ks} fill="none" strokeLinecap="round" />
           <ellipse cx={-60 + dx * 0.3} cy={-330} rx={40} ry={16} fill="#fff" opacity={0.25} transform="rotate(-18 -60 -330)" />
         </g>
       );
@@ -459,7 +482,7 @@ const HairFront: React.FC<{id: CharacterId; L: Look; dx: number; back: boolean}>
       return (
         <Cloud circles={PERM_FRONT.map(([x, y, r]) => [x + dx * 0.5, y, r] as [number, number, number])} fill={L.hair}
           extra={(
-            <g stroke="#E6DED3" strokeWidth={4} fill="none" strokeLinecap="round" opacity={0.9}>
+            <g stroke="#E6DED3" strokeWidth={4 * ks} fill="none" strokeLinecap="round" opacity={0.9}>
               <path d={`M ${-96 + dx * 0.5} -350 q 14 -12 26 0`} />
               <path d={`M ${40 + dx * 0.5} -372 q 14 -12 26 0`} />
               <path d={`M ${-150} -270 q 10 -14 24 -4`} />
@@ -475,7 +498,7 @@ const HairFront: React.FC<{id: CharacterId; L: Look; dx: number; back: boolean}>
             ${100 + dx * 0.5} -330 ${50 + dx * 0.5} -334 C ${20 + dx * 0.5} -300 ${-70 + dx * 0.5} -262
             ${-170 + dx * 0.2} -236 Z`} fill={L.hair} {...st} />
           <path d={`M ${-110 + dx * 0.5} -360 C ${-60 + dx * 0.5} -394 ${10 + dx * 0.5} -398 ${50 + dx * 0.5} -386`}
-            stroke={hl} strokeWidth={7} fill="none" strokeLinecap="round" />
+            stroke={hl} strokeWidth={7 * ks} fill="none" strokeLinecap="round" />
         </g>
       );
     case "son":
@@ -493,7 +516,7 @@ const HairFront: React.FC<{id: CharacterId; L: Look; dx: number; back: boolean}>
             ${110 + dx * 0.5} -334 ${-40 + dx * 0.5} -330 C ${-90 + dx * 0.5} -320 ${-130 + dx * 0.4} -290
             ${-166 + dx * 0.2} -236 Z`} fill={L.hair} {...st} />
           <path d={`M ${-56 + dx * 0.5} -330 C ${-30 + dx * 0.5} -380 ${20 + dx * 0.5} -402 ${70 + dx * 0.5} -400`}
-            stroke={hl} strokeWidth={6} fill="none" strokeLinecap="round" />
+            stroke={hl} strokeWidth={6 * ks} fill="none" strokeLinecap="round" />
         </g>
       );
     case "ad":
@@ -512,9 +535,9 @@ const HairFront: React.FC<{id: CharacterId; L: Look; dx: number; back: boolean}>
         <g>
           {/* the cap: crown and a brim pulled low; the hood's rim around the face opening */}
           <path d="M -150 -300 C -150 -400 -70 -420 0 -420 C 70 -420 150 -400 150 -300 Z" fill={L.inner}
-            stroke={INK} strokeWidth={LW} strokeLinejoin="round" />
+            stroke={INK} strokeWidth={lw} strokeLinejoin="round" />
           <path d="M -176 -296 C -120 -318 120 -318 176 -296 C 186 -270 150 -258 0 -262 C -150 -258 -186 -270 -176 -296 Z"
-            fill={shade(L.inner, 0.2)} stroke={INK} strokeWidth={LW} strokeLinejoin="round" />
+            fill={shade(L.inner, 0.2)} stroke={INK} strokeWidth={lw} strokeLinejoin="round" />
           <path d={HOOD_RIM} fill="none" stroke={INK} strokeWidth={34} strokeLinecap="round" />
           <path d={HOOD_RIM} fill="none" stroke={shade(L.hair, -0.16)} strokeWidth={22} strokeLinecap="round" />
         </g>
@@ -524,52 +547,49 @@ const HairFront: React.FC<{id: CharacterId; L: Look; dx: number; back: boolean}>
   }
 };
 
-/** Costume layer over the torso (front or back). */
-export const Costume: React.FC<{id: CharacterId; L: Look; b: number; back: boolean; uid: string}> = ({id, L, b, back}) => {
-  const st = {stroke: INK, strokeWidth: LW, strokeLinejoin: "round" as const, strokeLinecap: "round" as const};
-  const thin = {stroke: INK, strokeWidth: 3.5, strokeLinecap: "round" as const, fill: "none"};
-  if (back) {
-    if (id === "mother") return <path d={`M ${-200 * b} 60 L ${200 * b} 60 L ${276 * b} 1700 L ${-276 * b} 1700 Z`}
-      fill={L.inner} {...st} />;
-    if (id === "father" || id === "daughter") return <path d="M 0 40 L 0 1700" {...thin} opacity={0.5} />;
-    return null;
-  }
+/** Costume layer over the short torso (front only): a neckline, two buttons or a pocket, nothing that runs the length
+ * of the body (a long front line makes a torso read long). */
+export const Costume: React.FC<{id: CharacterId; L: Look; B: BodySpec; back: boolean; uid: string}> = ({id, L, B, back}) => {
+  const {lw, ks} = useInk();
+  const st = {stroke: INK, strokeWidth: lw, strokeLinejoin: "round" as const, strokeLinecap: "round" as const};
+  const thin = {stroke: INK, strokeWidth: 3.5 * ks, strokeLinecap: "round" as const, fill: "none"};
+  const hw = Math.max(B.w, B.hip) + 4;
+  const rib = <path d={`M ${-hw} ${B.hemY - 24} Q 0 ${B.hemY - 10} ${hw} ${B.hemY - 24}`} {...thin} opacity={0.55} />;
+  const pocket = (
+    <path d={`M -112 ${B.hemY - 96} L 112 ${B.hemY - 96} L 134 ${B.hemY - 14} L -134 ${B.hemY - 14} Z`}
+      {...thin} fill="rgba(0,0,0,0.08)" opacity={0.8} />
+  );
+  if (back) return id === "son" || id === "scammer" ? rib : null;
   switch (id) {
     case "father":
       return (
         <g>
-          <path d="M -50 -14 L 50 -14 L 22 360 L -22 360 Z" fill={L.inner} {...st} />
-          <path d="M -48 -16 L -8 34 L -62 48 Z M 48 -16 L 8 34 L 62 48 Z" fill={shade(L.inner, -0.12)} {...st} />
-          <path d="M -50 -14 L -22 360 M 50 -14 L 22 360" {...thin} strokeWidth={LW} />
-          {[150, 230, 310].map((y) => <circle key={y} cx={36 - y * 0.06} cy={y} r={9} fill={L.accent} stroke={INK}
-            strokeWidth={3.5} />)}
-          <path d={`M ${-150 * b} 300 h 70`} {...thin} opacity={0.6} />
+          <path d="M -50 -14 L 50 -14 L 0 116 Z" fill={L.inner} {...st} />
+          <path d="M -48 -16 L -8 32 L -62 46 Z M 48 -16 L 8 32 L 62 46 Z" fill={shade(L.inner, -0.12)} {...st} />
+          {[150, 198].map((y) => <circle key={y} cx={0} cy={y} r={9} fill={L.accent} stroke={INK} strokeWidth={3.5 * ks} />)}
+          <path d={`M -128 196 h 58 M 70 196 h 58`} {...thin} opacity={0.6} />
+          {rib}
         </g>
       );
     case "mother":
       return (
         <g>
-          {[-1, 1].map((s) => (
-            <path key={s} d={`M ${s * 62} 6 C ${s * 70} 120 ${s * 56} 300 ${s * 54} 1700 L ${s * 282 * b} 1700
-              L ${s * 268 * b} 150 C ${s * 262 * b} 100 ${s * 236 * b} 62 ${s * 168 * b} 46 C ${s * 120} 34 ${s * 80} 20
-              ${s * 62} 6 Z`} fill={L.inner} {...st} />
-          ))}
+          <path d="M -58 -10 C -62 56 -30 90 0 90 C 30 90 62 56 58 -10 Z" fill={L.inner} {...st} />
           <path d="M -46 -14 C -64 30 -30 48 0 38 C 30 48 64 30 46 -14" fill={shade(L.top, -0.18)} {...st} />
-          {[120, 200].map((y) => <circle key={y} cx={0} cy={y} r={7} fill={L.accent} stroke={INK} strokeWidth={3} />)}
+          {[128, 172].map((y) => <circle key={y} cx={0} cy={y} r={7} fill={L.accent} stroke={INK} strokeWidth={3 * ks} />)}
+          {rib}
         </g>
       );
     case "daughter":
       return (
         <g>
-          <path d="M -60 -12 C -40 20 40 20 60 -12 L 40 1700 L -40 1700 Z" fill={L.inner} {...st} />
-          <path d="M -60 -12 L -40 1700 M 60 -12 L 40 1700" {...thin} strokeWidth={LW} />
+          <path d="M -58 -12 C -40 18 40 18 58 -12 L 0 136 Z" fill={L.inner} {...st} />
           {/* ID lanyard with a blank card */}
-          <path d="M -36 0 L 10 236 M 36 0 L 22 236" stroke={L.accent} strokeWidth={8} strokeLinecap="round" />
-          <g transform="translate(16 290) rotate(4)">
-            <rect x={-40} y={-54} width={80} height={104} rx={10} fill="#F6F3EC" stroke={INK} strokeWidth={4.5} />
+          <path d="M -34 0 L 6 138 M 34 0 L 20 138" stroke={L.accent} strokeWidth={8} strokeLinecap="round" />
+          <g transform="translate(14 178) rotate(4) scale(0.78)">
+            <rect x={-40} y={-54} width={80} height={104} rx={10} fill="#F6F3EC" stroke={INK} strokeWidth={4.5 * ks} />
             <rect x={-40} y={-54} width={80} height={22} rx={8} fill={L.accent} />
             <rect x={-24} y={-20} width={48} height={36} rx={6} fill="#D9D3C7" />
-            <path d="M -24 30 h 48" stroke="#BDB6A8" strokeWidth={5} strokeLinecap="round" />
           </g>
         </g>
       );
@@ -579,37 +599,40 @@ export const Costume: React.FC<{id: CharacterId; L: Look; b: number; back: boole
           <path d="M -46 -14 C -40 30 40 30 46 -14 Z" fill={L.inner} {...st} />
           <path d="M -150 -6 C -120 40 120 40 150 -6" fill="none" stroke={shade(L.top, 0.2)} strokeWidth={18}
             strokeLinecap="round" />
-          <path d="M -28 30 L -34 170 M 28 30 L 34 170" stroke="#E7E3DA" strokeWidth={7} strokeLinecap="round" />
-          <path d={`M ${-120 * b} 420 Q 0 440 ${120 * b} 420`} {...thin} opacity={0.6} />
+          <path d="M -28 30 L -32 118 M 28 30 L 32 118" stroke="#E7E3DA" strokeWidth={7} strokeLinecap="round" />
+          {pocket}
+          {rib}
         </g>
       );
     case "scammer":
       return (
         <g>
-          <path d="M -30 20 L -40 200 M 30 20 L 40 200" stroke="#555B68" strokeWidth={7} strokeLinecap="round" />
-          <path d={`M ${-130 * b} 470 Q 0 450 ${130 * b} 470`} {...thin} stroke="#14161B" />
+          <path d="M -30 20 L -36 132 M 30 20 L 36 132" stroke="#555B68" strokeWidth={7} strokeLinecap="round" />
+          {pocket}
+          {rib}
         </g>
       );
     case "fake_banker":
     case "ad":
       return (
         <g>
-          <path d="M -52 -14 L 52 -14 L 10 330 L -10 330 Z" fill={L.inner} {...st} />
-          <path d="M -14 22 L 14 22 L 22 250 L 0 290 L -22 250 Z" fill={L.accent} {...st} />
+          <path d="M -52 -14 L 52 -14 L 0 196 Z" fill={L.inner} {...st} />
+          <path d="M -13 24 L 13 24 L 19 158 L 0 184 L -19 158 Z" fill={L.accent} {...st} />
           <path d="M -16 4 L 16 4 L 12 26 L -12 26 Z" fill={shade(L.accent, 0.15)} {...st} />
           {/* lapels */}
-          <path d="M -54 -14 L -96 150 L -40 120 L -10 330" fill="none" {...st} />
-          <path d="M 54 -14 L 96 150 L 40 120 L 10 330" fill="none" {...st} />
+          <path d="M -54 -14 L -94 118 L -46 100 L 0 198" fill="none" {...st} />
+          <path d="M 54 -14 L 94 118 L 46 100 L 0 198" fill="none" {...st} />
+          <circle cx={0} cy={228} r={8} fill={shade(L.top, 0.25)} stroke={INK} strokeWidth={3 * ks} />
           {id === "fake_banker" ? (
-            <g transform="translate(-130 250) rotate(-5)">
+            <g transform="translate(-118 182) rotate(-5) scale(0.82)">
               {/* a generic, blank staff card (no institution) */}
-              <path d="M 40 -260 L 0 -50" stroke="#8D93A0" strokeWidth={6} strokeLinecap="round" />
-              <rect x={-44} y={-56} width={88} height={112} rx={10} fill="#ECEAE4" stroke={INK} strokeWidth={4.5} />
+              <path d="M 70 -200 L 0 -50" stroke="#8D93A0" strokeWidth={6} strokeLinecap="round" />
+              <rect x={-44} y={-56} width={88} height={112} rx={10} fill="#ECEAE4" stroke={INK} strokeWidth={4.5 * ks} />
               <rect x={-30} y={-38} width={40} height={46} rx={6} fill="#C9C4B8" />
               <path d="M 18 -30 h 14 M 18 -14 h 14 M -30 26 h 60" stroke="#ABA597" strokeWidth={5} strokeLinecap="round" />
             </g>
           ) : (
-            <path d="M 96 120 l 40 -6 l 6 22 l -40 6 Z" fill="#F4F2EC" stroke={INK} strokeWidth={3.5} />
+            <path d="M 96 112 l 40 -6 l 6 22 l -40 6 Z" fill="#F4F2EC" stroke={INK} strokeWidth={3.5 * ks} />
           )}
         </g>
       );
@@ -621,16 +644,17 @@ export const Costume: React.FC<{id: CharacterId; L: Look; b: number; back: boole
 /* ------------------------------------------------------------------ emotion symbols */
 
 export const FxLayer: React.FC<{fx: Fx[]; dx: number; light: boolean; frame: number}> = ({fx, dx, light, frame}) => {
+  const {ks} = useInk();
   const on = (f: Fx) => fx.includes(f);
   const drop = (x: number, y: number, s = 1) => (
     <path transform={`translate(${x} ${y}) scale(${s})`} d="M 0 -30 C 8 -14 22 4 22 16 A 22 22 0 0 1 -22 16 C -22 4 -8 -14 0 -30 Z"
-      fill={SWEAT} stroke={INK} strokeWidth={4.5} />
+      fill={SWEAT} stroke={INK} strokeWidth={4.5 * ks} />
   );
   const fall = (frame % 36) / 36;
   return (
     <g>
       {on("gloom") ? (
-        <g stroke="#6F7FD8" strokeWidth={6} strokeLinecap="round" opacity={0.75}>
+        <g stroke="#6F7FD8" strokeWidth={6 * ks} strokeLinecap="round" opacity={0.75}>
           {[-90, -54, -18, 18, 54, 90].map((x, i) => <path key={i} d={`M ${x + dx * 0.5} ${-350 + (i % 2) * 10} v ${48 + (i % 3) * 12}`} />)}
         </g>
       ) : null}
@@ -640,7 +664,7 @@ export const FxLayer: React.FC<{fx: Fx[]; dx: number; light: boolean; frame: num
             <g key={s}>
               <ellipse cx={s * 96 + dx} cy={-136} rx={32} ry={17} fill="#F29A9A" opacity={0.6} />
               <path d={`M ${s * 96 + dx - 16} -142 l -7 12 M ${s * 96 + dx} -142 l -7 12 M ${s * 96 + dx + 16} -142 l -7 12`}
-                stroke="#D9737A" strokeWidth={3.5} strokeLinecap="round" />
+                stroke="#D9737A" strokeWidth={3.5 * ks} strokeLinecap="round" />
             </g>
           ))}
         </g>
@@ -657,7 +681,7 @@ export const FxLayer: React.FC<{fx: Fx[]; dx: number; light: boolean; frame: num
       {on("sweat") ? drop(150, -320 + Math.sin(frame / 7) * 4) : null}
       {on("sweat2") ? drop(-158, -296 + Math.cos(frame / 6) * 4, 0.8) : null}
       {on("shockLines") ? (
-        <g stroke={light ? "#F3EEE6" : INK} strokeWidth={7} strokeLinecap="round">
+        <g stroke={light ? "#F3EEE6" : INK} strokeWidth={7 * ks} strokeLinecap="round">
           {[-150, -128, -106, -74, -52, -30].map((a, i) => {
             const r = (a * Math.PI) / 180;
             const r0 = 236 + (i % 2) * 10;
@@ -668,10 +692,10 @@ export const FxLayer: React.FC<{fx: Fx[]; dx: number; light: boolean; frame: num
       ) : null}
       {on("question") ? (
         <text x={-262} y={-318} fontFamily={FONT} fontWeight={900} fontSize={104} fill={light ? "#F3EEE6" : INK}
-          stroke={light ? INK : "#FFFDF8"} strokeWidth={6} paintOrder="stroke" transform={`rotate(-12 -262 -318)`}>?</text>
+          stroke={light ? INK : "#FFFDF8"} strokeWidth={6 * ks} paintOrder="stroke" transform={`rotate(-12 -262 -318)`}>?</text>
       ) : null}
       {on("sparkle") ? (
-        <g fill="#FFE9A8" stroke={INK} strokeWidth={4} strokeLinejoin="round">
+        <g fill="#FFE9A8" stroke={INK} strokeWidth={4 * ks} strokeLinejoin="round">
           {[[-200, -300, 1], [206, -250, 0.7], [-178, -150, 0.55]].map(([x, y, s], i) => {
             const p = 0.75 + 0.25 * Math.sin(frame / 5 + i * 2);
             return <path key={i} transform={`translate(${x} ${y}) scale(${s * p})`}
@@ -680,12 +704,12 @@ export const FxLayer: React.FC<{fx: Fx[]; dx: number; light: boolean; frame: num
         </g>
       ) : null}
       {on("vein") ? (
-        <g transform="translate(118 -318)" stroke="#B24A5A" strokeWidth={7} fill="none" strokeLinecap="round">
+        <g transform="translate(118 -318)" stroke="#B24A5A" strokeWidth={7 * ks} fill="none" strokeLinecap="round">
           <path d="M -24 -8 q 8 -4 14 -14 M 8 -22 q 4 8 14 14 M 24 8 q -8 4 -14 14 M -8 22 q -4 -8 -14 -14" />
         </g>
       ) : null}
       {on("puff") ? (
-        <g fill="#FFFFFF" stroke={INK} strokeWidth={3.5} opacity={0.85}>
+        <g fill="#FFFFFF" stroke={INK} strokeWidth={3.5 * ks} opacity={0.85}>
           <circle cx={92 + dx} cy={-84} r={14} />
           <circle cx={122 + dx} cy={-96} r={10} />
           <circle cx={142 + dx} cy={-112} r={6} />
@@ -697,9 +721,11 @@ export const FxLayer: React.FC<{fx: Fx[]; dx: number; light: boolean; frame: num
 
 /* ------------------------------------------------------------------ the character */
 
-export const Phone2: React.FC<{screen?: CharPose["screen"]; glow: boolean}> = ({screen, glow}) => (
+export const Phone2: React.FC<{screen?: CharPose["screen"]; glow: boolean}> = ({screen, glow}) => {
+  const {lw, ks} = useInk();
+  return (
   <g>
-    <rect x={-60} y={-100} width={120} height={200} rx={20} fill="#2D323C" stroke={INK} strokeWidth={LW} />
+    <rect x={-60} y={-100} width={120} height={200} rx={20} fill="#2D323C" stroke={INK} strokeWidth={lw} />
     {screen ? (
       <g>
         <rect x={-50} y={-88} width={100} height={176} rx={12} fill={screen.bg} />
@@ -711,10 +737,25 @@ export const Phone2: React.FC<{screen?: CharPose["screen"]; glow: boolean}> = ({
     ) : (
       <circle cx={-34} cy={-76} r={7} fill="#4B5260" />
     )}
-    {glow ? <rect x={-60} y={-100} width={120} height={200} rx={20} fill="none" stroke="#DDF3FF" strokeWidth={4}
+    {glow ? <rect x={-60} y={-100} width={120} height={200} rx={20} fill="none" stroke="#DDF3FF" strokeWidth={4 * ks}
       opacity={0.5} /> : null}
   </g>
-);
+  );
+};
+
+/** The over-the-shoulder arms: the phone hand up at the right, the left arm hanging. */
+export const backArms = (): {L?: ArmSpec; R?: ArmSpec} => ({
+  R: {el: RIG.back.elbow as Pt, ha: RIG.back.hand as Pt, shape: "mitten"},
+  L: {el: RIG.elbows.rest.L as Pt, ha: RIG.hands.rest.L as Pt, shape: "rest"},
+});
+
+/** The reaction squash (and breathing) of the upper body, pivoting on the hem so the legs stay planted. */
+export const squashAt = (B: BodySpec, squash: number, breathe: number) =>
+  `translate(0 ${B.hemY}) scale(${1 + (1 - squash) * 0.6} ${squash * breathe}) translate(0 ${-B.hemY})`;
+
+/** The shadow tone down the torso's right side. */
+export const sideShade = (B: BodySpec) => `M ${B.sh - 30} 40 C ${B.w + 6} 96 ${B.w - 2} 200 ${B.w - 20} ${B.hemY + 30}
+  L ${B.w + 80} ${B.hemY + 30} L ${B.w + 80} 0 Z`;
 
 /**
  * One character, drawn in its own <svg> (so the stagings can dim, desaturate or blur it with CSS filters).
@@ -724,7 +765,9 @@ export const Character: React.FC<{pose: CharPose; uid: string; box?: {w: number;
   style?: React.CSSProperties}> = ({pose, uid, box = {w: 1080, h: 1920}, frame, style}) => {
   const p = pose;
   const L = LOOKS[p.id];
-  const b = L.build;
+  const B = bodyOf(p.id);
+  const ink = inkFor(p.px ?? p.k);
+  const {lw, ks} = ink;
   const back = p.view === "back";
   const turn = Math.max(-1, Math.min(1, p.turn ?? 0));
   const dx = turn * 28;
@@ -733,13 +776,13 @@ export const Character: React.FC<{pose: CharPose; uid: string; box?: {w: number;
   const silhouette = p.id === "scammer";
   const fx = p.fx ?? [];
   const gesture = p.gesture ?? "rest";
-  const arms = back ? {R: {el: RIG.back.elbow as Pt, ha: RIG.back.hand as Pt, shape: "mitten"}} as {L?: ArmSpec; R?: ArmSpec}
-    : armsOf(gesture, Boolean(p.mirror), p.free, p.typing ?? frame);
+  const arms = back ? backArms() : armsOf(gesture, Boolean(p.mirror), p.free, p.typing ?? frame);
   const high = (a?: ArmSpec) => Boolean(a && a.ha[1] < -20);
   const holding = !back && (gesture === "phoneRead" || gesture === "phoneType");
   const breathe = 1 + 0.012 * (p.breathe ?? 0);
   const squash = p.squash ?? 1;
   const tilt = (p.tilt ?? 0) + (p.nod ?? 0);
+  const legs = LEG_LOOKS[p.id];
   // rim light on dark stages: the silhouette grown by rimWidth px in the rim colour, as four hard CSS drop shadows
   // (a third of the cost of an SVG feMorphology dilate over a full-frame region)
   const rimPx = p.rim ? p.rimWidth ?? 7 : 0;
@@ -755,7 +798,7 @@ export const Character: React.FC<{pose: CharPose; uid: string; box?: {w: number;
 
   const armEl = (side: "L" | "R") => {
     const a = arms[side];
-    return a ? <Arm key={side} spec={a} side={side === "L" ? -1 : 1} b={b} color={L.top} skin={silhouette ? "#5A606E" : L.skin} /> : null;
+    return a ? <Arm key={side} spec={a} side={side === "L" ? -1 : 1} B={B} color={L.top} skin={silhouette ? "#5A606E" : L.skin} /> : null;
   };
 
   const head = (
@@ -764,16 +807,16 @@ export const Character: React.FC<{pose: CharPose; uid: string; box?: {w: number;
       {/* ears (behind the face; the far one tucks in when the face turns) */}
       {!silhouette ? [-1, 1].map((s) => (
         <g key={s} transform={`translate(${s * 158 - turn * 22} -192)`}>
-          <ellipse rx={28} ry={34} fill={L.skin} stroke={INK} strokeWidth={LW} />
-          <path d={`M ${s * 8} -14 q ${s * 10} 14 0 26`} stroke={skinShade} strokeWidth={5} fill="none" strokeLinecap="round" />
-          {p.id === "mother" && !back ? <circle cx={s * 2} cy={34} r={9} fill="#FBF7EF" stroke={INK} strokeWidth={3.5} /> : null}
+          <ellipse rx={28} ry={34} fill={L.skin} stroke={INK} strokeWidth={lw} />
+          <path d={`M ${s * 8} -14 q ${s * 10} 14 0 26`} stroke={skinShade} strokeWidth={5 * ks} fill="none" strokeLinecap="round" />
+          {p.id === "mother" && !back ? <circle cx={s * 2} cy={34} r={9} fill="#FBF7EF" stroke={INK} strokeWidth={3.5 * ks} /> : null}
         </g>
       )) : null}
       {/* the face */}
       <defs>
         <clipPath id={faceId}><path d={faceD} /></clipPath>
       </defs>
-      <path d={faceD} fill={L.skin} stroke={INK} strokeWidth={LW} strokeLinejoin="round" />
+      <path d={faceD} fill={L.skin} stroke={INK} strokeWidth={lw} strokeLinejoin="round" />
       <g clipPath={`url(#${faceId})`}>
         {!silhouette ? (
           <>
@@ -827,10 +870,10 @@ export const Character: React.FC<{pose: CharPose; uid: string; box?: {w: number;
               })}
               {/* nose */}
               <path d={`M ${dx * 1.25 - 4} -160 Q ${dx * 1.25 + 12} -146 ${dx * 1.25 - 2} -136`} stroke={shade(L.skin, 0.3)}
-                strokeWidth={5} fill="none" strokeLinecap="round" />
+                strokeWidth={5 * ks} fill="none" strokeLinecap="round" />
               {L.age ? [-1, 1].map((s) => (
                 <path key={s} d={`M ${s * 94 + dx} -198 l ${s * 14} -6 M ${s * 94 + dx} -182 l ${s * 14} 5`}
-                  stroke={shade(L.skin, 0.28)} strokeWidth={3.5} strokeLinecap="round" />
+                  stroke={shade(L.skin, 0.28)} strokeWidth={3.5 * ks} strokeLinecap="round" />
               )) : null}
               {/* a touch of colour on the cheeks */}
               {[-1, 1].map((s) => <ellipse key={s} cx={s * 100 + dx} cy={-128} rx={26} ry={13} fill="#F2A08F"
@@ -843,10 +886,10 @@ export const Character: React.FC<{pose: CharPose; uid: string; box?: {w: number;
             <g transform={`translate(${dx * 1.15} 0)`}>
               {[-1, 1].map((s) => (
                 <path key={s} d={`M ${s * 18} -150 L ${s * 96} -150 C ${s * 96} -114 ${s * 18} -110 ${s * 18} -150 Z`}
-                  fill="rgba(220,236,245,0.32)" stroke={INK} strokeWidth={5} strokeLinejoin="round" />
+                  fill="rgba(220,236,245,0.32)" stroke={INK} strokeWidth={5 * ks} strokeLinejoin="round" />
               ))}
-              <path d="M -18 -148 Q 0 -160 18 -148" stroke={INK} strokeWidth={5} fill="none" />
-              <path d="M -96 -150 L -150 -166 M 96 -150 L 150 -166" stroke={INK} strokeWidth={4} />
+              <path d="M -18 -148 Q 0 -160 18 -148" stroke={INK} strokeWidth={5 * ks} fill="none" />
+              <path d="M -96 -150 L -150 -166 M 96 -150 L 150 -166" stroke={INK} strokeWidth={4 * ks} />
             </g>
           ) : null}
           {(p.shadowHalf ?? 0) > 0 ? (
@@ -863,11 +906,11 @@ export const Character: React.FC<{pose: CharPose; uid: string; box?: {w: number;
         <g>
           <path d="M -206 -230 C -200 -420 200 -420 206 -230" stroke={INK} strokeWidth={22} fill="none" strokeLinecap="round" />
           <path d="M -206 -230 C -200 -420 200 -420 206 -230" stroke="#4A4F5C" strokeWidth={12} fill="none" strokeLinecap="round" />
-          <rect x={-232} y={-262} width={52} height={92} rx={22} fill="#3A3F4B" stroke={INK} strokeWidth={LW} />
+          <rect x={-232} y={-262} width={52} height={92} rx={22} fill="#3A3F4B" stroke={INK} strokeWidth={lw} />
           <circle cx={-206} cy={-190} r={6} fill={L.accent} />
           <path d="M -206 -186 C -200 -110 -140 -92 -62 -96" stroke={INK} strokeWidth={14} fill="none" strokeLinecap="round" />
-          <path d="M -206 -186 C -200 -110 -140 -92 -62 -96" stroke="#4A4F5C" strokeWidth={7} fill="none" strokeLinecap="round" />
-          <ellipse cx={-56} cy={-96} rx={18} ry={14} fill="#2A2D36" stroke={INK} strokeWidth={4.5} />
+          <path d="M -206 -186 C -200 -110 -140 -92 -62 -96" stroke="#4A4F5C" strokeWidth={7 * ks} fill="none" strokeLinecap="round" />
+          <ellipse cx={-56} cy={-96} rx={18} ry={14} fill="#2A2D36" stroke={INK} strokeWidth={4.5 * ks} />
         </g>
       ) : null}
       <FxLayer fx={back ? fx.filter((f) => f === "sweat" || f === "shockLines" || f === "question") : fx} dx={dx}
@@ -876,32 +919,30 @@ export const Character: React.FC<{pose: CharPose; uid: string; box?: {w: number;
   );
 
   return (
+    <InkContext.Provider value={ink}>
     <svg width={box.w} height={box.h} style={{position: "absolute", left: 0, top: 0, overflow: "visible", ...style,
       filter: [rimCss, style?.filter].filter(Boolean).join(" ") || undefined}}>
-      <g transform={`translate(${p.x} ${p.y}) scale(${p.k}) rotate(${p.lean ?? 0} 0 300)`}>
-        <g transform={`translate(0 300) scale(${1 + (1 - squash) * 0.6} ${squash * breathe}) translate(0 -300)`}>
+      <g transform={`translate(${p.x} ${p.y}) scale(${p.k}) rotate(${p.lean ?? 0} 0 ${B.sole})`}>
+        <FloorShadow B={B} uid={uid} />
+        <Legs B={B} cloth={legs.cloth} legFill={silhouette ? "#5A606E" : L.skin} feet="shoes" foot={legs.shoe}
+          back={back} />
+        {/* the upper body squashes and breathes over the hem; the legs stay planted */}
+        <g transform={squashAt(B, squash, breathe)}>
           {/* neck */}
           <rect x={-40} y={-74} width={80} height={90} rx={20} fill={silhouette ? "#14161B" : skinShade} stroke={INK}
-            strokeWidth={LW} />
+            strokeWidth={lw} />
           {/* torso + costume, the shadow tone on the right */}
-          <defs><clipPath id={torsoId}><path d={torsoPath(b)} /></clipPath></defs>
-          <path d={torsoPath(b)} fill={back && p.id === "mother" ? L.inner : L.top} stroke={INK} strokeWidth={LW}
-            strokeLinejoin="round" />
+          <defs><clipPath id={torsoId}><path d={torsoPath(B)} /></clipPath></defs>
+          <path d={torsoPath(B)} fill={L.top} stroke={INK} strokeWidth={lw} strokeLinejoin="round" />
           <g clipPath={`url(#${torsoId})`}>
-            <Costume id={p.id} L={L} b={b} back={back} uid={uid} />
-            <path d={`M ${170 * b} 30 C ${230 * b} 60 ${250 * b} 160 ${238 * b} 1700 L ${320 * b} 1700 L ${320 * b} 0 Z`}
-              fill="#000" opacity={0.12} />
+            <Costume id={p.id} L={L} B={B} back={back} uid={uid} />
+            <path d={sideShade(B)} fill="#000" opacity={0.12} />
             {silhouette && (p.monitor ?? 0) > 0 ? (
               <ellipse cx={240} cy={160} rx={160} ry={260} fill={L.accent} opacity={0.16 * (p.monitor ?? 0)} />
             ) : null}
           </g>
-          {/* rest arms hang at the sides: a sleeve seam on the torso edge */}
-          {!arms.L && !back ? <path d={`M ${-196 * b} 70 C ${-214 * b} 200 ${-212 * b} 420 ${-206 * b} 1700`}
-            stroke={INK} strokeWidth={4.5} fill="none" strokeLinecap="round" opacity={0.85} /> : null}
-          {!arms.R && !back ? <path d={`M ${196 * b} 70 C ${214 * b} 200 ${212 * b} 420 ${206 * b} 1700`}
-            stroke={INK} strokeWidth={4.5} fill="none" strokeLinecap="round" opacity={0.85} /> : null}
           {!high(arms.L) ? armEl("L") : null}
-          {!high(arms.R) ? armEl("R") : null}
+          {!high(arms.R) && !back ? armEl("R") : null}
           {holding ? (
             <g transform={`translate(0 ${RIG.hands.phoneRead.L[1] - 40}) rotate(-4)`}>
               <Phone2 glow />
@@ -928,5 +969,6 @@ export const Character: React.FC<{pose: CharPose; uid: string; box?: {w: number;
         </g>
       </g>
     </svg>
+    </InkContext.Provider>
   );
 };
