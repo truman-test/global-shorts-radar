@@ -18,7 +18,7 @@ from radar.production.assemble import (TRIM, ProductionError, ProductionResult, 
                                        write_meta)
 from radar.production.script import Script, caption_chunks
 from radar.production.textnorm import speakable_length, split_sentences
-from radar.production.themes import record_style, resolve_style_report
+from radar.production.themes import episode_number, record_style, resolve_style_report
 from radar.production.tts import TTSError
 
 VIDEO_DIR = PROJECT_ROOT / "video"
@@ -180,6 +180,9 @@ def music_props(script: Script) -> tuple[dict | None, dict | None]:
 
 
 VOICE_LABEL = "AI 음성"   # every narration is synthetic; OpenRAIL-M (Supertonic) requires an explicit disclaimer
+# Growth lines, visual only (no narration, no extra time; see reports/구독자 1천명 외부 성장 전략.md (a) 3 and 6):
+SHARE_LINE = "부모님께도 보내 주세요"   # handwritten under the closing checklist (family-chat sharing)
+VALUE_CTA = "매일 1장, 생존노트"        # a small chip with a bell in the last ~1.2 s, gone before the poster tail
 
 
 def episode_seed(script_id: str) -> int:
@@ -190,13 +193,36 @@ def episode_seed(script_id: str) -> int:
 
 def build_props(script: Script, scenes: list[dict], channel_name: str, sfx: bool = True,
                 music: dict | None = None, voice_label: str | None = VOICE_LABEL,
-                transition: str = "continuity", theme: str = "classic", category: str | None = None) -> dict:
+                transition: str = "continuity", theme: str = "classic", category: str | None = None,
+                episode_no: int | None = None, share_line: str | None = SHARE_LINE,
+                cta: str | None = VALUE_CTA) -> dict:
+    """Props for video/src/Short.tsx. `episode` stays the script id (seed fallback); the series number shown on the
+    poster is `episodeNo` (only for scheduled scripts, see themes.episode_number)."""
     props = {"channel": channel_name, "voiceLabel": voice_label, "disclaimer": script.disclaimer, "sfx": sfx,
              "music": music, "transition": transition, "posterTailMs": POSTER_TAIL_MS, "theme": theme,
              "episode": script.id, "seed": episode_seed(script.id), "scenes": scenes}
     if category:
         props["category"] = category
+    if isinstance(episode_no, int) and not isinstance(episode_no, bool) and episode_no > 0:
+        props["episodeNo"] = episode_no
+    if share_line:
+        props["shareLine"] = share_line
+    if cta:
+        props["cta"] = cta
     return props
+
+
+def meta_extra(style, transition: str, render_seconds: float, episode_no: int | None,
+               music_item: dict | None = None) -> dict:
+    """Engine-specific fields of meta.json: the stage, the series number ("생존노트 #N", None when unscheduled) and
+    the music's licence record."""
+    extra = {"engine": "remotion", "render_seconds": round(render_seconds, 1), "transition": transition,
+             "theme": style.theme, "stage": style.family, "category": style.category, "luminance": style.luminance,
+             "mascot": bool(style.mascot), "visual_group": style.visual_group, "episode": episode_no}
+    if music_item:
+        extra["music"] = {k: music_item[k] for k in ("id", "title", "artist", "license", "license_url",
+                                                       "attribution_required", "sha256")}
+    return extra
 
 
 def layout_props(scene) -> dict:
@@ -271,8 +297,9 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
     # own fields, else topic + the stage-family rules over the schedule (see themes.py)
     style, style_warnings = resolve_style_report(script)
     theme = style.theme
+    episode_no = episode_number(script.id)   # position in content/schedule.json; None if not scheduled
     props = build_props(script, scenes, channel_name, sfx, music, transition=transition, theme=theme,
-                        category=style.category)
+                        category=style.category, episode_no=episode_no)
     props_path.write_text(json.dumps(props, ensure_ascii=False, indent=1), encoding="utf-8")
 
     video = out_dir / "video.mp4"
@@ -305,12 +332,7 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
     subprocess.run([ffmpeg_exe(), "-hide_banner", "-loglevel", "error", "-y",
                     "-i", str(video), "-frames:v", "1", str(out_dir / "thumb.png")], capture_output=True)
     record_style(script, style)   # content/style_log.json: stage, theme, layouts (next episodes' constraints)
-    extra = {"engine": "remotion", "render_seconds": round(render_seconds, 1), "transition": transition,
-             "theme": theme, "stage": style.family, "category": style.category, "luminance": style.luminance,
-             "mascot": bool(style.mascot), "visual_group": style.visual_group}
-    if music_item:
-        extra["music"] = {k: music_item[k] for k in ("id", "title", "artist", "license", "license_url",
-                                                       "attribution_required", "sha256")}
+    extra = meta_extra(style, transition, render_seconds, episode_no, music_item)
     meta = write_meta(out_dir, script, duration, size, tts, warnings, extra=extra)
     return ProductionResult(video, out_dir / "thumb.png", meta, round(duration, 2), size, bool(tts.publishable), warnings)
 

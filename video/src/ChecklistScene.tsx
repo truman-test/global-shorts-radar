@@ -10,6 +10,10 @@ import {CATEGORIES, isLight, isNotebook, NOTE, stageInks, TONES, useCategory, us
 import {SceneProps} from "./types";
 
 const ROW_H = 132;
+// handwriting under the card: the sign-off and the share line, both kept above the caption band (1255)
+const HAND_LIMIT = 1240;
+const SIGN = {size: 78, h: 92};
+const SHARE = {size: 64, h: 72}; // line box + the slight tilt
 const PAD_Y = 30;
 const BOX = 72;
 
@@ -80,6 +84,17 @@ export const ChecklistScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   const marked = markedWords(scene.headline, scene.mark);
   const signOff = scene.headline.split(" ").filter((_, i) => marked.has(i)).join(" ");
   const warm = finale ? interpolate(frame, [lastTick - 30, lastTick + 12], [0, 1], clamp) : 0;
+  // Under the card: the sign-off (notebook stages) and the share line (closing scene, every stage). Both if they fit
+  // above the captions; when space is tight the share line replaces the sign-off.
+  const bottom = top + height;
+  const share = s.last && items.length ? s.share : undefined;
+  const signFits = finale && bottom + 16 + SIGN.h <= HAND_LIMIT;
+  const both = signFits && !!share && bottom + 16 + SIGN.h + 8 + SHARE.h <= HAND_LIMIT;
+  const shareY = both ? bottom + 16 + SIGN.h + 8 : bottom + 16;
+  const showShare = !!share && shareY + SHARE.h <= HAND_LIMIT;
+  const showSign = signFits && (!showShare || both);
+  // written once the first item is ticked (a calm moment, and ~4 s on screen), never in the final beat
+  const shareAt = Math.min((ticks[0] ?? 0) + 16, s.frames - 45);
   return (
     <SceneShell>
       {warm > 0 ? (
@@ -124,10 +139,16 @@ export const ChecklistScene: React.FC<{scene: SceneProps}> = ({scene}) => {
       </NoteCard>
       {/* the sign-off: the headline's key phrase, handwritten under the list next to 도치 (only if it fits above
           the captions) */}
-      {finale && top + height + 16 + 92 <= 1240 ? (
-        <Handwrite text={signOff} x={body.left + 24} y={top + height + 16} size={78}
+      {showSign ? (
+        <Handwrite text={signOff} x={body.left + 24} y={bottom + 16} size={SIGN.size}
           color={stageInks(t, scene.accent, s.last, tone).hand} underline={tone.fill}
           at={lastTick + 12} dur={14} rotate={-3} />
+      ) : null}
+      {/* the share line (ask to pass the list on to family): the page's own ink on notebook stages (their surface under
+          the card is paper, also under night-lamp's lamp), the stage's light ink on the dark alert stages (no 도치) */}
+      {showShare && share ? (
+        <Handwrite text={share} x={body.left + 24} y={shareY} size={SHARE.size}
+          color={isNotebook(t) ? NOTE.ink : t.stageInk} at={shareAt} dur={16} rotate={-2} />
       ) : null}
     </SceneShell>
   );

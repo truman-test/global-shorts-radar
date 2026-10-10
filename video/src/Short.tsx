@@ -9,14 +9,15 @@ import {
   useCurrentFrame,
   useVideoConfig,
 } from "remotion";
+import {Bell} from "lucide-react";
 import {FONT} from "./fonts";
 import {CALL_AVATAR, CallScene} from "./CallScene";
 import {BADGE, CardScene} from "./CardScene";
 import {CHIP} from "./kit";
-import {AnchorSpec, MORPH, SceneContext, Transition} from "./motion";
+import {AnchorSpec, MORPH, SceneContext, spr, Transition} from "./motion";
 import {Backdrop} from "./Backdrop";
-import {BRAND, CATEGORIES, CategoryContext, categoryFor, isLight, SeedContext, ThemeContext, themeFor, useCategory,
-  useTheme} from "./themes";
+import {BRAND, CATEGORIES, CategoryContext, categoryFor, isLight, NOTE, SeedContext, ThemeContext, themeFor,
+  useCategory, useTheme} from "./themes";
 import {seedOf} from "./hand";
 import {Traveller} from "./Traveller";
 import {MascotTrack, mascotOn} from "./Mascot";
@@ -45,11 +46,17 @@ const sceneFrames = (props: ShortProps, fps: number) => {
   });
 };
 
+/** Series name in the episode chip ("생존노트 #3"). */
+export const SERIES = "생존노트";
+
 /**
- * Brand line (fixed position on every stage): the topic category tag, the channel name and the "AI 음성" badge.
- * Only the colours follow the stage (light text on dark-luminance stages, dark ink on light ones).
+ * Brand line (fixed position on every stage): the topic category tag, the series chip ("생존노트 #N", scheduled
+ * episodes only), the channel name and the "AI 음성" badge. Only the colours follow the stage (light text on
+ * dark-luminance stages, dark ink on light ones). It never depends on the frame (except the progress bar), so the
+ * poster tail shows exactly the brand line of frame 0.
  */
-const TopBar: React.FC<{channel: string; voiceLabel?: string}> = ({channel, voiceLabel}) => {
+const TopBar: React.FC<{channel: string; voiceLabel?: string; episodeNo?: number}> = ({channel, voiceLabel,
+  episodeNo}) => {
   const frame = useCurrentFrame();
   const {durationInFrames} = useVideoConfig();
   const t = useTheme();
@@ -64,6 +71,13 @@ const TopBar: React.FC<{channel: string; voiceLabel?: string}> = ({channel, voic
         alignItems: "center", fontSize: 36, fontWeight: 700, color: ink, letterSpacing: 1}}>
         <span style={{marginRight: 18, padding: "5px 16px", borderRadius: 999, fontSize: 26, fontWeight: 800,
           letterSpacing: 0, background: cat.tint, color: cat.ink}}>{cat.label}</span>
+        {episodeNo ? (
+          // the series chip: an outline beside the filled category tag, quieter than both tag and badge
+          <span style={{marginLeft: -6, marginRight: 18, padding: "3px 13px", borderRadius: 999, fontSize: 25,
+            fontWeight: 800, letterSpacing: 0, whiteSpace: "nowrap", border: `2px solid ${t.stageInk}59`}}>
+            {SERIES} #{episodeNo}
+          </span>
+        ) : null}
         {channel}
         {voiceLabel ? (
           <span style={{marginLeft: 18, padding: "4px 14px", borderRadius: 10, fontSize: 28, fontWeight: 700,
@@ -87,6 +101,40 @@ const DisclaimerBadge: React.FC<{text: string}> = ({text}) => {
       opacity: s, transform: `translateY(${(1 - s) * -20}px)`}}>
       <div style={{padding: "12px 30px", borderRadius: 999, background: BRAND.disclaimerBg,
         border: `3px solid ${ACCENTS.red}`, color: BRAND.disclaimerText, fontSize: 34, fontWeight: 700}}>
+        {text}
+      </div>
+    </div>
+  );
+};
+
+/** Frames of the value CTA at the end of the closing scene (~1.2 s, <= 2 s). It ends with the scene, before the tail. */
+export const CTA_FRAMES = 36;
+const CTA_OUT = 8; // fades out over the closing scene's own exit, fully gone on its last frame
+
+/**
+ * Value CTA (visual only, no audio, no extra time): a small chip with a bell under the brand line (the opening
+ * disclaimer's slot, free in the closing scene) for the last CTA_FRAMES of the closing scene. Mounted in a Sequence
+ * that ends where the poster tail starts, so the loop/thumbnail frame never shows it.
+ */
+const ValueCta: React.FC<{text: string; frames: number}> = ({text, frames}) => {
+  const frame = useCurrentFrame();
+  const cat = CATEGORIES[useCategory()];
+  const inP = spr(frame, 0, 10, 0);
+  const out = Math.min(1, Math.max(0, (frames - 1 - frame) / CTA_OUT));
+  const op = Math.min(1, inP) * out;
+  // one small ring of the bell once the chip has landed (damped, two swings)
+  const r = Math.max(0, frame - 8);
+  const swing = frame >= 8 ? 16 * Math.exp(-r / 6) * Math.sin(r * 0.9) : 0;
+  if (op <= 0) return null;
+  return (
+    <div style={{position: "absolute", top: 162, width: "100%", display: "flex", justifyContent: "center",
+      opacity: op, transform: `translateY(${(1 - inP) * -12}px)`}}>
+      <div style={{display: "flex", alignItems: "center", gap: 12, padding: "9px 26px 9px 18px", borderRadius: 999,
+        background: NOTE.paper, color: NOTE.ink, fontSize: 32, fontWeight: 800, whiteSpace: "nowrap",
+        boxShadow: "0 8px 20px rgba(10,14,25,0.22)"}}>
+        <span style={{display: "flex", transform: `rotate(${swing}deg)`, transformOrigin: "50% 8%"}}>
+          <Bell size={32} color={cat.ink} strokeWidth={2.4} />
+        </span>
         {text}
       </div>
     </div>
@@ -237,12 +285,14 @@ export const Short: React.FC<ShortProps> = (props) => {
                 // Poster start: the first scene's visuals run POSTER frames ahead, so frame 0 (the feed preview,
                 // and the moment viewers decide to swipe) already shows the finished hook, not an empty screen.
                 <Sequence from={-POSTER} layout="none">
-                  <SceneContext.Provider value={{mode, index: i, frames: frames + POSTER, first: true, last, mascot: on[i]}}>
+                  <SceneContext.Provider value={{mode, index: i, frames: frames + POSTER, first: true, last, mascot: on[i],
+                    share: last ? props.shareLine : undefined}}>
                     <SceneBody scene={scene} />
                   </SceneContext.Provider>
                 </Sequence>
               ) : (
-                <SceneContext.Provider value={{mode, index: i, frames, first: false, last, mascot: on[i]}}>
+                <SceneContext.Provider value={{mode, index: i, frames, first: false, last, mascot: on[i],
+                  share: last ? props.shareLine : undefined}}>
                   <SceneBody scene={scene} />
                 </SceneContext.Provider>
               )}
@@ -294,7 +344,16 @@ export const Short: React.FC<ShortProps> = (props) => {
           </Freeze>
         </Sequence>
       ) : null}
-      <TopBar channel={props.channel} voiceLabel={props.voiceLabel} />
+      {props.cta && n ? (() => {
+        // the closing scene's last CTA_FRAMES (shorter if the scene is): ends exactly where the poster tail begins
+        const from = Math.max(spans[n - 1].from, end - CTA_FRAMES);
+        return (
+          <Sequence from={from} durationInFrames={Math.max(1, end - from)}>
+            <ValueCta text={props.cta} frames={end - from} />
+          </Sequence>
+        );
+      })() : null}
+      <TopBar channel={props.channel} voiceLabel={props.voiceLabel} episodeNo={props.episodeNo} />
       <Sequence durationInFrames={spans[0]?.frames ?? fps * 3}>
         <DisclaimerBadge text={props.disclaimer} />
       </Sequence>

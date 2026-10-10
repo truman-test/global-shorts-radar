@@ -157,7 +157,8 @@ def test_build_props_shape():
     props = build_props(s, [{"layout": "card"}], "채널")
     assert props == {"channel": "채널", "voiceLabel": "AI 음성", "disclaimer": s.disclaimer, "sfx": True,
                      "music": None, "transition": "continuity", "posterTailMs": 500, "theme": "classic",
-                     "episode": s.id, "seed": zlib.crc32(s.id.encode("utf-8")), "scenes": [{"layout": "card"}]}
+                     "episode": s.id, "seed": zlib.crc32(s.id.encode("utf-8")), "shareLine": "부모님께도 보내 주세요",
+                     "cta": "매일 1장, 생존노트", "scenes": [{"layout": "card"}]}
     # the seed is deterministic (per-episode stage variants, nothing random at render time)
     assert build_props(s, [], "채널")["seed"] == props["seed"]
     assert build_props(s, [], "채널", theme="pulse")["theme"] == "pulse"
