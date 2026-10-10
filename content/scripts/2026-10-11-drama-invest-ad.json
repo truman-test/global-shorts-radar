@@ -1,0 +1,186 @@
+{
+ "id": "2026-10-11-drama-invest-ad",
+ "pilot": "드라마 샘플: 검수 전 업로드 금지",
+ "source_video_id": "iU2Gp3kkUAo",
+ "title": "50대 아버지가 믿은 유명인 투자 광고, 끝은 가짜 주식앱 (재연)",
+ "description": "유명인 얼굴을 합성한 투자 광고에서 시작해 단체 채팅방, 가짜 주식앱으로 이어지는 투자 사기를 재연했습니다. 금융감독원 소비자경보(2026년 1월)와 관련 언론 보도 속 실제 사례들을 바탕으로 각색했습니다. 광고나 채팅방이 권하는 앱은 깔지 말고, 증권사 직원이라면 그 회사 공식 고객센터에 재직 여부부터 확인하세요.",
+ "tags": [
+  "투자 사기",
+  "리딩방",
+  "가짜 주식앱",
+  "딥페이크",
+  "유명인 사칭"
+ ],
+ "disclaimer": "※ 실제 사례들을 바탕으로 각색한 재연입니다",
+ "category": "ai",
+ "music": "tense",
+ "cast": {
+  "ad": {
+   "voice": "M3",
+   "label": "광고",
+   "role": "neutral"
+  },
+  "leader": {
+   "voice": "M2",
+   "label": "방장",
+   "role": "scammer"
+  },
+  "member": {
+   "voice": "F2",
+   "label": "회원",
+   "role": "neutral"
+  },
+  "father": {
+   "voice": "M1",
+   "label": "아버지",
+   "role": "victim"
+  },
+  "dochi": {
+   "voice": "F1",
+   "label": "도치"
+  }
+ },
+ "scenes": [
+  {
+   "headline": "유명인이 찍어준 종목",
+   "mark": "유명인",
+   "sub": "영상 중간에 뜬 투자 광고",
+   "icon": "video",
+   "accent": "red",
+   "lines": [
+    {
+     "speaker": "ad",
+     "text": "제가 고른 종목, 무료로 드려요."
+    },
+    {
+     "speaker": "father",
+     "text": "어, 그 유명인이네?"
+    }
+   ]
+  },
+  {
+   "layout": "chat",
+   "chat_title": "VIP 수익방",
+   "headline": "수익 자랑이 쏟아지는 방",
+   "mark": "수익 자랑",
+   "sub": "앱을 깔라고 합니다 (재연)",
+   "icon": "phone",
+   "accent": "yellow",
+   "lines": [
+    {
+     "speaker": "leader",
+     "text": "이 앱 깔아야 살 수 있어요."
+    },
+    {
+     "speaker": "member",
+     "text": "저도 벌었어요, 감사해요!"
+    },
+    {
+     "speaker": "father",
+     "text": "어, 벌써 올랐네!"
+    }
+   ]
+  },
+  {
+   "layout": "chat",
+   "chat_title": "VIP 수익방",
+   "headline": "더 넣으라고, 빼지 말라고",
+   "mark": "더 넣으라고",
+   "sub": "돈을 빼려 하자 핑계 (재연)",
+   "icon": "money",
+   "accent": "red",
+   "lines": [
+    {
+     "speaker": "leader",
+     "text": "큰 게 왔어요. 더 넣으세요."
+    },
+    {
+     "speaker": "father",
+     "text": "번 돈 좀 빼 볼게요."
+    },
+    {
+     "speaker": "leader",
+     "text": "지금 빼면 손해예요."
+    }
+   ],
+   "twist": "사기였습니다"
+  },
+  {
+   "layout": "timeline",
+   "headline": "광고 → 채팅방 → 가짜 앱",
+   "sub": "금융감독원 소비자경보 · 2026년 1월",
+   "icon": "warning",
+   "accent": "red",
+   "steps": [
+    {
+     "when": "1단계",
+     "text": "얼굴을 꾸민 투자 영상"
+    },
+    {
+     "when": "2단계",
+     "text": "단체 채팅방 초대"
+    },
+    {
+     "when": "3단계",
+     "text": "가짜 주식거래 앱 설치"
+    }
+   ],
+   "lines": [
+    {
+     "speaker": "dochi",
+     "text": "얼굴은 인공지능으로 꾸민 거예요."
+    },
+    {
+     "speaker": "dochi",
+     "text": "앱 속 수익도 꾸민 거고요."
+    },
+    {
+     "speaker": "dochi",
+     "text": "칭찬하던 회원도 한패일 수 있어요."
+    }
+   ]
+  },
+  {
+   "layout": "checklist",
+   "headline": "광고 속 앱은 깔지 않기",
+   "mark": "깔지 않기",
+   "sub": "직원이라면 공식 고객센터에 재직 확인",
+   "icon": "check",
+   "accent": "green",
+   "items": [
+    "광고·채팅방이 권하는 앱 안 깔기",
+    "증권사 공식 고객센터에 재직 확인",
+    "앱 설치 권하면 불법업자"
+   ],
+   "lines": [
+    {
+     "speaker": "dochi",
+     "text": "광고가 권하는 앱은, 깔지 마세요."
+    },
+    {
+     "speaker": "dochi",
+     "text": "증권사 직원이라면, 공식 고객센터에 재직 여부부터 확인하세요."
+    }
+   ]
+  }
+ ],
+ "sources": [
+  {
+   "title": "한국경제, \"증권사 직원입니다\"의 진화…AI 얼굴까지 빌려 투자금 뜯는다 (2026-01-26)",
+   "url": "https://www.hankyung.com/article/202601263694i"
+  },
+  {
+   "title": "SBS Biz, 금감원 불법 리딩방 소비자경보 '주의' 발령 (2026-01-26)",
+   "url": "https://biz.sbs.co.kr/amp/article/20000287460"
+  },
+  {
+   "title": "서울신문, 불법 투자리딩방 경찰청 접수 현황 보도 (2026-02-27)",
+   "url": "https://m.seoul.co.kr/news/2026/02/27/20260227005002"
+  },
+  {
+   "title": "머니투데이, 유튜브 광고 속 유명인 딥페이크 투자 권유 (2024-04-20)",
+   "url": "https://www.mt.co.kr/tech/2024/04/20/2024041915010221270"
+  }
+ ],
+ "author": "llm:claude-opus-5-5 (story writer, 드라마 샘플). Facts reused from the fact-checked 2026-10-09-deepfake-invest-ad (content/week1/iU2Gp3kkUAo.review.md fixes applied). Dialogue is an adapted composite re-enactment with no amounts; 바람잡이 (SBS Biz '바람잡이로 추정되는'), 추가 입금 반복 요구 and 반환 핑계 come from the Hankyung and SBS Biz articles already cited in the fact sheet (sentences not yet quoted there). The 6,581억 stat scene was cut for length."
+}

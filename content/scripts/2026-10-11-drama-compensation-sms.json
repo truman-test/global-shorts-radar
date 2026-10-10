@@ -1,0 +1,187 @@
+{
+ "id": "2026-10-11-drama-compensation-sms",
+ "pilot": "드라마 샘플: 검수 전 업로드 금지",
+ "source_video_id": "CAvtAcfHDvk",
+ "title": "유출 보상 문자, 60대 엄마 \"이거 눌러도 돼?\" (재연)",
+ "description": "은행 유출 뉴스 직후 60대 엄마가 '피해보상 안내' 문자를 받는 상황을 재연했습니다. 금융권 개인정보 유출 뒤 '유출 피해고객 대상 피해보상 안내' 같은 문자로 링크를 누르게 하는 수법을 금융당국이 경고했습니다. 금융회사와 금융당국은 유출 안내나 피해보상을 이유로 인터넷 주소(링크)를 보내지 않습니다. 유출 여부는 은행 공식 앱이나 대표번호로 직접 확인하세요. 이미 눌렀다면 전원을 끄거나 비행기모드로 바꾸고 통신사에서 악성앱 삭제·초기화를 받으세요. 피해가 의심되면 1394 상담, 돈이 나갔다면 다른 전화로 112나 금융회사 콜센터에 지급정지를 요청하세요.",
+ "tags": [
+  "스미싱 문자",
+  "피해보상 문자",
+  "개인정보 유출",
+  "지급정지",
+  "보이스피싱"
+ ],
+ "disclaimer": "※ 실제 수법을 바탕으로 각색한 재연입니다",
+ "category": "smishing",
+ "music": "suspense",
+ "cast": {
+  "mom": {
+   "voice": "F3",
+   "label": "엄마",
+   "role": "victim"
+  },
+  "daughter": {
+   "voice": "F2",
+   "label": "딸",
+   "role": "neutral"
+  },
+  "dochi": {
+   "voice": "F1",
+   "label": "도치"
+  }
+ },
+ "scenes": [
+  {
+   "layout": "sms",
+   "sender": "유출 피해고객 안내",
+   "sms_text": "[피해보상 안내] 고객님은 개인정보 유출 피해보상 대상입니다. 기한 내 신청 http://●●●●.kr/…",
+   "headline": "유출 보상 문자, 누르기 직전",
+   "mark": "누르기 직전",
+   "sub": "",
+   "icon": "warning",
+   "accent": "red",
+   "lines": [
+    {
+     "speaker": "mom",
+     "text": "어머, 유출 피해보상 대상이래."
+    },
+    {
+     "speaker": "mom",
+     "text": "기한 안에 신청하라네?"
+    }
+   ]
+  },
+  {
+   "layout": "chat",
+   "chat_title": "우리 가족",
+   "headline": "엄마, 그 링크 누르지 마",
+   "mark": "누르지 마",
+   "sub": "재연",
+   "icon": "family",
+   "accent": "red",
+   "lines": [
+    {
+     "speaker": "mom",
+     "text": "보상 문자 왔는데, 이거 눌러도 돼?"
+    },
+    {
+     "speaker": "daughter",
+     "text": "엄마, 잠깐! 누르지 마!"
+    }
+   ],
+   "twist": "사기였습니다"
+  },
+  {
+   "layout": "compare",
+   "headline": "유출·보상 안내에 링크 없음",
+   "mark": "링크 없음",
+   "sub": "금융위·금감원 · 2026.10.6, 9.18",
+   "icon": "shield",
+   "accent": "blue",
+   "real": {
+    "label": "진짜",
+    "title": "금융회사·금융당국",
+    "points": [
+     "링크 안 보냄",
+     "공식 앱에서 확인"
+    ]
+   },
+   "fake": {
+    "label": "가짜",
+    "title": "피해보상 안내 문자",
+    "points": [
+     "링크 클릭 유도",
+     "보상·특별대출 미끼"
+    ]
+   },
+   "lines": [
+    {
+     "speaker": "dochi",
+     "text": "금융회사와 당국은 보상 안내에 링크를 안 보내요."
+    },
+    {
+     "speaker": "dochi",
+     "text": "악성앱이 깔리면 경찰에 걸어도 사기범에게 연결될 수 있어요."
+    }
+   ]
+  },
+  {
+   "layout": "flow",
+   "headline": "눌렀다면 비행기모드부터",
+   "mark": "비행기모드",
+   "sub": "1394 상담도 다른 폰으로",
+   "icon": "warning",
+   "accent": "yellow",
+   "nodes": [
+    {
+     "text": "링크를 눌렀다면"
+    },
+    {
+     "text": "전원 끄기·비행기모드"
+    },
+    {
+     "text": "통신사서 악성앱 삭제"
+    },
+    {
+     "text": "돈이 나갔나?",
+     "yes": "다른 폰으로 112"
+    },
+    {
+     "text": "1394 피해 상담"
+    }
+   ],
+   "lines": [
+    {
+     "speaker": "dochi",
+     "text": "눌렀다면 비행기모드부터."
+    },
+    {
+     "speaker": "dochi",
+     "text": "통신사에서 악성앱 삭제나 초기화를 받으세요."
+    },
+    {
+     "speaker": "dochi",
+     "text": "돈이 나갔다면 다른 전화로 112에 지급정지 요청.",
+     "tts": "돈이 나갔다면 다른 전화로 일일이에 지급정지 요청."
+    }
+   ]
+  },
+  {
+   "layout": "checklist",
+   "headline": "확인은 공식 앱에서",
+   "sub": "",
+   "icon": "check",
+   "accent": "green",
+   "items": [
+    "링크 누르지 말고 삭제",
+    "유출 여부는 공식 앱·대표번호",
+    "의심 문자는 118 상담"
+   ],
+   "lines": [
+    {
+     "speaker": "dochi",
+     "text": "확인은 은행 공식 앱이나 대표번호로."
+    }
+   ]
+  }
+ ],
+ "sources": [
+  {
+   "title": "금융위원회·금융감독원 보도참고자료, 최근 금융권 개인정보 유출사고에 따른 보이스피싱·스미싱 등 피해에 주의하세요 (소비자경보 2026-26호, 2026-10-06)",
+   "url": "https://www.fsc.go.kr/no010101/87882"
+  },
+  {
+   "title": "금융위원회 보도자료, 추석 명절 전후 보이스피싱 피해에 주의하세요 (2026-09-18)",
+   "url": "https://www.fsc.go.kr/no010101/87779"
+  },
+  {
+   "title": "한국인터넷진흥원, 쿠팡 개인정보 유출 사고 이슈를 악용한 피해보상 사칭 전자금융사기(피싱) 주의 (2025-12-10)",
+   "url": "https://www.kisa.or.kr/402/form?lang_type=KO&postSeq=2563"
+  },
+  {
+   "title": "KISA 보호나라 (해킹·스팸·개인정보침해 상담 118)",
+   "url": "https://www.boho.or.kr/kr/main.do"
+  }
+ ],
+ "author": "llm:claude-opus-5-5 (story-writer, 드라마 샘플). Facts reused from the fact-checked 2026-10-10-leak-compensation-sms (content/week2/leak-compensation-sms.review.md); the 60대 엄마/딸 dialogue is an adapted re-enactment of the method in the 2026-10-06 금융당국 경보, no reported individual case, amount or outcome."
+}

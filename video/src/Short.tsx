@@ -438,7 +438,12 @@ export const Short: React.FC<ShortProps> = (props) => {
         );
       })() : null}
       <TopBar channel={props.channel} voiceLabel={props.voiceLabel} episodeNo={props.episodeNo} />
-      <Sequence durationInFrames={spans[0]?.frames ?? fps * 3}>
+      {/* the 재연 badge stays up through the last dramatized scene (dialogue lines or the twist stamp), so no
+          re-enacted moment is ever shown without it; explainers keep it on the first scene only */}
+      <Sequence durationInFrames={(() => {
+        const k = props.scenes.reduce((last, s, i) => (s.lines?.length || s.twist ? i : last), 0);
+        return spans[k] ? spans[k].from + spans[k].frames : fps * 3;
+      })()}>
         <DisclaimerBadge text={props.disclaimer} />
       </Sequence>
     </AbsoluteFill>

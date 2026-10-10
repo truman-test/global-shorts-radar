@@ -1,0 +1,161 @@
+{
+ "id": "2026-10-11-drama-bank-caller",
+ "pilot": "드라마 샘플: 검수 전 업로드 금지",
+ "source_video_id": "R6MMIC7RBAc",
+ "title": "은행 사칭 전화, 아버지 연소득까지 알았다 (재연)",
+ "description": "은퇴한 아버지에게 '은행 대출상담' 전화가 걸려 오는 상황을, 금융당국이 경고한 수법대로 재연했습니다. 은행 개인정보 유출 뒤, 내 연소득과 대출한도를 정확히 말하는 '은행 직원' 전화가 올 수 있습니다. 금융당국은 내 정보를 안다는 이유만으로 믿지 말라고 경고했습니다. 앱 설치나 기존 대출 상환을 요구하면 사기입니다. 일단 끊고, 공식 앱·홈페이지의 대표번호로 직접 확인하세요.",
+ "tags": [
+  "은행 사칭 전화",
+  "개인정보 유출",
+  "보이스피싱",
+  "대출 사기",
+  "소비자경보"
+ ],
+ "disclaimer": "※ 실제 수법을 바탕으로 각색한 재연입니다",
+ "theme": "night-lamp",
+ "category": "voice",
+ "music": "tense",
+ "cast": {
+  "scammer": {
+   "voice": "M2",
+   "label": "가짜 은행원"
+  },
+  "victim": {
+   "voice": "M1",
+   "label": "아버지"
+  },
+  "dochi": {
+   "voice": "F1",
+   "label": "도치"
+  }
+ },
+ "scenes": [
+  {
+   "layout": "call",
+   "caller": "은행 대출상담",
+   "caller_sub": "010-●●●●-●●●●",
+   "headline": "연소득까지 아는 은행 전화",
+   "mark": "연소득",
+   "sub": "",
+   "icon": "phone",
+   "accent": "red",
+   "lines": [
+    {
+     "speaker": "scammer",
+     "text": "아버님, 연소득으로 한도가 나왔어요."
+    },
+    {
+     "speaker": "victim",
+     "text": "내 연소득을 어떻게 알아요?"
+    },
+    {
+     "speaker": "scammer",
+     "text": "대출신청서 앱부터 까세요."
+    },
+    {
+     "speaker": "scammer",
+     "text": "기존 대출은 먼저 갚으시고요."
+    },
+    {
+     "speaker": "victim",
+     "text": "은행이 그러면, 해야지요."
+    }
+   ],
+   "twist": "사기였습니다"
+  },
+  {
+   "headline": "유출 정보에 연소득·대출한도",
+   "mark": "연소득·대출한도",
+   "sub": "2026.10.1 보도 · 한 은행 고객 약 2만 5천 명",
+   "icon": "warning",
+   "accent": "yellow",
+   "lines": [
+    {
+     "speaker": "dochi",
+     "text": "보도에 따르면, 한 은행 유출 정보엔 연소득과 대출한도도 있었어요."
+    }
+   ]
+  },
+  {
+   "layout": "compare",
+   "headline": "정확히 알아도 믿지 마세요",
+   "sub": "금융위·금감원 소비자경보 '주의' · 2026.10.6",
+   "icon": "shield",
+   "accent": "red",
+   "real": {
+    "label": "진짜",
+    "title": "금융회사·금융당국",
+    "points": [
+     "대출 때 앱설치 요구 없음",
+     "대출 때 선입금 요구 없음",
+     "계좌보호 이체 요구 없음"
+    ]
+   },
+   "fake": {
+    "label": "가짜",
+    "title": "은행 직원 사칭",
+    "points": [
+     "내 소득·한도 언급",
+     "앱부터 깔라고 함",
+     "기존 대출 먼저 상환"
+    ]
+   },
+   "lines": [
+    {
+     "speaker": "dochi",
+     "text": "금융당국은 내 정보를 정확히 말해도, 믿지 말라고 했어요."
+    }
+   ]
+  },
+  {
+   "layout": "checklist",
+   "headline": "끊고 대표번호로 다시",
+   "mark": "대표번호",
+   "sub": "공식 앱·홈페이지에 적힌 번호",
+   "icon": "phone",
+   "accent": "green",
+   "items": [
+    "내 정보 알아도 믿지 않기",
+    "앱 설치·기존대출 상환 거절",
+    "공식 대표번호로 다시 걸기"
+   ],
+   "lines": [
+    {
+     "speaker": "dochi",
+     "text": "앱을 깔라거나, 기존 대출부터 갚으라면 사기예요."
+    },
+    {
+     "speaker": "dochi",
+     "text": "일단 끊으세요."
+    },
+    {
+     "speaker": "dochi",
+     "text": "공식 앱이나 홈페이지의 대표번호로 거세요."
+    }
+   ]
+  }
+ ],
+ "sources": [
+  {
+   "title": "금융위원회·금융감독원 보도참고자료, 최근 금융권 개인정보 유출사고에 따른 보이스피싱·스미싱 등 피해에 주의하세요 (소비자경보 2026-26호, 2026-10-06)",
+   "url": "https://www.fsc.go.kr/no010101/87882"
+  },
+  {
+   "title": "금융위원회 보도자료, 全금융권 긴급 점검회의 (2026-10-06 게시)",
+   "url": "https://www.fsc.go.kr/no010101/87876"
+  },
+  {
+   "title": "머니투데이방송, 신한은행 개인정보 유출 보도 (2026-10-01)",
+   "url": "https://news.mtn.co.kr/news-detail/2026100115465611895"
+  },
+  {
+   "title": "경향신문, 한국 금융, 두 달 된 중국산 AI에 뚫렸다 (2026-10-04)",
+   "url": "https://khan.co.kr/article/202610042203025"
+  },
+  {
+   "title": "금융위원회 보도자료, 추석 명절 전후 보이스피싱 피해에 주의하세요 (2026-09-18)",
+   "url": "https://www.fsc.go.kr/no010101/87779"
+  }
+ ],
+ "author": "llm:claude-opus-5-5 (story-writer, 드라마 샘플). Facts reused in meaning from the fact-checked 2026-10-10-bank-caller-knows-income (content/week2/bank-caller-knows-income.review.md); the call is an adapted re-enactment of the method in 금융위·금감원 소비자경보 2026-26호, with no amount and no outcome."
+}
