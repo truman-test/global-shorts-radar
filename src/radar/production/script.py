@@ -625,4 +625,12 @@ def validate(script: Script, db=None, allow_unverified: bool = False) -> tuple[l
             elif status != "verified":
                 (warnings if allow_unverified else errors).append(
                     f"source story is '{status}', not verified (run `radar verify` first)")
+            else:
+                # an approval only covers this script if it was made for the same story: borrowing an unrelated
+                # verified signal would let unchecked facts through the gate
+                approved = set(json.loads(ver["sources_json"] or "[]"))
+                cited = {str(s.get("url", "")) for s in script.sources}
+                if cited and approved and not cited & approved:
+                    errors.append(f"the approval for '{script.source_video_id}' cites none of this script's sources; "
+                                  "verify this story (with its sources) before producing")
     return errors, warnings

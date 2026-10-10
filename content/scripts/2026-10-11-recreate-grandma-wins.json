@@ -1,0 +1,175 @@
+{
+ "id": "2026-10-11-recreate-grandma-wins",
+ "pilot": "재창조 샘플: 검수 전 업로드 금지",
+ "source_video_id": "Jf1239_V0mw",
+ "idea_source": "https://www.youtube.com/shorts/AHM0QE7bC0o",
+ "title": "아들 목소리 보이스피싱, 67살 엄마는 안 속았다 (재연)",
+ "description": "\"엄마, 나야. 사고 났어.\" 아들 목소리로 급한 돈 전화가 걸려 오는 상황을 재연했습니다. 엄마는 끊고 직접 확인하는 습관으로 이겨 냈습니다. 금융위원회·금융감독원은 가족 목소리도 AI로 조작될 수 있으니 일단 끊고 직접 확인하라고 당부합니다. 미국 FBI는 가족끼리 비밀 단어를 정해 두라고 권고했습니다. 오늘 저녁, 가족 암호 하나 정해 두세요.",
+ "tags": [
+  "보이스피싱",
+  "AI 음성 복제",
+  "딥보이스",
+  "가족 암호",
+  "사기 예방"
+ ],
+ "disclaimer": "※ 실제 수법을 바탕으로 각색한 재연입니다",
+ "category": "voice",
+ "music": "tense",
+ "cast": {
+  "scammer": {
+   "voice": "M3",
+   "label": "아들?",
+   "character": "scammer"
+  },
+  "victim": {
+   "voice": "F3",
+   "label": "엄마",
+   "character": "mother"
+  },
+  "son": {
+   "voice": "M3",
+   "label": "진짜 아들",
+   "role": "neutral",
+   "character": "son"
+  },
+  "dochi": {
+   "voice": "F1",
+   "label": "도치"
+  }
+ },
+ "scenes": [
+  {
+   "layout": "call",
+   "caller": "아들?",
+   "caller_sub": "모르는 번호",
+   "headline": "67살 엄마에게 온 아들 전화",
+   "mark": "아들 전화",
+   "sub": "",
+   "icon": "phone",
+   "accent": "red",
+   "lines": [
+    {
+     "speaker": "scammer",
+     "text": "엄마, 나야. 사고 났어."
+    },
+    {
+     "speaker": "victim",
+     "text": "어머, 다친 데는 없고?"
+    },
+    {
+     "speaker": "scammer",
+     "text": "급하게 돈 좀 보내 줘."
+    },
+    {
+     "speaker": "victim",
+     "text": "늘 보내던 네 통장으로?"
+    }
+   ]
+  },
+  {
+   "layout": "call",
+   "caller": "아들?",
+   "caller_sub": "모르는 번호",
+   "headline": "그 통장 말고, 다른 계좌로?",
+   "mark": "다른 계좌",
+   "sub": "",
+   "icon": "phone",
+   "accent": "red",
+   "lines": [
+    {
+     "speaker": "scammer",
+     "text": "아니, 다른 계좌로 보내!"
+    },
+    {
+     "speaker": "victim",
+     "text": "아들 통장은 하나뿐인데?"
+    },
+    {
+     "speaker": "victim",
+     "text": "우리 집 암호 대 봐."
+    },
+    {
+     "speaker": "scammer",
+     "text": "그럴 시간 없다니까!"
+    }
+   ]
+  },
+  {
+   "layout": "call",
+   "caller": "아들?",
+   "caller_sub": "저장된 번호",
+   "call_label": "발신 전화",
+   "headline": "끊고, 저장된 번호로",
+   "mark": "저장된 번호",
+   "sub": "",
+   "icon": "phone",
+   "accent": "yellow",
+   "lines": [
+    {
+     "speaker": "victim",
+     "text": "끊고 아들한테 걸어 봐야지."
+    },
+    {
+     "speaker": "son",
+     "text": "나 회사인데, 무슨 사고?"
+    }
+   ],
+   "twist": "사기였습니다"
+  },
+  {
+   "headline": "목소리가 같아도 가짜일 수 있어요",
+   "mark": "가짜일 수",
+   "sub": "금융위·금감원 보이스피싱 10계명 · 2026.2.10",
+   "icon": "voice",
+   "accent": "yellow",
+   "lines": [
+    {
+     "speaker": "dochi",
+     "text": "자녀 목소리도 AI로 흉내 낼 수 있어요."
+    }
+   ]
+  },
+  {
+   "layout": "checklist",
+   "headline": "급한 돈 전화, 끊고 직접 확인",
+   "mark": "끊고 직접 확인",
+   "sub": "가족 암호: 미국 FBI 권고 · 2024.12",
+   "icon": "family",
+   "accent": "green",
+   "items": [
+    "급한 돈 전화는 일단 끊기",
+    "저장된 번호로 직접 걸기",
+    "가족 암호 정해 두기"
+   ],
+   "lines": [
+    {
+     "speaker": "dochi",
+     "text": "급한 돈 전화는 일단 끊으세요."
+    },
+    {
+     "speaker": "dochi",
+     "text": "저장된 번호로 직접 거세요."
+    },
+    {
+     "speaker": "dochi",
+     "text": "오늘, 가족 암호를 정해 두세요."
+    }
+   ]
+  }
+ ],
+ "sources": [
+  {
+   "title": "금융위원회·금융감독원, 보이스피싱 피해예방 10계명 (2026-02-10)",
+   "url": "https://www.fsc.go.kr/no010101/86250"
+  },
+  {
+   "title": "FBI IC3 공익 경보 PSA241203 (2024-12-03)",
+   "url": "https://www.ic3.gov/PSA/2024/PSA241203"
+  },
+  {
+   "title": "미국 FTC 소비자 경보, Scammers use AI to enhance their family emergency schemes (2023-03-20)",
+   "url": "https://consumer.ftc.gov/consumer-alerts/2023/03/scammers-use-ai-enhance-their-family-emergency-schemes"
+  }
+ ],
+ "author": "llm:claude-opus-5-5 (story-writer, 재창조 샘플). Structure from the clean-room beat sheet content/week2/recreate_AHM0QE7bC0o.md only (idea credit: https://www.youtube.com/shorts/AHM0QE7bC0o; original not watched). Facts reused from the fact-checked 2026-10-09-voice-clone-3-seconds (content/week1/Jf1239_V0mw.md + .review.md) and 2026-10-08-family-password (FBI PSA241203). The call is an adapted re-enactment of the reported method; no amount, no reported case outcome."
+}

@@ -59,7 +59,7 @@ def _script(**over):
 def _verified_db(db, settings, now):
     pipeline.collect(FixtureClient(quota=QuotaTracker(10_000)), db, settings, now, "fixture")
     pipeline.compute_metrics(db, settings, now)
-    db.set_verification("smpl_A1", "verified", "2026-10-03T01:00:00Z", ["https://www.ic3.gov/x"], "ok")
+    db.set_verification("smpl_A1", "verified", "2026-10-03T01:00:00Z", ["https://www.ic3.gov/PSA/2024/PSA241203"], "ok")
     return db
 
 
@@ -84,6 +84,8 @@ def test_qa_gate_catches_each_problem(db, settings, now):
     assert any("not verified" in e for e in errors)
     errors, warnings = validate(unverified, db, allow_unverified=True)
     assert not any("not verified" in e for e in errors) and any("not verified" in w for w in warnings)
+    borrowed = _script(sources=[{"title": "다른 이야기", "url": "https://example.org/other-story"}])
+    assert any("cites none of this script's sources" in e for e in validate(borrowed, db)[0])
     db.set_verification("smpl_A1", "false", "2026-10-03T02:00:00Z", [], "debunked")
     assert any("FALSE" in e for e in validate(_script(), db, allow_unverified=True)[0])
 

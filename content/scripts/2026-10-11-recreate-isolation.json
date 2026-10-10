@@ -1,0 +1,178 @@
+{
+ "id": "2026-10-11-recreate-isolation",
+ "pilot": "재창조 샘플: 검수 전 업로드 금지",
+ "source_video_id": "7H7-ORelZdQ",
+ "idea_source": "https://www.youtube.com/shorts/64wbBbs1Mes",
+ "title": "\"지금 혼자 계세요?\" 64살 엄마에게 온 수사관 전화 (재연)",
+ "description": "\"어머님, 지금 혼자 계세요?\" 수사관이라며 걸려 온 전화가 엄마를 혼자 있게 하려다 실패하는 과정을, 경찰과 금융당국이 경고한 수법대로 재연했습니다. 기관 사칭범은 '보안 수사'라며 피해자를 모텔 같은 곳에 혼자 머물게 하고 가족에게 알리지 못하게 합니다(경찰청은 이를 '셀프감금'이라 부릅니다). 경찰청에 따르면 2025년 1~8월 기관사칭형 피해자 가운데 60대 이상이 33.7%로 세 명 중 한 명이었고, 1년 전보다 123.2% 늘었습니다. 금융위원회·금융감독원 보이스피싱 피해예방 10계명(2026.2.10): \"모텔 투숙 요구는 100% 사기\". 경찰청: 상대방이 요청하는 현금·가상자산 이체에는 응하면 안 됩니다. 혼자 있으라거나 아무에게도 말하지 말라고 하면 그 자리에서 끊고, 옆 가족에게 알리고, 112(경찰)·1394(통합대응단)·1332(금융감독원)에 직접 전화해 확인하세요. 보도에 따르면 10월 2일 새로 생긴 중대범죄수사청을 사칭한 전화도 개청 나흘 만에 등장했습니다(서울신문, 2026-10-07). 처음 듣는 기관 이름이 나와도 대응은 같습니다. 일단 끊고 112·1394에 직접 확인하세요.",
+ "tags": [
+  "보이스피싱",
+  "기관 사칭",
+  "수사기관 사칭",
+  "셀프감금",
+  "모텔 투숙 요구"
+ ],
+ "disclaimer": "※ 실제 수법을 바탕으로 각색한 재연입니다",
+ "category": "voice",
+ "music": "tense",
+ "cast": {
+  "scammer": {
+   "voice": "M2",
+   "label": "수사관?",
+   "character": "scammer"
+  },
+  "victim": {
+   "voice": "F3",
+   "label": "엄마",
+   "character": "mother"
+  },
+  "daughter": {
+   "voice": "F2",
+   "label": "딸",
+   "role": "neutral",
+   "character": "daughter"
+  },
+  "dochi": {
+   "voice": "F1",
+   "label": "도치"
+  }
+ },
+ "scenes": [
+  {
+   "layout": "call",
+   "caller": "모르는 번호",
+   "caller_sub": "02-●●●●-●●●●",
+   "headline": "64살 엄마에게 온 수사관 전화",
+   "mark": "수사관 전화",
+   "sub": "",
+   "icon": "phone",
+   "accent": "red",
+   "lines": [
+    {
+     "speaker": "scammer",
+     "text": "수사관인데요, 지금 혼자 계세요?"
+    },
+    {
+     "speaker": "victim",
+     "text": "아뇨, 딸이랑 장 봐요."
+    },
+    {
+     "speaker": "scammer",
+     "text": "혼자 조용한 곳으로 가세요."
+    }
+   ]
+  },
+  {
+   "layout": "call",
+   "caller": "모르는 번호",
+   "caller_sub": "02-●●●●-●●●●",
+   "headline": "모텔에 방을 잡으라고?",
+   "mark": "모텔",
+   "sub": "",
+   "icon": "phone",
+   "accent": "red",
+   "lines": [
+    {
+     "speaker": "scammer",
+     "text": "아무한테도 말하면 안 돼요."
+    },
+    {
+     "speaker": "victim",
+     "text": "얘, 스피커로 같이 듣자."
+    },
+    {
+     "speaker": "scammer",
+     "text": "모텔 잡고, 현금 찾아 오세요."
+    },
+    {
+     "speaker": "daughter",
+     "text": "엄마, 이거 사기야!"
+    }
+   ],
+   "twist": "사기였습니다"
+  },
+  {
+   "layout": "stat",
+   "headline": "60대 이상, 세 명 중 한 명",
+   "mark": "세 명 중 한 명",
+   "stat_value": "33.7%",
+   "stat_label": "기관사칭형 피해자 중 60대 이상",
+   "sub": "경찰청 · 2025년 1~8월 · 피해자 수 1년 새 123% 증가",
+   "icon": "warning",
+   "accent": "yellow",
+   "lines": [
+    {
+     "speaker": "dochi",
+     "text": "셋 중 한 명이 60대 이상이었어요."
+    }
+   ]
+  },
+  {
+   "headline": "모텔 투숙 요구는 100% 사기",
+   "mark": "100% 사기",
+   "sub": "금융위·금감원 보이스피싱 피해예방 10계명 · 2026.2.10",
+   "icon": "shield",
+   "accent": "red",
+   "lines": [
+    {
+     "speaker": "dochi",
+     "text": "수사기관은 절대 모텔 투숙을 요구하지 않아요."
+    }
+   ]
+  },
+  {
+   "layout": "checklist",
+   "headline": "혼자 있으라면, 끊고 알리기",
+   "mark": "끊고 알리기",
+   "sub": "현금 요구엔 응하지 않기 · 경찰청 2025.9.18",
+   "icon": "family",
+   "accent": "green",
+   "items": [
+    "그 자리에서 전화 끊기",
+    "옆 가족에게 바로 알리기",
+    "112·1394·1332에 직접 확인"
+   ],
+   "lines": [
+    {
+     "speaker": "dochi",
+     "text": "현금을 달라 해도 절대 응하지 마세요."
+    },
+    {
+     "speaker": "dochi",
+     "text": "일단 끊고, 옆 가족에게 알리세요."
+    },
+    {
+     "speaker": "dochi",
+     "text": "112나 1394에 직접 거세요."
+    }
+   ]
+  }
+ ],
+ "sources": [
+  {
+   "title": "경찰청 보도자료, 2030세대 대상 기관사칭형 보이스피싱 성행, 혼자가 된 당신을 노리고 있습니다 (2025-09-18)",
+   "url": "https://www.korea.kr/briefing/pressReleaseView.do?newsId=156755213"
+  },
+  {
+   "title": "금융위원회·금융감독원 보도자료, 보이스피싱 피해예방 10계명 (2026-02-10)",
+   "url": "https://www.korea.kr/briefing/pressReleaseView.do?newsId=156743968"
+  },
+  {
+   "title": "경찰청 보도자료, 전기통신금융사기 통합대응단 출범 1주년 (2026-09-29)",
+   "url": "https://www.korea.kr/briefing/pressReleaseView.do?newsId=156783514"
+  },
+  {
+   "title": "서울신문, 개청 나흘 만에 등장한 '중수청 사칭' 피싱 (2026-10-07)",
+   "url": "https://www.seoul.co.kr/news/society/2026/10/07/20261007500085"
+  },
+  {
+   "title": "행정안전부 보도자료, 중수청 10월 2일 개청 앞두고 막바지 준비 (2026-10-01)",
+   "url": "https://www.korea.kr/briefing/pressReleaseView.do?newsId=156784005"
+  },
+  {
+   "title": "뉴스토마토, 검찰, 역사 속으로…중수청·공소청 첫발 (2026-10-02)",
+   "url": "https://newstomato.com/ReadNews.aspx?no=1315540"
+  }
+ ],
+ "author": "llm:claude-opus-5-5 (story-writer, 재창조 샘플). Structure from the clean-room beat sheet content/week2/recreate_64wbBbs1Mes.md only (idea credit: https://www.youtube.com/shorts/64wbBbs1Mes; original not watched, no captions read). source_video_id 7H7-ORelZdQ is the radar signal for the same method (fake officials isolating the victim, 'digital arrest'); its verification record carries this episode's Korean sources. Facts from content/week2/prosecutor-isolation.md (경찰청 2025-09-18, 금융위·금감원 10계명 2026-02-10, 경찰청 2026-09-29). The call is an adapted re-enactment of the reported method (기관 사칭 + 셀프감금); no amount, no reported case outcome; the 중수청 report appears only in the description, attributed."
+}
