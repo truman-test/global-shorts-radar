@@ -1,7 +1,7 @@
 {
  "episodes": {
   "2026-10-08-zero-click": {
-   "stage": "paper",
+   "stage": "notebook",
    "theme": "graph",
    "category": "security",
    "layouts": [
@@ -16,10 +16,13 @@
     "card",
     "card"
    ],
-   "produced_at": "2026-10-10T00:16:16+00:00"
+   "produced_at": "2026-10-10T00:16:16+00:00",
+   "mascot": true,
+   "luminance": "light",
+   "visual_group": "ruled"
   },
   "2026-10-09-discord-bot-breach": {
-   "stage": "paper",
+   "stage": "notebook",
    "theme": "paper",
    "category": "security",
    "layouts": [
@@ -34,7 +37,10 @@
     "card",
     "card"
    ],
-   "produced_at": "2026-10-10T00:17:55+00:00"
+   "produced_at": "2026-10-10T00:17:55+00:00",
+   "mascot": true,
+   "luminance": "light",
+   "visual_group": "ruled"
   },
   "2026-10-09-ai-crocodile-hoax": {
    "stage": "alert",
@@ -52,10 +58,13 @@
     "card",
     "card"
    ],
-   "produced_at": "2026-10-10T00:21:52+00:00"
+   "produced_at": "2026-10-10T00:21:52+00:00",
+   "mascot": false,
+   "luminance": "dark",
+   "visual_group": "cards"
   },
   "2026-10-09-kid-tap-payment": {
-   "stage": "paper",
+   "stage": "notebook",
    "theme": "graph",
    "category": "security",
    "layouts": [
@@ -70,10 +79,13 @@
     "card",
     "card"
    ],
-   "produced_at": "2026-10-10T00:23:36+00:00"
+   "produced_at": "2026-10-10T00:23:36+00:00",
+   "mascot": true,
+   "luminance": "light",
+   "visual_group": "ruled"
   },
   "2026-10-09-deepfake-invest-ad": {
-   "stage": "paper",
+   "stage": "notebook",
    "theme": "paper",
    "category": "ai",
    "layouts": [
@@ -88,7 +100,10 @@
     "timeline",
     "stat"
    ],
-   "produced_at": "2026-10-10T00:25:25+00:00"
+   "produced_at": "2026-10-10T00:25:25+00:00",
+   "mascot": true,
+   "luminance": "light",
+   "visual_group": "ruled"
   },
   "2026-10-09-voice-clone-3-seconds": {
    "stage": "alert",
@@ -106,7 +121,10 @@
     "stat",
     "card"
    ],
-   "produced_at": "2026-10-10T00:28:46+00:00"
+   "produced_at": "2026-10-10T00:28:46+00:00",
+   "mascot": false,
+   "luminance": "dark",
+   "visual_group": "cards"
   },
   "2026-10-09-fake-map-number": {
    "stage": "alert",
@@ -124,10 +142,13 @@
     "card",
     "stat"
    ],
-   "produced_at": "2026-10-10T00:31:57+00:00"
+   "produced_at": "2026-10-10T00:31:57+00:00",
+   "mascot": false,
+   "luminance": "dark",
+   "visual_group": "cards"
   },
   "2026-10-09-airbnb-fake-damage-photo": {
-   "stage": "paper",
+   "stage": "notebook",
    "theme": "graph",
    "category": "ai",
    "layouts": [
@@ -142,10 +163,13 @@
     "card",
     "card"
    ],
-   "produced_at": "2026-10-10T00:33:25+00:00"
+   "produced_at": "2026-10-10T00:33:25+00:00",
+   "mascot": true,
+   "luminance": "light",
+   "visual_group": "ruled"
   },
   "2026-10-09-kid-password": {
-   "stage": "paper",
+   "stage": "notebook",
    "theme": "paper",
    "category": "security",
    "layouts": [
@@ -160,7 +184,10 @@
     "card",
     "card"
    ],
-   "produced_at": "2026-10-10T00:34:51+00:00"
+   "produced_at": "2026-10-10T00:34:51+00:00",
+   "mascot": true,
+   "luminance": "light",
+   "visual_group": "ruled"
   },
   "2026-10-08-deepfake-cfo": {
    "stage": "alert",
@@ -178,8 +205,32 @@
     "card",
     "card"
    ],
-   "produced_at": "2026-10-10T04:53:02+00:00"
+   "produced_at": "2026-10-10T04:53:02+00:00",
+   "mascot": false,
+   "luminance": "dark",
+   "visual_group": "cards"
+  },
+  "2026-10-08-family-password": {
+   "stage": "alert",
+   "theme": "classic",
+   "category": "voice",
+   "luminance": "dark",
+   "mascot": false,
+   "visual_group": "cards",
+   "layouts": [
+    "call",
+    "card",
+    "card",
+    "card",
+    "card"
+   ],
+   "middle": [
+    "card",
+    "card",
+    "card"
+   ],
+   "produced_at": "2026-10-08T17:02:07+00:00"
   }
  },
- "_doc": "Visual style of every produced episode, written by `radar produce` (Remotion engine). themes.resolve_style keeps logged stages in the schedule walk; `radar script-check` warns when the middle scenes repeat the previous episode's layout sequence."
+ "_doc": "Visual style of every produced episode, written by `radar produce` (Remotion engine). stage = family (alert | notebook), luminance (light | dark), mascot (도치 on), visual_group (ruled | cards | desk | evidence | blueprint | sky). themes.resolve_style keeps logged stages in the schedule walk (a script's own theme replaces its entry); `radar script-check` warns when the middle scenes repeat the previous episode's layout sequence."
 }

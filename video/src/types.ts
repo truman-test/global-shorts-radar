@@ -57,7 +57,7 @@ export type SceneProps = {
   total?: number; // dots: how many people the grid stands for
   stages?: DotStage[]; // dots: 2-4 stages
   unit?: string; // dots: counter unit, default "명"
-  mascot?: boolean; // 도치 the hedgehog mascot in this scene; default: on for paper stages, off for dark ones
+  mascot?: boolean; // 도치 the hedgehog mascot in this scene; default: the stage's mascotDefault (on for notebook stages)
 };
 
 export type Music = {
@@ -76,6 +76,8 @@ export type ShortProps = {
   posterTailMs?: number; // the last moment shows the opening poster again (loop + thumbnail frame)
   theme?: string; // stage theme (themes.ts / tokens.json): background family + pattern; default classic
   category?: string; // topic category (tokens.json categories): the brand chip label and the one accent colour
+  episode?: string; // script id (deterministic per-episode variants of the stage; never random at render time)
+  seed?: number; // CRC32 of the episode id, computed in Python (wins over a hash of `episode`)
   scenes: SceneProps[];
 };
 

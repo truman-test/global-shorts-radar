@@ -1,4 +1,4 @@
-// Line-art props per topic category, drawn in ink on the paper stage (our own simple shapes, 100x100 boxes).
+// Line-art props per topic category, drawn in ink on the notebook stages (our own simple shapes, 100x100 boxes).
 // Each stroke reveals with strokeDashoffset (pathLength = 1), then a light tint fills the shape.
 import React from "react";
 import {interpolate, useCurrentFrame} from "remotion";
@@ -37,9 +37,8 @@ const DOODLES: Record<CategoryName, [Doodle, Doodle]> = {
 };
 
 /** One doodle at (x, y) (centre), `size` px, drawn from frame `at` over ~14 frames, slightly tilted. */
-export const DoodleProp: React.FC<{which: 0 | 1; x: number; y: number; size: number; at: number; tilt?: number}> = ({
-  which, x, y, size, at, tilt = 0,
-}) => {
+export const DoodleProp: React.FC<{which: 0 | 1; x: number; y: number; size: number; at: number; tilt?: number;
+  ink?: string}> = ({which, x, y, size, at, tilt = 0, ink = NOTE.ink}) => {
   const frame = useCurrentFrame();
   const cat = useCategory();
   const d = DOODLES[cat][which];
@@ -55,7 +54,7 @@ export const DoodleProp: React.FC<{which: 0 | 1; x: number; y: number; size: num
         const p = interpolate(frame, [at + k * per, at + (k + 1) * per + 3], [0, 1], clamp);
         return (
           <path key={k} d={s} pathLength={1} strokeDasharray="1 2" strokeDashoffset={1 - p} fill="none"
-            stroke={NOTE.ink} strokeOpacity={0.82} strokeWidth={4.4} strokeLinecap="round" strokeLinejoin="round"
+            stroke={ink} strokeOpacity={0.82} strokeWidth={4.4} strokeLinecap="round" strokeLinejoin="round"
             opacity={p > 0 ? 1 : 0} />
         );
       })}

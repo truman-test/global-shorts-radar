@@ -14,13 +14,16 @@
   {"narration": "화면 속 최고재무책임자의 얼굴과 목소리는 AI로 합성한 가짜였습니다.",
    "headline": "얼굴도 목소리도 AI였다", "sub": "", "icon": "warning", "accent": "red"},
   {"narration": "보낸 돈은 2억 홍콩달러, 우리 돈 약 340억 원이었습니다.",
-   "headline": "약 340억 원 피해", "sub": "2억 홍콩달러", "icon": "money", "accent": "red"},
+   "headline": "약 340억 원 피해", "sub": "2억 홍콩달러", "icon": "money", "accent": "red",
+   "layout": "stat", "stat_value": "약 340억 원", "stat_label": "보낸 돈"},
   {"narration": "영상 속 지시만 믿지 마세요. 송금 전에는 알고 있는 번호로 직접 다시 확인하세요. 화면 속 상사도 가짜일 수 있으니까요.",
-   "headline": "송금 지시는 다른 경로로 확인", "sub": "알고 있는 번호로 직접 전화", "icon": "phone", "accent": "green"}
+   "headline": "송금 지시는 다른 경로로 확인", "sub": "알고 있는 번호로 직접 전화", "icon": "phone", "accent": "green",
+   "layout": "checklist", "items": ["영상 속 지시만 믿지 마세요", "송금 지시는 다른 경로로 확인", "알고 있는 번호로 직접 전화"]}
  ],
  "sources": [
   {"title": "아시아경제, 홍콩 딥페이크 화상회의 사기 (2024-02)", "url": "https://view.asiae.co.kr/article/2024020508362728470"}
  ],
  "music": "suspense",
+ "theme": "night-lamp",
  "author": "llm:claude-opus-5-5 (orchestrator; source video not watched); hook/length revision per 쇼츠 훅과 썸네일 최적화 report"
 }

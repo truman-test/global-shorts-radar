@@ -1,13 +1,14 @@
 // Procedural backgrounds, one per theme pattern (themes.ts). No stock assets: SVG/CSS only, every frame a pure
-// function of the frame number. Motion stays slow and low-contrast so it never competes with the captions.
+// function of the frame number (and the episode seed). Motion stays slow and low-contrast so it never competes with
+// the captions. The four widened notebook stages live in NotebookStages.tsx.
 import React, {useMemo} from "react";
 import {AbsoluteFill, interpolateColors, useCurrentFrame, useVideoConfig} from "remotion";
 import {fade} from "./motion";
-import {Pattern, Theme, toneOf, useCategory, useTheme} from "./themes";
+import {DeskSpread, KraftBoard, MoodSky, NightLamp} from "./NotebookStages";
+import {CAPTION_CALM, H, PaperGrain, rng, W} from "./textures";
+import {assertNever, CategoryName, isLight, Pattern, skyFor, SkyState, Theme, toneOf, useCategory, useSeed,
+  useTheme} from "./themes";
 import {Accent, ShortProps} from "./types";
-
-const W = 1080;
-const H = 1920;
 
 const sceneSpans = (props: ShortProps, fps: number) => {
   let from = 0;
@@ -17,14 +18,6 @@ const sceneSpans = (props: ShortProps, fps: number) => {
     from += frames;
     return out;
   });
-};
-
-/** Deterministic PRNG (mulberry32): the same layout on every frame and every render. */
-const rng = (seed: number) => () => {
-  seed = (seed + 0x6d2b79f5) | 0;
-  let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-  t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
 };
 
 const ink = (t: Theme, a: number) => `rgba(${t.ink},${a})`;
@@ -271,27 +264,6 @@ const Ruled: React.FC<{frame: number; theme: Theme}> = ({frame, theme}) => {
 
 /* ---------------------------------------------------------------- paper stages (종이 노트): cream page + grain */
 
-// fine fibres (dark specks, multiplied) and a slow blotchy tone, both from feTurbulence: no image assets
-const PAPER_FIBRES = "data:image/svg+xml;utf8," + encodeURIComponent(
-  "<svg xmlns='http://www.w3.org/2000/svg' width='300' height='300'>"
-  + "<filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' seed='3' stitchTiles='stitch'/>"
-  + "<feColorMatrix values='0 0 0 0 0.42  0 0 0 0 0.36  0 0 0 0 0.26  0 0 0 -1.25 0.72'/></filter>"
-  + "<rect width='300' height='300' filter='url(#n)'/></svg>");
-const PAPER_TONE = "data:image/svg+xml;utf8," + encodeURIComponent(
-  "<svg xmlns='http://www.w3.org/2000/svg' width='1080' height='1920'>"
-  + "<filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.004 0.006' numOctaves='3' seed='21'/>"
-  + "<feColorMatrix values='0 0 0 0 0.78  0 0 0 0 0.68  0 0 0 0 0.50  0 0 0 -1.6 0.95'/></filter>"
-  + "<rect width='1080' height='1920' filter='url(#n)'/></svg>");
-
-const PaperGrain: React.FC = () => (
-  <>
-    <AbsoluteFill style={{backgroundImage: `url("${PAPER_TONE}")`, backgroundSize: "1080px 1920px",
-      mixBlendMode: "multiply", opacity: 0.3}} />
-    <AbsoluteFill style={{backgroundImage: `url("${PAPER_FIBRES}")`, backgroundSize: "300px 300px",
-      mixBlendMode: "multiply", opacity: 0.45}} />
-  </>
-);
-
 /** Punched holes down the left edge: the page is torn from the channel's notebook. */
 const Holes: React.FC = () => (
   <svg width={W} height={H} style={{position: "absolute", inset: 0}}>
@@ -391,12 +363,21 @@ const GLOWS: Record<Pattern, [number, number, number, number]> = {
   matrix: [-280, 200, -260, 120],
   ruled: [0, 0, 0, 0],
   graph: [0, 0, 0, 0],
+  lamp: [0, 0, 0, 0],
+  kraft: [0, 0, 0, 0],
+  spread: [0, 0, 0, 0],
+  sky: [0, 0, 0, 0],
 };
 
-const PatternLayer: React.FC<{pattern: Pattern; frame: number; theme: Theme; color: string}> = ({
-  pattern, frame, theme, color,
-}) => {
+/** The mood-sky weather at this frame: the previous scene's sky crossfading into this scene's. */
+export type SkyMix = {from: SkyState; to: SkyState; mix: number};
+
+type LayerArgs = {frame: number; theme: Theme; color: string; seed: number; category: CategoryName; sky: SkyMix};
+
+/** Every Pattern has a renderer (exhaustive: a new pattern without one fails to type-check). */
+const PatternLayer: React.FC<{pattern: Pattern} & LayerArgs> = ({pattern, frame, theme, color, seed, category, sky}) => {
   switch (pattern) {
+    case "grid": return <Grid frame={frame} />;
     case "rings": return <Rings frame={frame} theme={theme} color={color} />;
     case "traces": return <Traces frame={frame} theme={theme} color={color} />;
     case "diagonal": return <Diagonal frame={frame} theme={theme} color={color} />;
@@ -406,42 +387,55 @@ const PatternLayer: React.FC<{pattern: Pattern; frame: number; theme: Theme; col
     case "matrix": return <Matrix frame={frame} theme={theme} color={color} />;
     case "ruled": return <PaperRuled theme={theme} />;
     case "graph": return <PaperGraph theme={theme} />;
-    default: return <Grid frame={frame} />;
+    case "lamp": return <NightLamp seed={seed} />;
+    case "kraft": return <KraftBoard seed={seed} category={category} />;
+    case "spread": return <DeskSpread frame={frame} seed={seed} category={category} />;
+    case "sky": return <MoodSky frame={frame} seed={seed} theme={theme} from={sky.from} to={sky.to} mix={sky.mix} />;
+    default: return assertNever(pattern);
   }
 };
 
-// The pattern fades to a third behind the caption band (y ~1250-1560) so it never runs through the words.
-const CAPTION_CALM = "linear-gradient(180deg, #000 0px, #000 1170px, rgba(0,0,0,0.32) 1240px, "
-  + "rgba(0,0,0,0.32) 1570px, #000 1650px)";
+/** Stages that draw their own surface, texture and light (and calm the caption band themselves). */
+const FULL_STAGE: ReadonlySet<Pattern> = new Set<Pattern>(["lamp", "kraft", "spread", "sky"]);
 
 /**
  * Stage background: base colours and the theme's pattern; on dark (경보) stages two soft glows follow the scene
- * tone (the category colour for "blue" scenes) under a dark vignette, on paper stages the page grain and a warm
- * vignette.
+ * tone (the category colour for "blue" scenes) under a dark vignette, on the classic paper pages the page grain and
+ * a warm vignette. The full notebook stages (night-lamp, kraft-board, desk-spread, mood-sky) draw everything
+ * themselves; mood-sky's weather follows the scene tone (and returns to the opening scene's in the poster tail).
  */
 export const Backdrop: React.FC<{props: ShortProps}> = ({props}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const theme = useTheme();
   const category = useCategory();
+  const seed = useSeed();
   const spans = sceneSpans(props, fps);
+  const n = props.scenes.length;
+  const end = n ? spans[n - 1].from + spans[n - 1].frames : 0;
   let idx = spans.findIndex((s) => frame < s.from + s.frames);
-  if (idx < 0) idx = spans.length - 1;
+  if (idx < 0) idx = n - 1;
   const glowOf = (a: Accent) => (a === "blue" ? toneOf(a, category).fill : theme.accents[a]);
   const prev = props.scenes[Math.max(0, idx - 1)]?.accent ?? "blue";
   const cur = props.scenes[idx]?.accent ?? "blue";
-  const color = idx >= 0 ? interpolateColors(fade(frame, spans[idx].from, 16), [0, 1], [glowOf(prev), glowOf(cur)])
-    : glowOf("blue");
+  const color = idx >= 0 && spans[idx]
+    ? interpolateColors(fade(frame, spans[idx].from, 16), [0, 1], [glowOf(prev), glowOf(cur)]) : glowOf("blue");
+  const skyOf = (i: number): SkyState => (props.scenes[i] ? skyFor(props.scenes[i].accent, i === n - 1) : "day");
+  const sky: SkyMix = n && frame >= end
+    ? {from: skyOf(n - 1), to: skyOf(0), mix: fade(frame, end, 6)} // poster tail: back to the opening sky
+    : {from: skyOf(Math.max(0, idx - 1)), to: skyOf(idx),
+      mix: idx > 0 && spans[idx] ? fade(frame, spans[idx].from, 14) : 1};
   const gx = Math.sin(frame / 55) * 80;
   const gy = Math.cos(frame / 70) * 60;
   const [l1, t1, r2, b2] = GLOWS[theme.pattern];
-  const paper = theme.family === "paper";
+  const light = isLight(theme);
+  const layer = <PatternLayer pattern={theme.pattern} frame={frame} theme={theme} color={color} seed={seed}
+    category={category} sky={sky} />;
+  if (FULL_STAGE.has(theme.pattern)) return <AbsoluteFill style={{background: theme.base}}>{layer}</AbsoluteFill>;
   return (
     <AbsoluteFill style={{background: theme.base}}>
-      {paper ? <PaperGrain /> : null}
-      <AbsoluteFill style={{maskImage: CAPTION_CALM, WebkitMaskImage: CAPTION_CALM}}>
-        <PatternLayer pattern={theme.pattern} frame={frame} theme={theme} color={color} />
-      </AbsoluteFill>
+      {light ? <PaperGrain /> : null}
+      <AbsoluteFill style={{maskImage: CAPTION_CALM, WebkitMaskImage: CAPTION_CALM}}>{layer}</AbsoluteFill>
       {theme.glow > 0 ? (
         <>
           <div style={{position: "absolute", width: 900, height: 900, left: l1 + gx, top: t1 + gy, borderRadius: "50%",
@@ -450,7 +444,7 @@ export const Backdrop: React.FC<{props: ShortProps}> = ({props}) => {
             background: color, opacity: theme.glow * 0.64, filter: "blur(170px)"}} />
         </>
       ) : null}
-      <AbsoluteFill style={{background: paper
+      <AbsoluteFill style={{background: light
         ? "radial-gradient(ellipse at center, transparent 55%, rgba(110,84,40,0.16) 100%)"
         : "radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.55) 100%)"}} />
     </AbsoluteFill>

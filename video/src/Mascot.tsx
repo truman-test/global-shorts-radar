@@ -1,6 +1,9 @@
 // "도치": the channel's mascot, a small hedgehog. Its defence (spikes up, curl into a ball) is the channel's
-// message: spot the danger, protect yourself. Our own flat design for the paper stage: warm-brown scalloped spiky
-// back, cream face and belly, black nose, dot eyes with a highlight, tiny feet and paws, ink outline.
+// message: spot the danger, protect yourself. Our own flat design for the notebook stages: warm-brown scalloped spiky
+// back, cream face and belly, black nose, dot eyes with a highlight, tiny feet and paws, ink outline. Colours come from
+// a palette (tokens.json "mascot"): "paper" on light pages, "night" on dark ones (a neutral rim light around the
+// silhouette, a slightly brighter face, a softer, wider floor shadow). The stage decides where 도치 stands (its
+// mascotSlot: the margin column and the range of the feet line).
 // One SVG rig driven by plain numbers (position, squash, tilt, look, blink, bristle, curl, expression, paw), every
 // value a pure function of the frame. It stands in the page margin (the layouts give it room when it is on) or on
 // the explainer card's corner, reacts to what each scene shows, and hops or waddles from one spot to the next.
@@ -13,7 +16,7 @@ import {spr} from "./motion";
 import {ALERT_LAND, chatBeats, checklistTicks, compareBeats, dotBeats, flowBeats, SMS_FLAG, STAT_COUNT,
   timelineBeats, TOGGLE_CIRCLE, toggleTaps} from "./schedule";
 import {toggleRowY} from "./ToggleScene";
-import {Theme, useTheme} from "./themes";
+import {MASCOT_PALETTES, MascotPalette, MascotSlot, mascotPaletteFor, Theme, useTheme} from "./themes";
 import {SceneProps, ShortProps} from "./types";
 
 export type Expr = "neutral" | "alarmed" | "worried" | "curious" | "happy";
@@ -40,12 +43,6 @@ export type Pose = {
   opacity: number;
 };
 
-const INK = "#2B2620";
-const SPIKE = "#94653F";
-const SPIKE_DARK = "#7A5132";
-const FACE = "#F7E6C8";
-const EAR = "#E9B99A";
-const SWEAT = "#8CC8FF";
 
 /* ------------------------------------------------------------------ motion primitives */
 
@@ -99,7 +96,15 @@ const spikePath = (cx: number, cy: number, rx: number, ry: number, a0: number, a
   return pts;
 };
 
-export const Dochi: React.FC<{pose: Pose; blink: number; frame: number}> = ({pose, blink, frame}) => {
+/**
+ * 도치 itself. `rim` (0..1) scales the palette's rim light (a dilated silhouette behind the outline), so the light
+ * can fade in and out when the palette changes between scenes.
+ */
+export const Dochi: React.FC<{pose: Pose; blink: number; frame: number; palette?: MascotPalette; rim?: number}> = ({
+  pose, blink, frame, palette = MASCOT_PALETTES.paper, rim = 1,
+}) => {
+  const {ink: INK, spike: SPIKE, spikeDark: SPIKE_DARK, face: FACE, ear: EAR, sweat: SWEAT} = palette;
+  const rimR = palette.rimWidth * Math.min(1, Math.max(0, rim));
   const S = pose.size;
   const c = Math.min(1, Math.max(0, pose.curl));
   const sy = pose.sy;
@@ -171,6 +176,7 @@ export const Dochi: React.FC<{pose: Pose; blink: number; frame: number}> = ({pos
   })();
 
   const clip = pose.clipY !== undefined ? `dochi${Math.round(pose.x)}${Math.round(pose.clipY)}` : undefined;
+  const night = palette.rimWidth > 0;
   return (
     <svg style={{position: "absolute", left: pose.x - pad, top: pose.y - pad * 1.6, overflow: "visible",
       opacity: pose.opacity, pointerEvents: "none"}} width={pad * 2} height={pad * 2}>
@@ -181,11 +187,22 @@ export const Dochi: React.FC<{pose: Pose; blink: number; frame: number}> = ({pos
           </clipPath>
         </defs>
       ) : null}
+      {rimR > 0.2 ? (
+        <defs>
+          {/* rim light: the silhouette dilated by rimR px in the rim colour, under the drawing */}
+          <filter id="dochiRim" x="-40%" y="-40%" width="180%" height="180%">
+            <feMorphology in="SourceAlpha" operator="dilate" radius={rimR.toFixed(2)} result="grown" />
+            <feFlood floodColor={palette.rim} floodOpacity={0.92} />
+            <feComposite in2="grown" operator="in" result="rim" />
+            <feMerge><feMergeNode in="rim" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
+        </defs>
+      ) : null}
       <g clipPath={clip ? `url(#${clip})` : undefined}>
-        <ellipse cx={pad} cy={pad * 1.6 + 3} rx={S * 0.44 * Math.max(0.4, 1 - pose.lift / 200)} ry={S * 0.05}
-          fill="rgba(60,40,10,0.16)" />
+        <ellipse cx={pad} cy={pad * 1.6 + 3} rx={S * (night ? 0.54 : 0.44) * Math.max(0.4, 1 - pose.lift / 200)}
+          ry={S * (night ? 0.075 : 0.05)} fill={palette.shadow} />
         <g transform={`translate(${pad + Math.sin(frame * 3.1) * 3 * pose.shiver} ${pad * 1.6 - pose.lift})
-          rotate(${pose.tilt + step * 3}) scale(${sx} ${sy})`}>
+          rotate(${pose.tilt + step * 3}) scale(${sx} ${sy})`} filter={rimR > 0.2 ? "url(#dochiRim)" : undefined}>
           {/* feet (waddle: one lifts while the body rocks) */}
           {c < 0.6 ? [[-0.2, 1], [0.17, -1]].map(([fx, ph], k) => (
             <ellipse key={k} cx={fx * S} cy={-0.012 * S - Math.max(0, step * ph) * 0.04 * S} rx={0.075 * S} ry={0.04 * S}
@@ -246,14 +263,14 @@ export const Dochi: React.FC<{pose: Pose; blink: number; frame: number}> = ({pos
 /* ------------------------------------------------------------------ where 도치 stands and how it reacts */
 
 export const SIZE = 166; // ~15% of the frame width (body; ~19% with the snout and quills)
-const MARGIN_X = 114; // centre of the margin the layouts leave free (x ~16-196) when 도치 is on
 const CARD_SPOT = {x: 182, y: 712, size: 176}; // on the explainer card's top-left corner
-export const FEET_MIN = 700; // never higher than this (the header card ends at 502)
-const FEET_MAX = 1232; // never into the caption band (starts at 1255)
+// The margin spot comes from the stage (Theme.mascotSlot): the centre of the margin the layouts leave free
+// (x ~16-196) when 도치 is on, and the feet line's range: never above minY (the header card ends at 502), never
+// below maxY (the caption band starts at 1255).
+export const DEFAULT_SLOT: MascotSlot = {x: 114, minY: 700, maxY: 1232};
 
-const base = (x: number, y: number, size = SIZE): Pose => ({x, y: Math.min(FEET_MAX, Math.max(FEET_MIN, y)), size,
-  lookX: 0.8, lookY: 0, expr: "neutral", paw: "none", pawAngle: 0, tilt: 0, bristle: 0, shiver: 0, curl: 0,
-  sweat: false, sy: 1, lift: 0, walk: 0, opacity: 1});
+const pose0 = (x: number, y: number, size = SIZE): Pose => ({x, y, size, lookX: 0.8, lookY: 0, expr: "neutral",
+  paw: "none", pawAngle: 0, tilt: 0, bristle: 0, shiver: 0, curl: 0, sweat: false, sy: 1, lift: 0, walk: 0, opacity: 1});
 
 const withHop = (p: Pose, h: ReturnType<typeof hop>): Pose => ({...p, sy: p.sy * h.sy, lift: p.lift + h.lift});
 
@@ -272,14 +289,17 @@ const settle = (p: Pose, f: number, at: number): Pose =>
 
 const happy = (p: Pose): Pose => ({...p, expr: "happy", bristle: 0, sweat: false});
 
-/** The pose at scene-local frame f (f includes the poster lead for the first scene). */
-export const scenePose = (scene: SceneProps, f: number, fps: number, first = false): Pose => {
-  const mx = MARGIN_X;
+/** The pose at scene-local frame f (f includes the poster lead for the first scene), in the stage's slot. */
+export const scenePose = (scene: SceneProps, f: number, fps: number, first = false,
+  slot: MascotSlot = DEFAULT_SLOT): Pose => {
+  const mx = slot.x;
+  // a margin spot: feet clamped to the stage's range
+  const base = (x: number, y: number, size = SIZE) => pose0(x, Math.min(slot.maxY, Math.max(slot.minY, y)), size);
   switch (scene.layout) {
     case "card": {
       // first scene: peeks up from behind the card's corner; then sits on it looking at the headline
       const rise = first ? spr(f, 3, 11, 0.04) : 1;
-      let p = base(CARD_SPOT.x, CARD_SPOT.y + (1 - Math.min(1, rise)) * 150, CARD_SPOT.size);
+      let p = pose0(CARD_SPOT.x, CARD_SPOT.y + (1 - Math.min(1, rise)) * 150, CARD_SPOT.size);
       p.clipY = rise < 0.97 ? CARD_SPOT.y : undefined;
       p.lookY = 0.6;
       const react = 6 + scene.headline.split(" ").length * 2; // the key phrase has landed
@@ -414,8 +434,8 @@ export const scenePose = (scene: SceneProps, f: number, fps: number, first = fal
   }
 };
 
-/** Is 도치 on in this scene? The script's `mascot` wins; by default on paper stages, off on dark ones. */
-export const mascotOn = (scene: SceneProps, theme: Theme) => scene.mascot ?? theme.family === "paper";
+/** Is 도치 on in this scene? The script's `mascot` wins; else the stage's mascotDefault (on for notebook stages). */
+export const mascotOn = (scene: SceneProps, theme: Theme) => scene.mascot ?? theme.mascotDefault;
 
 const MOVE = 14; // frames for the move from one scene's spot to the next
 
@@ -434,13 +454,21 @@ export const MascotTrack: React.FC<{props: ShortProps; spans: {from: number; fra
   if (!n) return null;
   const end = spans[n - 1].from + spans[n - 1].frames;
   const local = (i: number, f: number) => f - spans[i].from + (i === 0 ? poster : 0);
-  const poseAt = (i: number, f: number) => scenePose(props.scenes[i], local(i, f), fps, i === 0);
+  const slot = theme.mascotSlot;
+  const poseAt = (i: number, f: number) => scenePose(props.scenes[i], local(i, f), fps, i === 0, slot);
+  // palette per scene (mood-sky: night under its night sky); the rim light fades over the first frames of a scene
+  const paletteOf = (i: number) => mascotPaletteFor(theme, props.scenes[i].accent, i === n - 1);
+  const rimOf = (i: number) => (paletteOf(i) === "night" ? 1 : 0);
   let pose: Pose | null;
+  let rim = rimOf(0);
   if (frame >= end) {
-    pose = mascotOn(props.scenes[0], theme) ? scenePose(props.scenes[0], poster, fps, true) : null;
+    pose = mascotOn(props.scenes[0], theme) ? scenePose(props.scenes[0], poster, fps, true, slot) : null;
   } else {
     let i = spans.findIndex((s) => frame < s.from + s.frames);
     if (i < 0) i = n - 1;
+    const tIn = frame - spans[i].from;
+    const k = i > 0 ? Math.min(1, tIn / 10) : 1;
+    rim = i > 0 ? rimOf(i - 1) + (rimOf(i) - rimOf(i - 1)) * k : rimOf(i);
     const on = mascotOn(props.scenes[i], theme);
     const prevOn = i > 0 && mascotOn(props.scenes[i - 1], theme);
     const t = frame - spans[i].from;
@@ -466,6 +494,8 @@ export const MascotTrack: React.FC<{props: ShortProps; spans: {from: number; fra
   if (!pose) return null;
   // breathing: a slow squash/stretch and bob while standing
   const breathe = pose.lift > 0 || pose.curl > 0 ? 0 : Math.sin(frame / 16);
+  const palette = MASCOT_PALETTES[rim > 0 ? "night" : "paper"];
   return <Dochi pose={{...pose, y: pose.y - breathe * 2, sy: pose.sy * (1 + 0.018 * breathe),
-    opacity: interpolate(pose.opacity, [0, 1], [0, 1])}} blink={blinkAt(frame)} frame={frame} />;
+    opacity: interpolate(pose.opacity, [0, 1], [0, 1])}} blink={blinkAt(frame)} frame={frame} palette={palette}
+    rim={rim} />;
 };

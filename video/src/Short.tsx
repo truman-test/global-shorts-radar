@@ -15,7 +15,9 @@ import {BADGE, CardScene} from "./CardScene";
 import {CHIP} from "./kit";
 import {AnchorSpec, MORPH, SceneContext, Transition} from "./motion";
 import {Backdrop} from "./Backdrop";
-import {BRAND, CATEGORIES, CategoryContext, categoryFor, ThemeContext, themeFor, useCategory, useTheme} from "./themes";
+import {BRAND, CATEGORIES, CategoryContext, categoryFor, isLight, SeedContext, ThemeContext, themeFor, useCategory,
+  useTheme} from "./themes";
+import {seedOf} from "./hand";
 import {Traveller} from "./Traveller";
 import {MascotTrack, mascotOn} from "./Mascot";
 import {Captions} from "./Captions";
@@ -45,14 +47,14 @@ const sceneFrames = (props: ShortProps, fps: number) => {
 
 /**
  * Brand line (fixed position on every stage): the topic category tag, the channel name and the "AI 음성" badge.
- * Only the colours follow the stage (light text on dark stages, dark ink on paper).
+ * Only the colours follow the stage (light text on dark-luminance stages, dark ink on light ones).
  */
 const TopBar: React.FC<{channel: string; voiceLabel?: string}> = ({channel, voiceLabel}) => {
   const frame = useCurrentFrame();
   const {durationInFrames} = useVideoConfig();
   const t = useTheme();
   const cat = CATEGORIES[useCategory()];
-  const paper = t.family === "paper";
+  const paper = isLight(t);
   const ink = `${t.stageInk}${Math.round(BRAND.inkAlpha * 255).toString(16)}`;
   return (
     <>
@@ -214,8 +216,11 @@ export const Short: React.FC<ShortProps> = (props) => {
   const tail = Math.round(((props.posterTailMs ?? 0) / 1000) * fps);
   const theme = themeFor(props.theme);
   const on = props.scenes.map((s) => mascotOn(s, theme));
+  // per-episode variants of the stage come from Python's seed (CRC32 of the script id), never from randomness
+  const seed = typeof props.seed === "number" ? props.seed >>> 0 : seedOf(props.episode ?? "");
   return (
     <ThemeContext.Provider value={theme}>
+    <SeedContext.Provider value={seed}>
     <CategoryContext.Provider value={categoryFor(props.category)}>
     <AbsoluteFill style={{fontFamily: FONT, color: "#fff", wordBreak: "keep-all"}}>
       <Backdrop props={props} />
@@ -295,6 +300,7 @@ export const Short: React.FC<ShortProps> = (props) => {
       </Sequence>
     </AbsoluteFill>
     </CategoryContext.Provider>
+    </SeedContext.Provider>
     </ThemeContext.Provider>
   );
 };

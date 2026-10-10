@@ -6,7 +6,7 @@ import {BODY_BOTTOM, BODY_TOP, clamp, markedWords, NoteCard, SceneHeader, SceneS
 import {spr, useScene} from "./motion";
 import {rng} from "./hand";
 import {checklistTicks} from "./schedule";
-import {CATEGORIES, NOTE, TONES, useCategory, useTheme, useTone} from "./themes";
+import {CATEGORIES, isLight, isNotebook, NOTE, stageInks, TONES, useCategory, useTheme, useTone} from "./themes";
 import {SceneProps} from "./types";
 
 const ROW_H = 132;
@@ -74,8 +74,8 @@ export const ChecklistScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   const body = useBody();
   const hlWidth = items.length ? 22 + BOX + (body.width - 40 - 22 - BOX) * lead(0) : 0;
 
-  // paper stage, closing scene: the page warms up as the list fills, a few confetti flecks on the final tick
-  const finale = t.family === "paper" && s.last && items.length > 0;
+  // notebook stages, closing scene: the page warms up as the list fills, a few confetti flecks on the final tick
+  const finale = isNotebook(t) && s.last && items.length > 0;
   const lastTick = ticks[items.length - 1] ?? 0;
   const marked = markedWords(scene.headline, scene.mark);
   const signOff = scene.headline.split(" ").filter((_, i) => marked.has(i)).join(" ");
@@ -83,7 +83,7 @@ export const ChecklistScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   return (
     <SceneShell>
       {warm > 0 ? (
-        <div style={{position: "absolute", inset: 0, opacity: warm, mixBlendMode: "multiply",
+        <div style={{position: "absolute", inset: 0, opacity: warm * (isLight(t) ? 1 : 0.6), mixBlendMode: isLight(t) ? "multiply" : "soft-light",
           background: "radial-gradient(ellipse 90% 70% at 50% 45%, rgba(255,214,150,0.30), rgba(255,170,110,0.22))"}} />
       ) : null}
       <SceneHeader scene={scene} />
@@ -125,7 +125,8 @@ export const ChecklistScene: React.FC<{scene: SceneProps}> = ({scene}) => {
       {/* the sign-off: the headline's key phrase, handwritten under the list next to 도치 (only if it fits above
           the captions) */}
       {finale && top + height + 16 + 92 <= 1240 ? (
-        <Handwrite text={signOff} x={body.left + 24} y={top + height + 16} size={78} color={tone.ink} underline={tone.fill}
+        <Handwrite text={signOff} x={body.left + 24} y={top + height + 16} size={78}
+          color={stageInks(t, scene.accent, s.last, tone).hand} underline={tone.fill}
           at={lastTick + 12} dur={14} rotate={-3} />
       ) : null}
     </SceneShell>

@@ -18,7 +18,9 @@ Rules:
   push notification, "stat" for the one key number, "timeline" for 2-4 dated steps, "checklist" for the final actions,
   "compare" for real vs fake, "toggle" for a settings path, "flow" for a decision chart, "dots" for a sourced funnel count.
   Don't repeat the previous episode's middle-scene layout sequence (script-check warns). The mascot 도치 and the stage
-  (종이 노트 / 다크 경보) are chosen automatically; set "mascot": false on a scene only if it would distract.
+  (종이 노트: paper, graph, night-lamp, kraft-board, desk-spread, mood-sky / 다크 경보) are chosen automatically by topic and
+  the variety rules; set "theme" only for a reason (script-check warns if it breaks a rule) and "mascot": false on a
+  scene only if it would distract.
   Mockup text is a reenactment: generic names only ("은행 앱", "메신저"), masked links/numbers, nothing beyond the facts.
 - One idea per scene. The last scene is one action the viewer can do today.
 - Every number and fact must appear in the fact sheet. Keep its hedging ("주장", "의심") and its dates.

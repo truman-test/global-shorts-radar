@@ -10,9 +10,10 @@ Read video/src/Short.tsx, CardScene.tsx, CallScene.tsx, Captions.tsx, types.ts a
 
 Design rules:
 - 1080x1920. Look comes from the design system: video/src/tokens.json (fixed brand layer: white note card, caption box,
-  semantic 위험/주의/안전 colors, category colors), themes.ts / Backdrop.tsx (stages: 종이 노트 = paper/graph,
-  다크 경보 = pulse/circuit/scan/aurora/dots), Mascot.tsx (도치, paper stage only), Handwriting.tsx (Gaegu Bold, accents
-  only). Pretendard for all other text, lucide icons. Contrast is tested in tests/test_design_tokens.py.
+  semantic 위험/주의/안전 colors, category colors), themes.ts / Backdrop.tsx / NotebookStages.tsx (stages: family
+  notebook = 종이 노트 paper/graph/night-lamp/kraft-board/desk-spread/mood-sky, family alert = 다크 경보
+  pulse/circuit/scan/aurora/dots; each stage also has a luminance, a visual group and a mascotSlot), Mascot.tsx (도치,
+  on by the stage's mascotDefault, paper/night palettes), Handwriting.tsx (Gaegu Bold, accents only). Pretendard for all other text, lucide icons. Contrast is tested in tests/test_design_tokens.py.
 - Keep the caption band (66-78% height) and the bottom 20% and right edge (YouTube buttons) clear of important content.
 - Keep the top bar (channel name + "AI 음성" badge) and the first-scene disclaimer badge untouched.
 - Generic, invented UI only: never copy a real app's look (KakaoTalk, banks, Toss, Naver, Google Maps), no real logos,

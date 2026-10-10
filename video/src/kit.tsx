@@ -2,7 +2,7 @@ import React, {useLayoutEffect, useRef} from "react";
 import {interpolate, useCurrentFrame} from "remotion";
 import {handBox, handLine, markerStyle, seedOf} from "./hand";
 import {Anchor, Face, fade, fadeOut, IN_AT, IN_DUR, spr, useMorphIn, useScene} from "./motion";
-import {BRAND, muted, NOTE, Theme, Tone, TYPE, useTheme, useTone} from "./themes";
+import {BRAND, isNotebook, muted, NOTE, Theme, Tone, TYPE, useTheme, useTone} from "./themes";
 import {SceneProps} from "./types";
 
 export const clamp = {extrapolateLeft: "clamp", extrapolateRight: "clamp"} as const;
@@ -62,7 +62,7 @@ const CARD_GRAIN = "data:image/svg+xml;utf8," + encodeURIComponent(
   + "<rect width='220' height='220' filter='url(#n)'/></svg>");
 
 /**
- * Paper stage, scene change: a wobbly ink line runs in from the page margin and draws the card's outline
+ * Notebook stages, scene change: a wobbly ink line runs in from the page margin and draws the card's outline
  * (strokeDashoffset), then fades as the card itself fades in, so the next card looks drawn rather than cut in.
  * The card is measured on screen (its height depends on the text), the path set directly on the element.
  */
@@ -97,14 +97,14 @@ const SketchOutline: React.FC<{seed: number}> = ({seed}) => {
 
 /**
  * The white note card every key text sits on, on every stage: same radius, same soft shadow, the folded top-right
- * corner and faint paper grain. Absolutely positioned by `box`; children are laid out inside the padding. On paper
+ * corner and faint paper grain. Absolutely positioned by `box`; children are laid out inside the padding. On notebook
  * stages a card that arrives with a scene change is sketched in ink first (SketchOutline).
  */
 export const NoteCard: React.FC<{box: React.CSSProperties; fold?: number; pad?: number | string;
   children?: React.ReactNode; inner?: React.CSSProperties}> = ({box, fold = 58, pad = 0, children, inner}) => {
   const t = useTheme();
   const s = useScene();
-  const sketch = t.family === "paper" && s.mode === "continuity" && !s.first;
+  const sketch = isNotebook(t) && s.mode === "continuity" && !s.first;
   return (
     <div style={{position: "absolute", filter: "drop-shadow(0 16px 26px rgba(10,14,25,0.22)) drop-shadow(0 2px 3px rgba(10,14,25,0.12))",
       ...box}}>

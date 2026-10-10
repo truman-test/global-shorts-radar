@@ -3,8 +3,8 @@ import {interpolate, useCurrentFrame} from "remotion";
 import {DoodleProp} from "./Doodles";
 import {Handwrite} from "./Handwriting";
 import {clamp, Headline, NoteCard, useShell} from "./kit";
-import {Anchor, Face, MORPH, spr, useMorphIn} from "./motion";
-import {chipRadius, NOTE, TYPE, useTheme, useTone} from "./themes";
+import {Anchor, Face, MORPH, spr, useMorphIn, useScene} from "./motion";
+import {chipRadius, isNotebook, NOTE, stageInks, TYPE, useTheme, useTone} from "./themes";
 import {SceneProps} from "./types";
 
 export const BADGE = 270;
@@ -24,6 +24,9 @@ export const CardScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   const t = useTheme();
   const tone = useTone(scene.accent);
   const shell = useShell("swipe");
+  const s = useScene();
+  // inks for what is drawn straight on the stage (light ones under mood-sky's night sky)
+  const inks = stageInks(t, scene.accent, s.last, tone);
   const morph = useMorphIn();
   const iconIn = morph ? 1 : spr(frame, 2, 13, 0.04);
   // the traveller measures the badge on screen, so the float needs no special case
@@ -46,14 +49,14 @@ export const CardScene: React.FC<{scene: SceneProps}> = ({scene}) => {
           <Face look={{kind: "chip", icon: scene.icon, accent: scene.accent}} size={BADGE} glow={60} />
         </Anchor>
       </div>
-      {/* paper stage: two line-art props of the episode's topic draw themselves around the badge */}
-      {t.family === "paper" ? (
+      {/* notebook stages: two line-art props of the episode's topic draw themselves around the badge */}
+      {isNotebook(t) ? (
         <>
-          <DoodleProp which={0} x={858} y={520} size={150} at={4} tilt={8} />
-          <DoodleProp which={1} x={196} y={438} size={104} at={7} tilt={-8} />
+          <DoodleProp which={0} x={858} y={520} size={150} at={4} tilt={8} ink={inks.doodle} />
+          <DoodleProp which={1} x={196} y={438} size={104} at={7} tilt={-8} ink={inks.doodle} />
           {/* a handwritten tone label writes itself above the card's right half (위험! / 주의! / 안전!) */}
           {scene.accent !== "blue" ? (
-            <Handwrite text={`${tone.label}!`} x={738} y={618} size={70} color={tone.ink} underline={tone.fill} at={9}
+            <Handwrite text={`${tone.label}!`} x={738} y={618} size={70} color={inks.hand} underline={tone.fill} at={9}
               dur={10} rotate={-7} />
           ) : null}
         </>

@@ -184,10 +184,13 @@ def _script_command(cmd, args, db) -> int:
         print(f"  error: {e}")
     if cmd == "script-check":
         if not errors:
-            from radar.production.themes import CATEGORIES, FAMILY_LABELS, resolve_style
-            style = resolve_style(script)
-            print(f"  stage: {FAMILY_LABELS[style.family]} / {style.theme}, category: {CATEGORIES[style.category]}"
+            from radar.production.themes import CATEGORIES, FAMILY_LABELS, resolve_style_report
+            style, style_warnings = resolve_style_report(script)
+            print(f"  stage: {FAMILY_LABELS[style.family]} / {style.theme} ({style.luminance}, 도치 "
+                  f"{'on' if style.mascot else 'off'}, {style.visual_group}), category: {CATEGORIES[style.category]}"
                   + ("" if script.theme else " (by topic/schedule)"))
+            for w in style_warnings:
+                print(f"  warning: {w}")
         for i, scene in enumerate(script.scenes, start=1):
             print(f"  [{i}] spoken: {scene.tts_text()}")
         return 1 if errors else 0

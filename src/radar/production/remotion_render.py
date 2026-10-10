@@ -10,6 +10,7 @@ import json
 import shutil
 import subprocess
 import time
+import zlib
 from pathlib import Path
 
 from radar.config import PROJECT_ROOT
@@ -17,7 +18,7 @@ from radar.production.assemble import (TRIM, ProductionError, ProductionResult, 
                                        write_meta)
 from radar.production.script import Script, caption_chunks
 from radar.production.textnorm import speakable_length, split_sentences
-from radar.production.themes import record_style, resolve_style
+from radar.production.themes import record_style, resolve_style_report
 from radar.production.tts import TTSError
 
 VIDEO_DIR = PROJECT_ROOT / "video"
@@ -181,12 +182,18 @@ def music_props(script: Script) -> tuple[dict | None, dict | None]:
 VOICE_LABEL = "AI 음성"   # every narration is synthetic; OpenRAIL-M (Supertonic) requires an explicit disclaimer
 
 
+def episode_seed(script_id: str) -> int:
+    """Deterministic per-episode seed for the stage's variants (scrap layout, sky clouds, prop drift): CRC32 of the
+    script id, so a re-render draws the same picture and nothing is random at render time."""
+    return zlib.crc32(script_id.encode("utf-8"))
+
+
 def build_props(script: Script, scenes: list[dict], channel_name: str, sfx: bool = True,
                 music: dict | None = None, voice_label: str | None = VOICE_LABEL,
                 transition: str = "continuity", theme: str = "classic", category: str | None = None) -> dict:
     props = {"channel": channel_name, "voiceLabel": voice_label, "disclaimer": script.disclaimer, "sfx": sfx,
              "music": music, "transition": transition, "posterTailMs": POSTER_TAIL_MS, "theme": theme,
-             "scenes": scenes}
+             "episode": script.id, "seed": episode_seed(script.id), "scenes": scenes}
     if category:
         props["category"] = category
     return props
@@ -262,7 +269,7 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
     music, music_item = music_props(script)
     props_path = out_dir / "props.json"
     # own fields, else topic + the stage-family rules over the schedule (see themes.py)
-    style = resolve_style(script)
+    style, style_warnings = resolve_style_report(script)
     theme = style.theme
     props = build_props(script, scenes, channel_name, sfx, music, transition=transition, theme=theme,
                         category=style.category)
@@ -290,13 +297,15 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
     if abs(duration - total) > 0.6:
         raise ProductionError(f"output length {duration:.2f}s differs from the planned {total:.2f}s")
     warnings = [] if 15 <= duration <= 45 else [f"length {duration:.1f}s outside the 15-45s target"]
+    warnings += style_warnings
     if not tts.publishable:
         warnings.append(f"voice backend '{tts.name}' is for local preview only; re-produce with --backend google to publish")
     subprocess.run([ffmpeg_exe(), "-hide_banner", "-loglevel", "error", "-y", "-ss", "1.2",
                     "-i", str(video), "-frames:v", "1", str(out_dir / "thumb.png")], capture_output=True)
     record_style(script, style)   # content/style_log.json: stage, theme, layouts (next episodes' constraints)
     extra = {"engine": "remotion", "render_seconds": round(render_seconds, 1), "transition": transition,
-             "theme": theme, "stage": style.family, "category": style.category}
+             "theme": theme, "stage": style.family, "category": style.category, "luminance": style.luminance,
+             "mascot": bool(style.mascot), "visual_group": style.visual_group}
     if music_item:
         extra["music"] = {k: music_item[k] for k in ("id", "title", "artist", "license", "license_url",
                                                        "attribution_required", "sha256")}
