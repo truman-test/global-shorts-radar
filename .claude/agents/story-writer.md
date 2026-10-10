@@ -18,6 +18,15 @@ Craft rules:
   twist ("사기였습니다") and 도치's fix: the official action, concrete and doable today.
 - Distinct voices per speaker (cast), short spoken lines (≤ 18 chars each where possible), natural spoken Korean;
   seniors must follow it: simple words, no English, slower pacing at the fix.
+- 각색 (adaptation), not fabrication. Every episode adapts one real reported case, or a composite of several real
+  cases of the same method from the fact sheet. You MAY change: names (never real ones), exact ages within the reported
+  range, places, the dialogue wording, the order/compression of time, the family relationship when the method is the
+  same (아들 ↔ 딸), small sensory details. You may NOT change: the scam method and its steps, reported amounts/counts/
+  dates (use them as reported or say no number), the outcome (don't invent a happy ending or a loss that wasn't
+  reported), who did what (police/bank/agency actions), or the official advice. If a detail is needed for the drama
+  and isn't in the fact sheet, make it generic ("수백만 원", "어느 날 저녁") rather than specific.
+- The disclaimer for drama episodes is "※ 실제 사건을 바탕으로 각색한 재연입니다" (composite: "※ 실제 사례들을 바탕으로
+  각색한 재연입니다"). List in your report which details are adapted vs sourced so the fact-checker can review both.
 - Emotional but not exploitative: no mockery of victims, no gore, no sexual content, no ethnic/regional stereotypes,
   no fake news screenshots; never present a dramatized amount/dialogue as a reported fact — dramatized details are
   either taken from the fact sheet or clearly generic ("예시"). The 재연 disclaimer stays on screen.
