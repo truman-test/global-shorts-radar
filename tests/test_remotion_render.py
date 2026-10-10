@@ -56,6 +56,12 @@ GOOD = {
     "stat": dict(stat_value="6,581억 원", stat_label="한 해 피해액"),
     "timeline": dict(steps=[{"when": "1일차", "text": "메신저로 접근"}, {"when": "2일차", "text": "앱 설치 유도"}]),
     "checklist": dict(items=["가족 암호 정하기", "링크 누르지 않기"]),
+    "compare": dict(real={"label": "진짜", "title": "공식 앱 안 알림", "points": ["앱에서 직접 확인"]},
+                    fake={"label": "가짜", "title": "010-●●●●-●●●●", "points": ["주소 확인 링크"]}),
+    "toggle": dict(path=["보안", "결제 인증"], setting="구매 시 인증 요구", toggle_to="on"),
+    "flow": dict(nodes=[{"text": "문자를 받았다"}, {"text": "링크가 있다?", "yes": "누르지 않기"},
+                        {"text": "공식 앱에서 조회"}]),
+    "dots": dict(total=1000, stages=[{"label": "링크 클릭", "count": 120}, {"label": "금전 피해", "count": 9}]),
 }
 
 
@@ -125,6 +131,10 @@ def test_scene_props_carry_layout_fields_in_camel_case():
         "stat": {"statValue": "6,581억 원", "statLabel": "한 해 피해액"},
         "timeline": {"steps": GOOD["timeline"]["steps"]},
         "checklist": {"items": GOOD["checklist"]["items"]},
+        "compare": {"real": GOOD["compare"]["real"], "fake": GOOD["compare"]["fake"]},
+        "toggle": {"path": ["보안", "결제 인증"], "setting": "구매 시 인증 요구", "toggleTo": "on"},
+        "flow": {"nodes": GOOD["flow"]["nodes"]},
+        "dots": {"total": 1000, "stages": GOOD["dots"]["stages"], "unit": "명"},
     }
     base = {"layout", "audio", "leadInMs", "speechMs", "durationMs", "pages", "headline", "sub", "icon", "accent"}
     for layout, extra in expect.items():
@@ -219,3 +229,71 @@ def test_remotion_render_end_to_end(tmp_path):
     s.scenes = s.scenes[:2]
     result = produce_remotion(s, tmp_path, tts=ToneTTS(), channel_name="테스트")
     assert result.size == "1080x1920" and result.duration > 5
+
+
+@pytest.mark.parametrize("kw,problem", [
+    (dict(layout="compare", real={"label": "진짜", "title": "", "points": []}, fake=GOOD["compare"]["fake"]), "real.title"),
+    (dict(layout="compare", real=GOOD["compare"]["real"], fake={"label": "가짜", "title": "http://evil.kr/a", "points": []}),
+     "unmasked link"),
+    (dict(layout="compare", real=GOOD["compare"]["real"], fake={"label": "가짜", "title": "카카오 알림", "points": []}),
+     "real brand"),
+    (dict(layout="compare", real=GOOD["compare"]["real"],
+          fake={"label": "가짜", "title": "가짜 문자", "points": ["가" * 15]}), "points"),
+    (dict(layout="toggle", path=["보안"] * 4, setting="인증"), "1-3 menu steps"),
+    (dict(layout="toggle", path=["보안"], setting="인증", toggle_to="maybe"), "toggle_to"),
+    (dict(layout="toggle", path=["보안"], setting="가" * 15), "longer than 14"),
+    (dict(layout="flow", nodes=[{"text": "하나"}, {"text": "둘"}]), "3-5 nodes"),
+    (dict(layout="flow", nodes=[{"text": "가"}, {"text": "나", "yes": "다", "no": "라"}, {"text": "마"}]), "not both"),
+    (dict(layout="flow", nodes=[{"text": "가" * 17}, {"text": "나"}, {"text": "다"}]), "1-16 characters"),
+    (dict(layout="dots", total=5, stages=[{"label": "a", "count": 3}, {"label": "b", "count": 1}]), "10-1,000,000"),
+    (dict(layout="dots", total=100, stages=[{"label": "클릭", "count": 30}, {"label": "피해", "count": 40}]), "funnel"),
+    (dict(layout="dots", total=100, stages=[{"label": "클릭", "count": 30}]), "2-4 stages"),
+    (dict(layout="dots", total=100, stages=[{"label": "클릭", "count": -1}, {"label": "피해", "count": 1}]), "whole number"),
+    (dict(mark="없는 말"), "not part of the headline"),
+])
+def test_new_layout_rules(kw, problem):
+    assert any(problem in e for e in _errors(**kw)), _errors(**kw)
+
+
+def test_new_layouts_load_from_json(tmp_path):
+    data = json.loads(open("content/scripts/2026-10-08-family-password.json", encoding="utf-8").read())
+    data["scenes"][1].update(layout="compare", mark="암호",
+                             real={"title": "가족만 아는 암호", "points": ["미리 정해 둔 말"]},
+                             fake={"title": "급하다는 목소리", "points": ["암호를 모른다"]})
+    data["scenes"][2].update(layout="dots", total="1,000", stages=[{"label": "응답", "count": "300"},
+                                                                    {"label": "송금", "count": 12}])
+    data["scenes"][3].update(layout="toggle", path=["보안"], setting="모르는 번호 차단", toggle_to="ON")
+    p = tmp_path / "s.json"
+    p.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    s = load_script(p)
+    assert s.scenes[1].real == {"label": "진짜", "title": "가족만 아는 암호", "points": ["미리 정해 둔 말"]}
+    assert s.scenes[1].fake["label"] == "가짜" and s.scenes[1].mark == "암호"
+    assert s.scenes[2].total == 1000 and s.scenes[2].stages[0] == {"label": "응답", "count": 300}
+    assert s.scenes[3].toggle_to == "on"
+    errs = [e for e in validate(s)[0] if not e.startswith("scene 2")]   # scene 2's headline need not contain "암호"
+    assert errs == [], errs
+    from radar.production.remotion_render import scene_props
+    props = scene_props(s.scenes[1], "", 0.0, 1.0, 1.25, [])
+    assert props["mark"] == "암호" and props["real"]["title"] == "가족만 아는 암호"
+    data["scenes"][2]["stages"][0]["count"] = 2.5
+    p.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    assert any("whole number" in e for e in validate(load_script(p))[0])
+
+
+def test_build_props_carries_the_category():
+    s = load_script("content/scripts/2026-10-08-family-password.json")
+    props = build_props(s, [], "채널", theme="paper", category="voice")
+    assert props["theme"] == "paper" and props["category"] == "voice"
+
+def test_mascot_switch_per_scene(tmp_path):
+    from radar.production.remotion_render import scene_props
+    assert _errors(mascot=False) == [] and _errors(mascot=True) == []
+    assert any("mascot must be true or false" in e for e in _errors(mascot="no"))
+    assert scene_props(Scene(NARR, "헤드", "phone", mascot=False), "", 0.0, 1.0, 1.25, [])["mascot"] is False
+    assert "mascot" not in scene_props(Scene(NARR, "헤드", "phone"), "", 0.0, 1.0, 1.25, [])
+    data = json.loads(open("content/scripts/2026-10-08-family-password.json", encoding="utf-8").read())
+    data["scenes"][1]["mascot"] = False
+    p = tmp_path / "s.json"
+    p.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+    s = load_script(p)
+    assert s.scenes[1].mascot is False and s.scenes[0].mascot is None and validate(s)[0] == []

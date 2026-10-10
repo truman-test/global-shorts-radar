@@ -1,7 +1,7 @@
 import React from "react";
 import {Easing, interpolate, useCurrentFrame} from "remotion";
-import {BODY_BOTTOM, BODY_TOP, clamp, SceneHeader, SceneShell} from "./kit";
-import {muted, useTheme} from "./themes";
+import {BODY_BOTTOM, BODY_TOP, clamp, NoteCard, SceneHeader, SceneShell, useBody} from "./kit";
+import {NOTE, useTone} from "./themes";
 import {spr} from "./motion";
 import {STAT_COUNT} from "./schedule";
 import {SceneProps} from "./types";
@@ -40,59 +40,56 @@ export const countUp = (raw: string, t: number) => {
 const emWidth = (s: string) => [...s].reduce((a, c) => a + (/[\d.,]/.test(c) ? 0.6 : c === " " ? 0.28 : 0.95), 0);
 
 /**
- * One big number: the numeric part counts up with an ease-out, lands with a small punch and a glow
- * ring sweep; the label and the sub-line follow.
+ * One big number written on the note card: the numeric part counts up with an ease-out and lands with a small
+ * punch while a meter fills under it; the label and the sub-line follow.
  */
 export const StatScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   const frame = useCurrentFrame();
-  const th = useTheme();
-  const accent = th.accents[scene.accent];
+  const tone = useTone(scene.accent);
   const full = scene.statValue ?? "";
   const [a, b] = STAT_COUNT;
   const t = interpolate(frame, [a, b], [0, 1], {...clamp, easing: Easing.out(Easing.cubic)});
   const shown = countUp(full, t);
-  const size = Math.min(220, Math.floor(860 / Math.max(1, emWidth(full))));
+  const size = Math.min(200, Math.floor((useBody().width - 100) / Math.max(1, emWidth(full))));
   const punch = spr(frame, b, 10, 0.03);
   const scale = frame < b ? 0.9 + 0.1 * t : 1 + 0.06 * Math.sin(Math.min(1, punch) * Math.PI);
   const labelIn = spr(frame, b - 6, 14);
   const subIn = interpolate(frame, [b + 4, b + 14], [0, 1], clamp);
   const meter = interpolate(frame, [a, b], [0, 1], {...clamp, easing: Easing.out(Easing.cubic)});
-  const numH = size * 1.12;
-  const groupH = numH + 36 + 16 + 44 + 64 + (scene.sub ? 26 + 48 : 0);
-  const top = BODY_TOP + Math.max(0, (BODY_BOTTOM - BODY_TOP - groupH) / 2) - 20;
-  const meterTop = top + numH + 36;
-  const METER_W = 640;
+  const body = useBody();
+  const METER_W = Math.min(600, body.width - 160);
+  const cardTop = BODY_TOP + 10;
 
   return (
     <SceneShell>
       <SceneHeader scene={{...scene, sub: ""}} />
-      <div style={{position: "absolute", left: 40, right: 40, top: top - 160, height: numH + 320,
-        background: `radial-gradient(ellipse 50% 50% at 50% 50%, ${accent}2e 0%, transparent 70%)`}} />
-      <div style={{position: "absolute", top, left: 60, right: 60, textAlign: "center", fontSize: size,
-        fontWeight: 900, letterSpacing: -size * 0.02, lineHeight: 1.12, color: accent,
-        fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", transform: `scale(${scale})`,
-        textShadow: `0 0 ${40 + punch * 30}px ${accent}88, 0 10px 40px rgba(0,0,0,0.6)`}}>
-        {shown}
-      </div>
-      {/* meter that fills with the count */}
-      <div style={{position: "absolute", top: meterTop, left: (1080 - METER_W) / 2, width: METER_W, height: 16,
-        borderRadius: 8, background: "rgba(255,255,255,0.1)"}}>
-        <div style={{width: METER_W * meter, height: "100%", borderRadius: 8, background: accent,
-          boxShadow: `0 0 20px ${accent}`}} />
-        <div style={{position: "absolute", top: -9, left: METER_W * meter - 17, width: 34, height: 34, borderRadius: "50%",
-          background: "#fff", boxShadow: `0 0 24px ${accent}`, opacity: meter > 0.01 ? 1 : 0}} />
-      </div>
-      <div style={{position: "absolute", top: meterTop + 16 + 44, left: 140, right: 140, textAlign: "center",
-        fontSize: 52, fontWeight: 800, lineHeight: 1.22, opacity: Math.min(1, labelIn),
-        transform: `translateY(${(1 - labelIn) * 20}px)`}}>
-        {scene.statLabel}
-      </div>
-      {scene.sub ? (
-        <div style={{position: "absolute", top: meterTop + 16 + 44 + 64 + 26, left: 140, right: 140, textAlign: "center",
-          fontSize: 38, fontWeight: 700, color: muted(th), opacity: subIn, transform: `translateY(${(1 - subIn) * 10}px)`}}>
-          {scene.sub}
+      <NoteCard box={{top: cardTop, left: body.left, width: body.width, height: BODY_BOTTOM - 10 - cardTop}} fold={50}>
+        <div style={{position: "absolute", inset: "30px 50px", display: "flex", flexDirection: "column",
+          alignItems: "center", justifyContent: "center", gap: 0}}>
+          <div style={{fontSize: size, fontWeight: 900, letterSpacing: -size * 0.02, lineHeight: 1.12, color: tone.ink,
+            fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap", transform: `scale(${scale})`}}>
+            {shown}
+          </div>
+          {/* meter that fills with the count */}
+          <div style={{position: "relative", marginTop: 30, width: METER_W, height: 16, borderRadius: 8,
+            background: NOTE.rule}}>
+            <div style={{width: METER_W * meter, height: "100%", borderRadius: 8, background: tone.fill}} />
+            <div style={{position: "absolute", top: -9, left: METER_W * meter - 17, width: 34, height: 34,
+              borderRadius: "50%", background: NOTE.paper, border: `6px solid ${tone.fill}`, boxSizing: "border-box",
+              opacity: meter > 0.01 ? 1 : 0}} />
+          </div>
+          <div style={{marginTop: 44, textAlign: "center", fontSize: 50, fontWeight: 800, lineHeight: 1.22,
+            color: NOTE.ink, opacity: Math.min(1, labelIn), transform: `translateY(${(1 - labelIn) * 20}px)`}}>
+            {scene.statLabel}
+          </div>
+          {scene.sub ? (
+            <div style={{marginTop: 22, textAlign: "center", fontSize: 36, fontWeight: 700, color: NOTE.muted,
+              opacity: subIn, transform: `translateY(${(1 - subIn) * 10}px)`}}>
+              {scene.sub}
+            </div>
+          ) : null}
         </div>
-      ) : null}
+      </NoteCard>
     </SceneShell>
   );
 };

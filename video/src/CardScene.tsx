@@ -1,72 +1,78 @@
 import React from "react";
 import {interpolate, useCurrentFrame} from "remotion";
-import {Brackets, clamp, markStyle, useShell} from "./kit";
+import {DoodleProp} from "./Doodles";
+import {Handwrite} from "./Handwriting";
+import {clamp, Headline, NoteCard, useShell} from "./kit";
 import {Anchor, Face, MORPH, spr, useMorphIn} from "./motion";
-import {chipRadius, muted, useTheme} from "./themes";
+import {chipRadius, NOTE, TYPE, useTheme, useTone} from "./themes";
 import {SceneProps} from "./types";
 
 export const BADGE = 270;
 
-/** Explainer card: icon badge springs in and floats, headline words pop in one by one, accent rule grows. */
+/** Poster headline size: two lines of the note card at most. */
+const posterSize = (headline: string) => {
+  const n = headline.replace(/\s/g, "").length;
+  return n <= 14 ? TYPE.poster : n <= 18 ? 96 : 88;
+};
+
+/**
+ * Explainer card (also the poster when it opens the video): the icon badge springs in and floats above the note
+ * card, the headline words pop in one by one on the card and the key phrase gets the stage's mark.
+ */
 export const CardScene: React.FC<{scene: SceneProps}> = ({scene}) => {
   const frame = useCurrentFrame();
   const t = useTheme();
+  const tone = useTone(scene.accent);
   const shell = useShell("swipe");
   const morph = useMorphIn();
-  const accent = t.accents[scene.accent];
   const iconIn = morph ? 1 : spr(frame, 2, 13, 0.04);
   // the traveller measures the badge on screen, so the float needs no special case
   const float = Math.sin(frame / 13) * 8;
   const pulse = (frame % 45) / 45;
   const ringIn = morph ? interpolate(frame, [MORPH, MORPH + 8], [0, 1], clamp) : 1;
   const words = scene.headline.split(" ");
-  const ruleIn = spr(frame, 6 + words.length * 3, 16, 0);
-  const subIn = interpolate(frame, [10 + words.length * 3, 22 + words.length * 3], [0, 1], clamp);
-  const headlineWords = words.map((w, i) => {
-    const s = spr(frame, 4 + i * 3, 13, 0.03);
-    return (
-      <span key={i} style={{display: "inline-block", marginRight: 26, opacity: Math.min(1, s),
-        transform: `translateY(${(1 - s) * 40}px) scale(${0.85 + 0.15 * s})`,
-        textShadow: "0 8px 30px rgba(0,0,0,0.6)"}}>
-        <span style={markStyle(t, accent, spr(frame, 9 + i * 3, 10, 0))}>{w}</span>
-      </span>
-    );
-  });
+  const cardIn = morph ? 1 : spr(frame, 0, 14, 0.01);
+  // everything has landed by the poster frame (POSTER = 24) for headlines of up to ~6 words
+  const subIn = interpolate(frame, [6 + words.length * 2, 12 + words.length * 2], [0, 1], clamp);
 
   return (
     <div style={{position: "absolute", inset: 0, ...shell}}>
       {/* icon badge */}
-      <div style={{position: "absolute", left: 540 - BADGE / 2, top: 400, width: BADGE, height: BADGE,
+      <div style={{position: "absolute", left: 540 - BADGE / 2, top: 390, width: BADGE, height: BADGE,
         transform: `translateY(${float}px) scale(${0.3 + 0.7 * iconIn})`, opacity: Math.min(1, iconIn)}}>
-        <div style={{position: "absolute", inset: 0, borderRadius: chipRadius(t, BADGE), border: `4px solid ${accent}`,
-          opacity: 0.6 * (1 - pulse) * ringIn, transform: `scale(${1 + pulse * 0.45})`}} />
-        {t.headline === "brackets" ? (
-          // viewfinder frame around the badge (in after the traveller has landed when the scene morphs in)
-          <Brackets p={ringIn} color={`${accent}b0`} inset={[34, 34]} size={58} weight={6} />
-        ) : null}
+        <div style={{position: "absolute", inset: 0, borderRadius: chipRadius(t, BADGE), border: `5px solid ${tone.fill}`,
+          opacity: 0.6 * (1 - pulse) * ringIn, transform: `scale(${1 + pulse * 0.42})`}} />
         <Anchor size={BADGE} style={{position: "absolute", inset: 0}}>
           <Face look={{kind: "chip", icon: scene.icon, accent: scene.accent}} size={BADGE} glow={60} />
         </Anchor>
       </div>
-      {/* headline */}
-      <div style={{position: "absolute", top: 760, left: 90, right: 90, textAlign: "center", fontSize: 104,
-        fontWeight: 900, lineHeight: 1.2, letterSpacing: -2, textWrap: "balance" as React.CSSProperties["textWrap"]}}>
-        {headlineWords}
-      </div>
-      {/* accent rule + sub */}
-      <div style={{position: "absolute", top: 1035, width: "100%", display: "flex", flexDirection: "column",
-        alignItems: "center", gap: 26}}>
-        {t.headline === "rule" ? (
-          <div style={{width: 200 * ruleIn, height: 12, borderRadius: 6, background: accent,
-            boxShadow: `0 0 24px ${accent}`}} />
-        ) : <div style={{height: 12}} />}
-        {scene.sub ? (
-          <div style={{fontSize: 46, fontWeight: 700, color: muted(t, 0.9), opacity: subIn,
-            transform: `translateY(${(1 - subIn) * 14}px)`, padding: "0 110px", textAlign: "center"}}>
-            {scene.sub}
-          </div>
-        ) : null}
-      </div>
+      {/* paper stage: two line-art props of the episode's topic draw themselves around the badge */}
+      {t.family === "paper" ? (
+        <>
+          <DoodleProp which={0} x={858} y={520} size={150} at={4} tilt={8} />
+          <DoodleProp which={1} x={196} y={438} size={104} at={7} tilt={-8} />
+          {/* a handwritten tone label writes itself above the card's right half (위험! / 주의! / 안전!) */}
+          {scene.accent !== "blue" ? (
+            <Handwrite text={`${tone.label}!`} x={738} y={618} size={70} color={tone.ink} underline={tone.fill} at={9}
+              dur={10} rotate={-7} />
+          ) : null}
+        </>
+      ) : null}
+      {/* the note card with the headline */}
+      <NoteCard box={{top: 712, left: 64, right: 64, opacity: Math.min(1, cardIn * 1.3),
+        transform: `translateY(${(1 - cardIn) * 40}px)`}} fold={56}>
+        <div style={{padding: scene.sub ? "46px 56px 40px" : "52px 56px 56px", display: "flex", flexDirection: "column",
+          alignItems: "center", gap: 26}}>
+          <Headline text={scene.headline} mark={scene.mark} size={posterSize(scene.headline)} tone={tone} theme={t}
+            start={2} step={2} rise={40} />
+          {scene.sub ? (
+            <div style={{fontSize: 42, fontWeight: TYPE.weights.text, color: NOTE.muted, opacity: subIn, lineHeight: 1.25,
+              transform: `translateY(${(1 - subIn) * 14}px)`, textAlign: "center", maxWidth: 820}}>
+              {scene.sub}
+            </div>
+          ) : null}
+        </div>
+      </NoteCard>
     </div>
   );
 };

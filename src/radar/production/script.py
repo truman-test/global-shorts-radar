@@ -12,8 +12,10 @@ never contains the source video's narration. JSON shape:
               "tts": "(optional spoken override)"}],
   "sources": [{"title": "...", "url": "https://..."}],
   "author": "llm:<model> | manual",
-  "theme": "aurora"                               # optional visual theme (radar.production.themes); default:
-}                                                 # picked by topic, rotated so consecutive days differ
+  "theme": "aurora",                              # optional stage theme (radar.production.themes); default:
+                                                  # picked by topic + the stage-family rules over the schedule
+  "category": "voice"                             # optional topic category (ai | security | smishing | voice)
+}
 
 Scene layouts ("layout"; every layout keeps headline/sub/icon/accent):
   card       explainer card (default)
@@ -24,6 +26,13 @@ Scene layouts ("layout"; every layout keeps headline/sub/icon/accent):
   stat       one big counting number: stat_value ("6,581억 원"), stat_label
   timeline   2-4 dated steps: steps=[{"when": "1일차", "text": "..."}]
   checklist  2-4 action items ticked one by one: items=["...", "..."]
+  compare    진짜 vs 가짜 split: real={"label": "진짜", "title": "...", "points": ["..."]}, fake={... "label": "가짜"}
+  toggle     settings flow: path=["보안", "결제 인증"] (1-3 menu steps), setting="...", toggle_to="on"|"off"
+  flow       hand-drawn decision chart: nodes=[{"text": "...", "yes": "side box"} | {"text", "no"} | {"text"}] (3-5)
+  dots       seeded dot simulation: total=1000, stages=[{"label": "링크 클릭", "count": 120}, ...] (2-4, a funnel:
+             each count <= the previous; every number must come from the script's sources), unit="명"
+Every scene may set "mark": the headline's key phrase (a substring) that gets the highlighter / underline, and
+"mascot": false / true to hide / show 도치 the hedgehog mascot (default: on for paper stages, off for dark ones).
 Mockup text never contains real phone numbers, real-looking links or brand names.
 """
 from __future__ import annotations
@@ -42,7 +51,7 @@ LAYOUT_LEAD_IN = {"call": 0.9, "alert": 0.5}   # time before the narration start
 POSTER_TAIL = 0.5            # the loop-back poster at the end
 MIN_SECONDS, MAX_SECONDS = 12.0, 50.0
 TARGET_SECONDS = (20.0, 36.0)   # final video length; Shorts research 2026-10-09: 30-35 s for this channel
-LAYOUTS = ("card", "call", "chat", "sms", "alert", "stat", "timeline", "checklist")
+LAYOUTS = ("card", "call", "chat", "sms", "alert", "stat", "timeline", "checklist", "compare", "toggle", "flow", "dots")
 MASK = "●"
 # Real apps, banks, platforms and people that must never appear in an invented mockup.
 BRANDS = ("카카오", "카톡", "토스", "네이버", "구글", "애플", "삼성", "갤럭시", "아이폰", "유튜브", "인스타", "페이스북",
@@ -79,6 +88,17 @@ class Scene:
     stat_label: str = ""        # stat: what the number is
     steps: list[dict] = field(default_factory=list)      # timeline: [{"when": "1일차", "text": "..."}]
     items: list[str] = field(default_factory=list)       # checklist: ["...", "..."]
+    mark: str = ""              # any layout: the headline's key phrase (substring) to highlight
+    real: dict = field(default_factory=dict)             # compare: {"label", "title", "points"}
+    fake: dict = field(default_factory=dict)             # compare: {"label", "title", "points"}
+    path: list[str] = field(default_factory=list)        # toggle: menu steps tapped through
+    setting: str = ""           # toggle: the switch's row label
+    toggle_to: str = "on"       # toggle: "on" | "off"
+    nodes: list[dict] = field(default_factory=list)      # flow: [{"text", "yes"?, "no"?}]
+    total: int = 0              # dots: people the grid stands for
+    stages: list[dict] = field(default_factory=list)     # dots: [{"label", "count"}]
+    unit: str = "명"            # dots: counter unit
+    mascot: object = None       # 도치 the hedgehog mascot: True / False, None = by stage (on for paper, off for dark)
 
     def tts_text(self) -> str:
         return self.tts.strip() or normalize_for_tts(self.narration)
@@ -96,9 +116,30 @@ class Script:
     sources: list[dict]
     author: str = ""
     music: str = ""             # mood key from assets/manifest.json (tense, explainer, uplifting, tech, suspense)
-    theme: str = ""             # visual theme (radar.production.themes.THEMES); "" = by topic / rotation
+    theme: str = ""             # stage theme (radar.production.themes.THEMES); "" = by topic + family rules
+    category: str = ""          # topic category (radar.production.themes.CATEGORIES); "" = by topic
     path: str = ""
     extra: dict = field(default_factory=dict)
+
+
+def _int(v) -> int:
+    """Whole numbers only ("1,000" is accepted); anything else becomes -1 so validation reports it."""
+    if isinstance(v, bool):
+        return -1
+    if isinstance(v, int):
+        return v
+    try:
+        f = float(str(v).replace(",", ""))
+    except ValueError:
+        return -1
+    return int(f) if f.is_integer() else -1
+
+
+def _side(v, label: str) -> dict:
+    if not isinstance(v, dict):
+        return {}
+    return {"label": str(v.get("label", label)).strip() or label, "title": str(v.get("title", "")).strip(),
+            "points": [str(p).strip() for p in v.get("points", [])]}
 
 
 def load_script(path: str | Path) -> Script:
@@ -122,14 +163,24 @@ def load_script(path: str | Path) -> Script:
                         stat_value=str(s.get("stat_value", "")).strip(), stat_label=str(s.get("stat_label", "")).strip(),
                         steps=[{"when": str(t.get("when", "")).strip(), "text": str(t.get("text", "")).strip()}
                                for t in s.get("steps", [])],
-                        items=[str(t).strip() for t in s.get("items", [])])
+                        items=[str(t).strip() for t in s.get("items", [])],
+                        mark=str(s.get("mark", "")).strip(), real=_side(s.get("real"), "진짜"),
+                        fake=_side(s.get("fake"), "가짜"), path=[str(t).strip() for t in s.get("path", [])],
+                        setting=str(s.get("setting", "")).strip(),
+                        toggle_to=str(s.get("toggle_to", "on")).strip().lower(),
+                        nodes=[{k: str(n[k]).strip() for k in ("text", "yes", "no") if str(n.get(k, "")).strip()}
+                               for n in s.get("nodes", [])],
+                        total=_int(s.get("total", 0)),
+                        stages=[{"label": str(t.get("label", "")).strip(), "count": _int(t.get("count", 0))}
+                                for t in s.get("stages", [])],
+                        unit=str(s.get("unit", "명")).strip() or "명", mascot=s.get("mascot"))
                   for s in data["scenes"]]
         return Script(id=str(data["id"]), source_video_id=str(data["source_video_id"]), title=str(data["title"]).strip(),
                       description=str(data.get("description", "")).strip(), tags=[str(t) for t in data.get("tags", [])],
                       disclaimer=str(data.get("disclaimer", "")).strip(), scenes=scenes,
                       sources=[dict(s) for s in data.get("sources", [])], author=str(data.get("author", "")),
                       music=str(data.get("music", "")).strip(), theme=str(data.get("theme", "")).strip(),
-                      path=str(path))
+                      category=str(data.get("category", "")).strip(), path=str(path))
     except (KeyError, TypeError, AttributeError) as exc:
         raise ScriptError(f"{path}: missing or malformed field {exc}") from exc
 
@@ -213,7 +264,62 @@ _LAYOUT_RULES = {
     "stat": (("stat_value", "stat_label"), (), {"stat_value": 12, "stat_label": 28}),
     "timeline": (("steps",), (), {}),
     "checklist": (("items",), (), {}),
+    "compare": (("real", "fake"), (), {}),
+    "toggle": (("path", "setting"), ("setting",), {"setting": 14}),
+    "flow": (("nodes",), (), {}),
+    "dots": (("total", "stages"), (), {"unit": 2}),
 }
+
+
+def _new_layout_errors(i: int, sc: Scene) -> tuple[list[str], list[str]]:
+    """(errors, mockup texts) for compare / toggle / flow / dots."""
+    errors, texts = [], []
+    if sc.layout == "compare":
+        for name, side in (("real", sc.real), ("fake", sc.fake)):
+            if not side:
+                continue
+            if not 1 <= len(side.get("label", "")) <= 4:
+                errors.append(f"scene {i}: {name}.label must be 1-4 characters (e.g. 진짜 / 가짜)")
+            if not 1 <= len(side.get("title", "")) <= 20:
+                errors.append(f"scene {i}: {name}.title needs 1-20 characters (the sender, number or address shown)")
+            if len(side.get("points", [])) > 3 or any(not 1 <= len(p) <= 14 for p in side.get("points", [])):
+                errors.append(f"scene {i}: {name}.points takes 0-3 lines of 1-14 characters")
+            texts += [side.get("title", ""), *side.get("points", [])]
+    elif sc.layout == "toggle":
+        if sc.path and (len(sc.path) > 3 or any(not 1 <= len(p) <= 10 for p in sc.path)):
+            errors.append(f"scene {i}: toggle path takes 1-3 menu steps of 1-10 characters")
+        if sc.toggle_to not in ("on", "off"):
+            errors.append(f"scene {i}: toggle_to must be 'on' or 'off'")
+        texts += list(sc.path)
+    elif sc.layout == "flow":
+        if sc.nodes and not 3 <= len(sc.nodes) <= 5:
+            errors.append(f"scene {i}: flow needs 3-5 nodes")
+        for k, n in enumerate(sc.nodes, start=1):
+            if not 1 <= len(n.get("text", "")) <= 16:
+                errors.append(f"scene {i}: node {k} needs text of 1-16 characters")
+            if "yes" in n and "no" in n:
+                errors.append(f"scene {i}: node {k} may branch on 'yes' or 'no', not both "
+                              "(the chain continues down with the other answer)")
+            for key in ("yes", "no"):
+                if key in n and len(n[key]) > 10:
+                    errors.append(f"scene {i}: node {k} '{key}' branch is longer than 10 characters")
+            texts += [n.get("text", ""), n.get("yes", ""), n.get("no", "")]
+    elif sc.layout == "dots":
+        if sc.total and not 10 <= sc.total <= 1_000_000:
+            errors.append(f"scene {i}: dots total must be a whole number of 10-1,000,000")
+        if sc.stages and not 2 <= len(sc.stages) <= 4:
+            errors.append(f"scene {i}: dots needs 2-4 stages")
+        prev = sc.total
+        for k, st in enumerate(sc.stages, start=1):
+            if not 1 <= len(st.get("label", "")) <= 10:
+                errors.append(f"scene {i}: stage {k} needs a label of 1-10 characters")
+            n = st.get("count", -1)
+            if not isinstance(n, int) or n < 1 or (prev > 0 and n > prev):
+                errors.append(f"scene {i}: stage {k} count must be a whole number from 1 to the previous stage's "
+                              f"({prev}): the stages are a funnel, and every number must come from the sources")
+            else:
+                prev = n
+    return errors, texts
 
 
 def _layout_errors(i: int, sc: Scene) -> list[str]:
@@ -248,6 +354,14 @@ def _layout_errors(i: int, sc: Scene) -> list[str]:
             errors.append(f"scene {i}: checklist needs 2-4 items")
         if any(not 1 <= len(t) <= 22 for t in sc.items):
             errors.append(f"scene {i}: checklist items must be 1-22 characters")
+    if sc.layout in ("compare", "toggle", "flow", "dots"):
+        more, extra = _new_layout_errors(i, sc)
+        errors += more
+        texts += extra
+    if sc.mascot is not None and not isinstance(sc.mascot, bool):
+        errors.append(f"scene {i}: mascot must be true or false (or left out: on for paper stages)")
+    if sc.mark and sc.mark not in sc.headline:
+        errors.append(f"scene {i}: mark '{sc.mark}' is not part of the headline")
     for text in texts:
         errors += [f"scene {i}: {p}" for p in mockup_text_problems(text)]
     return errors
@@ -297,10 +411,12 @@ def validate(script: Script, db=None, allow_unverified: bool = False) -> tuple[l
         known = moods()
         if known and script.music not in known:
             errors.append(f"music mood '{script.music}' not in assets/manifest.json ({', '.join(known)})")
-    if script.theme:
-        from radar.production.themes import THEMES
-        if script.theme not in THEMES:
+    if script.theme or script.category:
+        from radar.production.themes import CATEGORIES, THEMES
+        if script.theme and script.theme not in THEMES:
             errors.append(f"unknown theme '{script.theme}' (use {', '.join(THEMES)})")
+        if script.category and script.category not in CATEGORIES:
+            errors.append(f"unknown category '{script.category}' (use {', '.join(CATEGORIES)})")
     if len(", ".join(script.tags)) > 450:
         errors.append("tags exceed YouTube's ~500 character limit")
     if len(build_description(script)) > 4800:

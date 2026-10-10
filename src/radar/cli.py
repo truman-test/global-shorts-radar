@@ -172,6 +172,11 @@ def _script_command(cmd, args, db) -> int:
         print(f"error: {exc}", file=sys.stderr)
         return 2
     errors, warnings = validate(script, db, args.allow_unverified)
+    if cmd == "script-check":
+        from radar.production.themes import layout_repeat_warning
+        repeat = layout_repeat_warning(script)
+        if repeat:
+            warnings.append(repeat)
     print(f"{script.id}: {len(script.scenes)} scenes, ~{estimate_seconds(script):.1f}s estimated")
     for w in warnings:
         print(f"  warning: {w}")
@@ -179,8 +184,10 @@ def _script_command(cmd, args, db) -> int:
         print(f"  error: {e}")
     if cmd == "script-check":
         if not errors:
-            from radar.production.themes import resolve_theme
-            print(f"  theme: {resolve_theme(script)}" + ("" if script.theme else " (by topic/schedule)"))
+            from radar.production.themes import CATEGORIES, FAMILY_LABELS, resolve_style
+            style = resolve_style(script)
+            print(f"  stage: {FAMILY_LABELS[style.family]} / {style.theme}, category: {CATEGORIES[style.category]}"
+                  + ("" if script.theme else " (by topic/schedule)"))
         for i, scene in enumerate(script.scenes, start=1):
             print(f"  [{i}] spoken: {scene.tts_text()}")
         return 1 if errors else 0

@@ -1,13 +1,16 @@
 import React from "react";
 import {spring, useCurrentFrame, useVideoConfig} from "remotion";
+import {CAPTION} from "./themes";
 import {CaptionPage} from "./types";
 
-const HIGHLIGHT = "#FFD23F";
+// Same on every stage (tokens.json "caption"; contrast checked by tests/test_design_tokens.py).
+const HIGHLIGHT = CAPTION.highlight;
 
 /** Text with a thick black outline: a stroked copy underneath, the fill on top (reliable in headless Chrome). */
 const Outlined: React.FC<{text: string; color: string}> = ({text, color}) => (
   <span style={{position: "relative", display: "inline-block"}}>
-    <span style={{position: "absolute", left: 0, top: 0, WebkitTextStroke: "12px #000", color: "#000"}}>{text}</span>
+    <span style={{position: "absolute", left: 0, top: 0, WebkitTextStroke: `${CAPTION.outlineWidth}px ${CAPTION.outline}`,
+      color: CAPTION.outline}}>{text}</span>
     <span style={{position: "relative", color}}>{text}</span>
   </span>
 );
@@ -35,7 +38,7 @@ export const Captions: React.FC<{pages: CaptionPage[]; instantFirst?: boolean}> 
         return (
           <span key={i} style={{display: "inline-block", transform: `scale(${active ? 1.04 : 1})`,
             transformOrigin: "50% 70%"}}>
-            <Outlined text={w.text} color={active ? HIGHLIGHT : "#FFFFFF"} />
+            <Outlined text={w.text} color={active ? HIGHLIGHT : CAPTION.fill} />
           </span>
         );
       })}
