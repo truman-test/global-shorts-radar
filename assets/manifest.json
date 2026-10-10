@@ -75,5 +75,22 @@
    "retrieved_at": "2026-10-08T16:06:23Z",
    "sha256": "49842074dc06f05a40690c2b3af42bd32be76a5f6505a65cfe952b2fe1ccb5de"
   }
+ ],
+ "fonts": [
+  {
+   "id": "gaegu-bold",
+   "title": "Gaegu Bold",
+   "author": "JIKJI SOFT (The Gaegu Project Authors)",
+   "file": "video/public/fonts/Gaegu-Bold.ttf",
+   "source_url": "https://raw.githubusercontent.com/google/fonts/main/ofl/gaegu/Gaegu-Bold.ttf",
+   "license": "SIL Open Font License 1.1",
+   "license_url": "https://scripts.sil.org/OFL",
+   "license_snapshot": "assets/licenses/gaegu_ofl.txt",
+   "attribution_required": false,
+   "sha256": "cc38a4af9506a45254d1ce07c589ec473d9e5f0be319e5a77b17c214903f8c1c",
+   "bytes": 2962664,
+   "fetched_at": "2026-10-10",
+   "use": "handwritten accents only (poster/closing notes); captions stay Pretendard"
+  }
  ]
 }
