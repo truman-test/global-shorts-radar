@@ -337,6 +337,18 @@ def _scheduled(schedule_path: Path) -> list[dict]:
     return sorted((e for e in entries if e.get("script")), key=lambda e: str(e.get("date", "")))
 
 
+def episode_number(script_id: str, schedule_path: str | Path | None = None) -> int | None:
+    """The series number shown on the poster ("생존노트 #N"): the script's position in content/schedule.json walked
+    in date order (2026-10-09 = #1), counting every scheduled entry whatever its status. None when the script is
+    not scheduled (a preview or a spare script gets no number rather than a wrong one)."""
+    seen: list[str] = []
+    for entry in _scheduled(Path(schedule_path or SCHEDULE)):
+        sid = str(entry["script"])
+        if sid not in seen:
+            seen.append(sid)
+    return seen.index(script_id) + 1 if script_id in seen else None
+
+
 def resolve_schedule(schedule_path: str | Path | None = None, scripts_dir: str | Path | None = None,
                      log_path: str | Path | None = None, extra=None) -> list[tuple[str, Style, list[str], str]]:
     """The whole schedule walked in date order: [(script id, style, warnings, source)], source = "log" (kept as

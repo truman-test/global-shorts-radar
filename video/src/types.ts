@@ -78,6 +78,9 @@ export type ShortProps = {
   category?: string; // topic category (tokens.json categories): the brand chip label and the one accent colour
   episode?: string; // script id (deterministic per-episode variants of the stage; never random at render time)
   seed?: number; // CRC32 of the episode id, computed in Python (wins over a hash of `episode`)
+  episodeNo?: number; // series number (position in content/schedule.json): the "생존노트 #N" chip in the brand line
+  shareLine?: string; // handwritten under the closing checklist only, e.g. "부모님께도 보내 주세요" (visual only)
+  cta?: string; // value chip with a bell in the last ~1.2 s before the poster tail, e.g. "매일 1장, 생존노트"
   scenes: SceneProps[];
 };
 

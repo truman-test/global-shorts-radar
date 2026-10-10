@@ -182,6 +182,27 @@ def test_handwritten_labels_and_doodles_beside_the_card(stage):
             assert contrast(sky["doodle"], bg) >= GRAPHIC_MIN, (stage, state, "doodle", bg)
 
 
+@pytest.mark.parametrize("stage", sorted(STAGES))
+def test_share_line_and_value_chip(stage):
+    """The closing share line ("부모님께도 보내 주세요", handwritten under the checklist card, text >= 4.5:1): the page's
+    note ink on notebook stages (their surface under the card is paper, night-lamp's lamp-lit page included; a paper
+    label with handBacking), the stage's light ink on the dark alert stages. The value CTA chip: note ink and the
+    category's bell on the white note paper."""
+    s = STAGES[stage]
+    if s["family"] == "notebook":
+        ink = NOTE["ink"]
+        bgs = [rgba(NOTE["paper"])] if s.get("handBacking") else stage_backgrounds(stage, "card")
+    else:
+        assert s["luminance"] == "dark"
+        ink = s["stageInk"]
+        bgs = stage_backgrounds(stage, "card") + stage_backgrounds(stage, "caption")
+    for bg in bgs:
+        assert contrast(ink, bg) >= TEXT_MIN, (stage, "share line", bg)
+    assert contrast(NOTE["ink"], NOTE["paper"]) >= TEXT_MIN
+    for name, cat in TOKENS["categories"].items():
+        assert contrast(cat["ink"], NOTE["paper"]) >= GRAPHIC_MIN, (name, "bell")
+
+
 @pytest.mark.parametrize("stage", NEW_STAGES)
 def test_new_stages_keep_captions_and_warning_text_above_the_bar(stage):
     assert caption_silhouette_min(stage) >= CAPTION_MIN

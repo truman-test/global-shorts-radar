@@ -37,7 +37,9 @@ export const IN_AT = 2; // scene N+1's content starts fading in this many frames
 export const IN_DUR = 9;
 
 // mascot: 도치 is on in this scene (the layouts then leave the left margin free for it, see kit.useBody)
-export type SceneCtx = {mode: Transition; index: number; frames: number; first: boolean; last: boolean; mascot?: boolean};
+// share: the closing scene's share line (ShortProps.shareLine), undefined in every other scene and in the poster tail
+export type SceneCtx = {mode: Transition; index: number; frames: number; first: boolean; last: boolean; mascot?: boolean;
+  share?: string};
 
 // Standalone renders (Studio sample, stills) behave like the classic single scene.
 export const SceneContext = createContext<SceneCtx>({mode: "classic", index: 0, frames: 1e9, first: true, last: true});
