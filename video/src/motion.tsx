@@ -40,8 +40,10 @@ export const IN_DUR = 9;
 // share: the closing scene's share line (ShortProps.shareLine), undefined in every other scene and in the poster tail
 // shift: frames the visuals run ahead of the audio (the first scene's poster start); speech-synced elements (the
 // active speaker in a dialogue) subtract it, see useSpeechMs in dialogue.tsx
+// noMorphIn / noMorphOut: no shared-element traveller at this scene's start / end (a drama staging is on the other
+// side, or this scene is one): the anchor stays visible and the layout plays its own entrance
 export type SceneCtx = {mode: Transition; index: number; frames: number; first: boolean; last: boolean; mascot?: boolean;
-  share?: string; shift?: number};
+  share?: string; shift?: number; noMorphIn?: boolean; noMorphOut?: boolean};
 
 // Standalone renders (Studio sample, stills) behave like the classic single scene.
 export const SceneContext = createContext<SceneCtx>({mode: "classic", index: 0, frames: 1e9, first: true, last: true});
@@ -61,7 +63,7 @@ export const useRealFrame = () => {
 /** True when this scene morphs in from the previous one (its own entrance is replaced by the traveller). */
 export const useMorphIn = () => {
   const s = useScene();
-  return s.mode === "continuity" && !s.first;
+  return s.mode === "continuity" && !s.first && !s.noMorphIn;
 };
 
 /**
@@ -112,7 +114,8 @@ export const Anchor: React.FC<{size: number; children: React.ReactNode; style?: 
 }) => {
   const frame = useRealFrame();
   const s = useScene();
-  const hidden = s.mode === "continuity" && ((!s.first && frame < MORPH) || (!s.last && frame >= s.frames));
+  const hidden = s.mode === "continuity" && ((!s.first && !s.noMorphIn && frame < MORPH)
+    || (!s.last && !s.noMorphOut && frame >= s.frames));
   return (
     <div data-anchor={s.index} data-size={size} style={{width: size, height: size, ...style,
       visibility: hidden ? "hidden" : undefined}}>

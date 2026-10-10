@@ -16,8 +16,8 @@ from pathlib import Path
 from radar.config import PROJECT_ROOT
 from radar.production.assemble import (TRIM, ProductionError, ProductionResult, ffmpeg_exe, media_info, run_ffmpeg,
                                        write_meta)
-from radar.production.script import (LINE_GAP, TWIST_DELAY, TWIST_HOLD, Script, cast_of, caption_chunks, line_voice,
-                                     mockup_side)
+from radar.production.script import (LINE_GAP, TWIST_DELAY, TWIST_HOLD, Script, cast_of, caption_chunks,
+                                     default_staging, line_voice, mockup_side)
 from radar.production.textnorm import speakable_length, split_sentences
 from radar.production.themes import episode_number, record_style, resolve_style_report
 from radar.production.tts import TTSError
@@ -251,8 +251,9 @@ def lines_props(scene, spans: list[tuple[float, float]], cast: dict) -> list[dic
     out = []
     for line, (a, b) in zip(scene.lines, spans):
         side = mockup_side(cast.get(line.speaker, {}).get("role", "neutral"))
+        notes = {k: getattr(line, k) for k in ("face", "gesture", "bubble") if getattr(line, k, "")}
         out.append({"speaker": line.speaker, "text": line.text, "startMs": round(a * 1000), "endMs": round(b * 1000),
-                    **({"side": side} if side else {})})
+                    **({"side": side} if side else {}), **notes})
     return out
 
 
@@ -261,7 +262,8 @@ def cast_props(script: Script) -> dict:
     cast = cast_of(script)
     used = [line.speaker for scene in script.scenes for line in scene.lines]
     return {s: {"label": cast[s].get("label", ""), "role": cast[s]["role"],
-                **({"side": mockup_side(cast[s]["role"])} if mockup_side(cast[s]["role"]) else {})}
+                **({"side": mockup_side(cast[s]["role"])} if mockup_side(cast[s]["role"]) else {}),
+                **({"character": cast[s]["character"]} if cast[s].get("character") else {})}
             for s in dict.fromkeys(used) if s in cast}
 
 
@@ -379,7 +381,7 @@ def layout_props(scene) -> dict:
 
 
 def scene_props(scene, audio: str, lead: float, speech: float, length: float, pages: list[dict],
-                lines: list[dict] | None = None) -> dict:
+                lines: list[dict] | None = None, staging: str | None = None) -> dict:
     """Props of one scene. Dialogue: `lines` = [{speaker, text, startMs, endMs}] (scene time, lead-in included);
     a twist scene gets {text, atMs}: the frame freezes and the stamp lands at atMs."""
     return {"layout": scene.layout, "audio": audio, "leadInMs": round(lead * 1000), "speechMs": round(speech * 1000),
@@ -387,6 +389,7 @@ def scene_props(scene, audio: str, lead: float, speech: float, length: float, pa
             "icon": scene.icon, "accent": scene.accent, **({"mark": scene.mark} if scene.mark else {}),
             **({"mascot": scene.mascot} if isinstance(scene.mascot, bool) else {}),
             **({"lines": lines} if lines else {}),
+            **({"staging": staging} if staging else {}),
             **({"twist": {"text": scene.twist, "atMs": round((lead + speech + TWIST_DELAY) * 1000)}}
                if scene.twist else {}),
             **layout_props(scene)}
@@ -434,7 +437,8 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
         if speech < 0.3:
             raise ProductionError(f"scene {i + 1}: TTS produced no usable audio")
         shutil.copy(wav, public_job / wav.name)
-        scenes.append(scene_props(scene, f"jobs/{script.id}/{wav.name}", lead, speech, length, pages, lines))
+        scenes.append(scene_props(scene, f"jobs/{script.id}/{wav.name}", lead, speech, length, pages, lines,
+                                  default_staging(scene, cast_of(script))))
         total += round(length * 1000) / 1000
     music, music_item = music_props(script)
     props_path = out_dir / "props.json"

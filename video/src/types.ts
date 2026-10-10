@@ -11,11 +11,30 @@ export type CaptionPage = {startMs: number; endMs: number; words: Word[]; speake
 /** Dialogue roles: the caption chip colour and the side of the phone mockup (victim = the phone's owner). */
 export type SpeakerRole = "scammer" | "victim" | "narrator" | "dochi" | "neutral";
 
-/** A cast member as the renderer needs it: the chip label ("" = no chip), its role and mockup side. */
-export type CastMember = {label: string; role: SpeakerRole; side?: "me" | "them"};
+/** On-screen characters (Character.tsx rigs; composition.json "characters"). "ad" is the voice of an on-screen ad,
+ * drawn as an invented presenter inside the TV frame of watch_ad. */
+export type CharacterId = "father" | "mother" | "daughter" | "son" | "scammer" | "fake_banker" | "ad";
 
-/** One spoken line of a dialogue scene (scene time, lead-in included). */
-export type SpokenLine = {speaker: string; text: string; startMs: number; endMs: number; side?: "me" | "them"};
+/** Character expressions (the 8 of the brief + "excited", the lured look). */
+export type Expression = "neutral" | "worried" | "shocked" | "panicked" | "relieved" | "suspicious" | "smug" | "fakeKind"
+  | "excited";
+
+/** Arm/hand poses of a character. */
+export type Gesture = "rest" | "phoneEar" | "phoneRead" | "phoneType" | "handOnHead" | "handsOnCheeks" | "point"
+  | "palmOut" | "clutchChest";
+
+/** How a dialogue scene is staged with characters (CastScene.tsx); default from the layout (rig.ts stagingOf). */
+export type Staging = "pip_call" | "split_call" | "solo" | "over_shoulder_chat" | "watch_ad" | "twist_closeup"
+  | "dochi_explains";
+
+/** A cast member as the renderer needs it: the chip label ("" = no chip), its role and mockup side, and the
+ * character rig that plays it (none = voice only). */
+export type CastMember = {label: string; role: SpeakerRole; side?: "me" | "them"; character?: CharacterId};
+
+/** One spoken line of a dialogue scene (scene time, lead-in included). Optional acting notes: the speaker's face and
+ * gesture, and a keyword speech bubble (<= 8 characters, a part of the line's text). */
+export type SpokenLine = {speaker: string; text: string; startMs: number; endMs: number; side?: "me" | "them";
+  face?: Expression; gesture?: Gesture; bubble?: string};
 
 /** The reveal: at atMs the scene's frame freezes and a hand-drawn stamp lands on it. */
 export type Twist = {text: string; atMs: number};
@@ -73,6 +92,7 @@ export type SceneProps = {
   mascot?: boolean; // 도치 the hedgehog mascot in this scene; default: the stage's mascotDefault (on for notebook stages)
   lines?: SpokenLine[]; // dialogue: who speaks when (the mockup and 도치 react to the active speaker)
   twist?: Twist; // the reveal stamp over a freeze-frame at the scene's end
+  staging?: Staging; // dialogue with characters: the staging template (Python picks the default from the layout)
 };
 
 export type Music = {

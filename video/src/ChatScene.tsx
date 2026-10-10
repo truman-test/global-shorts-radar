@@ -32,7 +32,7 @@ const TypingDots: React.FC<{frame: number}> = ({frame}) => {
  * Invented messenger thread: bubbles arrive one by one over the narration (typing dots before
  * each incoming one), newest at the bottom, older ones scrolling up and fading under the header.
  */
-export const ChatScene: React.FC<{scene: SceneProps}> = ({scene}) => {
+export const ChatScene: React.FC<{scene: SceneProps; bare?: boolean}> = ({scene, bare}) => {
   const visual = useCurrentFrame();
   const t = useTheme();
   const {fps} = useVideoConfig();
@@ -79,7 +79,7 @@ export const ChatScene: React.FC<{scene: SceneProps}> = ({scene}) => {
 
   return (
     <SceneShell>
-      <SceneHeader scene={scene} />
+      {bare ? null : <SceneHeader scene={scene} />}
       <PhonePanel header={
         <>
           <Avatar label={title} />

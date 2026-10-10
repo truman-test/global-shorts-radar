@@ -18,12 +18,14 @@
   "mom": {
    "voice": "F3",
    "label": "엄마",
-   "role": "victim"
+   "role": "victim",
+   "character": "mother"
   },
   "daughter": {
    "voice": "F2",
    "label": "딸",
-   "role": "neutral"
+   "role": "neutral",
+   "character": "daughter"
   },
   "dochi": {
    "voice": "F1",
@@ -43,13 +45,16 @@
    "lines": [
     {
      "speaker": "mom",
-     "text": "어머, 유출 피해보상 대상이래."
+     "text": "어머, 유출 피해보상 대상이래.",
+     "face": "excited"
     },
     {
      "speaker": "mom",
-     "text": "기한 안에 신청하라네?"
+     "text": "기한 안에 신청하라네?",
+     "face": "excited"
     }
-   ]
+   ],
+   "staging": "over_shoulder_chat"
   },
   {
    "layout": "chat",
@@ -62,14 +67,19 @@
    "lines": [
     {
      "speaker": "mom",
-     "text": "보상 문자 왔는데, 이거 눌러도 돼?"
+     "text": "보상 문자 왔는데, 이거 눌러도 돼?",
+     "face": "worried"
     },
     {
      "speaker": "daughter",
-     "text": "엄마, 잠깐! 누르지 마!"
+     "text": "엄마, 잠깐! 누르지 마!",
+     "face": "shocked",
+     "gesture": "palmOut",
+     "bubble": "누르지 마!"
     }
    ],
-   "twist": "사기였습니다"
+   "twist": "사기였습니다",
+   "staging": "over_shoulder_chat"
   },
   {
    "layout": "compare",
@@ -103,7 +113,8 @@
      "speaker": "dochi",
      "text": "악성앱이 깔리면 경찰에 걸어도 사기범에게 연결될 수 있어요."
     }
-   ]
+   ],
+   "staging": "dochi_explains"
   },
   {
    "layout": "flow",
@@ -162,7 +173,8 @@
      "speaker": "dochi",
      "text": "확인은 은행 공식 앱이나 대표번호로."
     }
-   ]
+   ],
+   "staging": "dochi_explains"
   }
  ],
  "sources": [

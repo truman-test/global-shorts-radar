@@ -14,7 +14,9 @@ import {Bell} from "lucide-react";
 import {FONT} from "./fonts";
 import {CallScene, callAvatar} from "./CallScene";
 import {BADGE, CardScene} from "./CardScene";
-import {CastContext} from "./dialogue";
+import {CastContext, useCast} from "./dialogue";
+import {CastScene} from "./CastScene";
+import {isDrama, SPEC, stagingOf} from "./rig";
 import {Stamp} from "./Handwriting";
 import {CHIP} from "./kit";
 import {AnchorSpec, fadeOut, MORPH, RealFrameContext, SceneContext, spr, Transition, useScene} from "./motion";
@@ -163,7 +165,9 @@ const STAMP_Y = 640;
 const SceneVisual: React.FC<{scene: SceneProps; shift: number}> = ({scene, shift}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
-  if (!scene.twist) return <SceneBody scene={scene} />;
+  const cast = useCast();
+  // a drama staging plays its own reveal (close-up, flash, freeze), so it is never frozen from outside
+  if (!scene.twist || isDrama(stagingOf(scene, cast))) return <SceneBody scene={scene} />;
   const at = Math.round((scene.twist.atMs / 1000) * fps) + shift;
   const frozen = frame >= at;
   const k = frozen ? Math.min(1, (frame - at + 1) / 3) : 0;
@@ -189,22 +193,39 @@ const TwistStamp: React.FC<{scene: SceneProps}> = ({scene}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const s = useScene();
+  const cast = useCast();
   if (!scene.twist) return null;
+  // drama: on the victim's chest in the shocked close-up, under the chin (never over the eyes or the mouth)
+  const drama = isDrama(stagingOf(scene, cast));
+  const spot = drama ? SPEC.twist_closeup.stamp : {x: s.mascot ? 589 : 540, y: STAMP_Y};
   const at = Math.round((scene.twist.atMs / 1000) * fps);
   const exit = s.mode === "continuity" && !s.last ? fadeOut(frame, s.frames)
     : interpolate(frame, [s.frames - 7, s.frames], [1, 0], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
   return (
     <div style={{position: "absolute", inset: 0, opacity: exit}}>
-      <Stamp text={scene.twist.text} at={at} x={s.mascot ? 589 : 540} y={STAMP_Y} />
+      <Stamp text={scene.twist.text} at={at} x={spot.x} y={spot.y} />
     </div>
   );
 };
 
+/**
+ * A scene's picture: a dialogue scene with rigged characters is staged (CastScene: its layout's own picture is reused
+ * where it carries information, the thread in the hand or the explainer beside the family); else the layout.
+ */
 const SceneBody: React.FC<{scene: SceneProps}> = ({scene}) => {
+  const cast = useCast();
+  const staging = stagingOf(scene, cast);
+  if (!staging) return <LayoutBody scene={scene} />;
+  const body = staging === "over_shoulder_chat" ? <LayoutBody scene={scene} bare />
+    : staging === "dochi_explains" ? <LayoutBody scene={scene} /> : null;
+  return <CastScene scene={scene} staging={staging} body={body} />;
+};
+
+const LayoutBody: React.FC<{scene: SceneProps; bare?: boolean}> = ({scene, bare}) => {
   switch (scene.layout) {
     case "call": return <CallScene scene={scene} />;
-    case "chat": return <ChatScene scene={scene} />;
-    case "sms": return <SmsScene scene={scene} />;
+    case "chat": return <ChatScene scene={scene} bare={bare} />;
+    case "sms": return <SmsScene scene={scene} bare={bare} />;
     case "alert": return <AlertScene scene={scene} />;
     case "stat": return <StatScene scene={scene} />;
     case "timeline": return <TimelineScene scene={scene} />;
@@ -328,7 +349,7 @@ const anchorSpec = (scene: SceneProps): AnchorSpec => {
 };
 
 export const Short: React.FC<ShortProps> = (props) => {
-  const {fps} = useVideoConfig();
+  const {fps, durationInFrames} = useVideoConfig();
   const spans = sceneFrames(props, fps);
   const mode: Transition = props.transition === "classic" ? "classic" : "continuity";
   const cont = mode === "continuity";
@@ -336,7 +357,12 @@ export const Short: React.FC<ShortProps> = (props) => {
   const end = n ? spans[n - 1].from + spans[n - 1].frames : 0;
   const tail = Math.round(((props.posterTailMs ?? 0) / 1000) * fps);
   const theme = themeFor(props.theme);
-  const on = props.scenes.map((s) => mascotOn(s, theme));
+  const castMap = props.cast ?? {};
+  const on = props.scenes.map((s) => mascotOn(s, theme, castMap));
+  // drama stagings have no shared element: the boundaries next to one crossfade without the traveller
+  const drama = props.scenes.map((s) => isDrama(stagingOf(s, castMap)));
+  const noMorph = (i: number) => ({noMorphIn: i > 0 && (drama[i] || drama[i - 1]),
+    noMorphOut: i < n - 1 && (drama[i] || drama[i + 1])});
   // per-episode variants of the stage come from Python's seed (CRC32 of the script id), never from randomness
   const seed = typeof props.seed === "number" ? props.seed >>> 0 : seedOf(props.episode ?? "");
   return (
@@ -360,20 +386,20 @@ export const Short: React.FC<ShortProps> = (props) => {
                 // and the moment viewers decide to swipe) already shows the finished hook, not an empty screen.
                 <Sequence from={-POSTER} layout="none">
                   <SceneContext.Provider value={{mode, index: i, frames: frames + POSTER, first: true, last, mascot: on[i],
-                    share: last ? props.shareLine : undefined, shift: POSTER}}>
+                    share: last ? props.shareLine : undefined, shift: POSTER, ...noMorph(i)}}>
                     <SceneVisual scene={scene} shift={POSTER} />
                   </SceneContext.Provider>
                 </Sequence>
               ) : (
                 <SceneContext.Provider value={{mode, index: i, frames, first: false, last, mascot: on[i],
-                  share: last ? props.shareLine : undefined}}>
+                  share: last ? props.shareLine : undefined, ...noMorph(i)}}>
                   <SceneVisual scene={scene} shift={0} />
                 </SceneContext.Provider>
               )}
             </Sequence>
           );
         })}
-        {cont ? props.scenes.slice(1).map((scene, j) => (
+        {cont ? props.scenes.slice(1).map((scene, j) => drama[j] || drama[j + 1] ? null : (
           <Sequence key={`t${j}`} from={spans[j + 1].from} durationInFrames={MORPH}>
             <Traveller index={j} from={anchorSpec(props.scenes[j])} to={anchorSpec(scene)}
               hideFrom={Boolean(props.scenes[j].twist)} />
@@ -382,7 +408,7 @@ export const Short: React.FC<ShortProps> = (props) => {
         {props.scenes.map((scene, i) => scene.twist ? (
           <Sequence key={`tw${i}`} from={spans[i].from} durationInFrames={spans[i].frames + (cont && i < n - 1 ? MORPH : 0)}>
             <SceneContext.Provider value={{mode, index: i, frames: spans[i].frames, first: i === 0, last: i === n - 1,
-              mascot: on[i]}}>
+              mascot: on[i], ...noMorph(i)}}>
               <TwistStamp scene={scene} />
             </SceneContext.Provider>
           </Sequence>
@@ -411,13 +437,14 @@ export const Short: React.FC<ShortProps> = (props) => {
       {tail > 0 && n ? (
         // Poster tail: the opening frame again (first scene settled, first caption page, disclaimer badge), so the
         // loop back to frame 0 is seamless and this frame can be picked as the Shorts thumbnail in the app.
-        <Sequence from={end} durationInFrames={tail}>
+        // (to the composition's last frame: its length rounds the total, the scenes round one by one)
+        <Sequence from={end} durationInFrames={Math.max(tail, durationInFrames - end)}>
           {/* the frozen frame must stay inside the sequence's own length (Remotion clamps it to the 15-frame tail),
               so the scene is shifted by POSTER and frozen at its local frame 0 = the opening frame's POSTER */}
           <Sequence from={-POSTER} layout="none">
             <Freeze frame={0}>
               <SceneContext.Provider value={{mode, index: 0, frames: spans[0].frames + POSTER, first: true, last: false, mascot: on[0],
-                shift: POSTER}}>
+                shift: POSTER, ...noMorph(0)}}>
                 <SceneBody scene={props.scenes[0]} />
               </SceneContext.Provider>
             </Freeze>
