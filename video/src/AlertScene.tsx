@@ -41,7 +41,7 @@ export const AlertScene: React.FC<{scene: SceneProps}> = ({scene}) => {
             background: t.wallpaper[2], opacity: 0.28, filter: "blur(100px)"}} />
           {/* lock-screen clock (below the banner, so it stays readable as context) */}
           <div style={{position: "absolute", top: 400, width: "100%", textAlign: "center"}}>
-            <div style={{fontSize: 34, fontWeight: 700, color: "rgba(255,255,255,0.85)"}}>10월 9일 목요일</div>
+            <div style={{fontSize: 34, fontWeight: 700, color: "rgba(255,255,255,0.85)"}}>오늘</div>
             <div style={{fontSize: 190, fontWeight: 800, letterSpacing: -4, lineHeight: 1.05, color: "rgba(255,255,255,0.95)"}}>
               2:14
             </div>
