@@ -124,7 +124,7 @@
     "card",
     "card"
    ],
-   "produced_at": "2026-10-10T06:21:21+00:00"
+   "produced_at": "2026-10-10T10:06:56+00:00"
   },
   "2026-10-09-deepfake-invest-ad": {
    "stage": "notebook",
@@ -145,7 +145,7 @@
     "timeline",
     "stat"
    ],
-   "produced_at": "2026-10-10T06:23:25+00:00"
+   "produced_at": "2026-10-10T09:50:38+00:00"
   },
   "2026-10-09-voice-clone-3-seconds": {
    "stage": "alert",
@@ -166,7 +166,7 @@
     "stat",
     "card"
    ],
-   "produced_at": "2026-10-10T06:27:43+00:00"
+   "produced_at": "2026-10-10T09:54:51+00:00"
   },
   "2026-10-09-fake-map-number": {
    "stage": "alert",
@@ -187,7 +187,7 @@
     "card",
     "stat"
    ],
-   "produced_at": "2026-10-10T06:31:34+00:00"
+   "produced_at": "2026-10-10T10:00:02+00:00"
   },
   "2026-10-09-airbnb-fake-damage-photo": {
    "stage": "notebook",
@@ -229,7 +229,70 @@
     "card",
     "card"
    ],
-   "produced_at": "2026-10-10T06:35:08+00:00"
+   "produced_at": "2026-10-10T10:03:42+00:00"
+  },
+  "2026-10-10-bank-caller-knows-income": {
+   "stage": "notebook",
+   "theme": "mood-sky",
+   "category": "voice",
+   "luminance": "light",
+   "mascot": true,
+   "visual_group": "sky",
+   "layouts": [
+    "call",
+    "card",
+    "compare",
+    "flow",
+    "checklist"
+   ],
+   "middle": [
+    "card",
+    "compare",
+    "flow"
+   ],
+   "produced_at": "2026-10-10T09:41:30+00:00"
+  },
+  "2026-10-10-parents-loan-block": {
+   "stage": "alert",
+   "theme": "pulse",
+   "category": "security",
+   "luminance": "dark",
+   "mascot": false,
+   "visual_group": "cards",
+   "layouts": [
+    "alert",
+    "stat",
+    "timeline",
+    "toggle",
+    "checklist"
+   ],
+   "middle": [
+    "stat",
+    "timeline",
+    "toggle"
+   ],
+   "produced_at": "2026-10-10T09:45:54+00:00"
+  },
+  "2026-10-10-leak-compensation-sms": {
+   "stage": "notebook",
+   "theme": "kraft-board",
+   "category": "smishing",
+   "luminance": "light",
+   "mascot": true,
+   "visual_group": "evidence",
+   "layouts": [
+    "sms",
+    "compare",
+    "card",
+    "flow",
+    "checklist"
+   ],
+   "middle": [
+    "compare",
+    "card",
+    "flow"
+   ],
+   "produced_at": "2026-10-10T09:48:46+00:00"
   }
  },
  "_doc": "Visual style of every produced episode, written by `radar produce` (Remotion engine). stage = family (alert | notebook), luminance (light | dark), mascot (도치 on), visual_group (ruled | cards | desk | evidence | blueprint | sky). themes.resolve_style keeps logged stages in the schedule walk (a script's own theme replaces its entry); `radar script-check` warns when the middle scenes repeat the previous episode's layout sequence."

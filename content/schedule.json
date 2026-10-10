@@ -23,49 +23,49 @@
   {
    "date": "2026-10-12",
    "script": "2026-10-10-bank-caller-knows-income",
-   "status": "planned",
+   "status": "ready",
    "source_video_id": "R6MMIC7RBAc"
   },
   {
    "date": "2026-10-13",
    "script": "2026-10-10-parents-loan-block",
-   "status": "planned",
+   "status": "ready",
    "source_video_id": "tRI9-0drNcw"
   },
   {
    "date": "2026-10-14",
    "script": "2026-10-10-leak-compensation-sms",
-   "status": "planned",
+   "status": "ready",
    "source_video_id": "CAvtAcfHDvk"
   },
   {
    "date": "2026-10-15",
    "script": "2026-10-09-deepfake-invest-ad",
-   "status": "planned",
+   "status": "ready",
    "source_video_id": "iU2Gp3kkUAo"
   },
   {
    "date": "2026-10-16",
    "script": "2026-10-09-voice-clone-3-seconds",
-   "status": "planned",
+   "status": "ready",
    "source_video_id": "Jf1239_V0mw"
   },
   {
    "date": "2026-10-17",
    "script": "2026-10-09-fake-map-number",
-   "status": "planned",
+   "status": "ready",
    "source_video_id": "Xz7rLQ62WOs"
   },
   {
    "date": "2026-10-18",
    "script": "2026-10-09-kid-tap-payment",
-   "status": "planned",
+   "status": "ready",
    "source_video_id": "hpMCY56yDWA"
   },
   {
    "date": "2026-10-19",
    "script": "2026-10-09-kid-password",
-   "status": "planned",
+   "status": "ready",
    "source_video_id": "D1Z-xslsgyg"
   }
  ],
