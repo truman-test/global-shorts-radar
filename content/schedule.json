@@ -22,51 +22,65 @@
   },
   {
    "date": "2026-10-12",
-   "script": "2026-10-09-discord-bot-breach",
-   "status": "ready",
-   "source_video_id": "LNOSVdWdwFY"
+   "script": "2026-10-10-bank-caller-knows-income",
+   "status": "planned",
+   "source_video_id": "R6MMIC7RBAc"
   },
   {
    "date": "2026-10-13",
-   "script": "2026-10-09-ai-crocodile-hoax",
-   "status": "ready",
-   "source_video_id": "7l3OM5YnPYc"
+   "script": "2026-10-10-parents-loan-block",
+   "status": "planned",
+   "source_video_id": "tRI9-0drNcw"
   },
   {
    "date": "2026-10-14",
-   "script": "2026-10-09-kid-tap-payment",
-   "status": "ready",
-   "source_video_id": "hpMCY56yDWA"
+   "script": "2026-10-10-leak-compensation-sms",
+   "status": "planned",
+   "source_video_id": "CAvtAcfHDvk"
   },
   {
    "date": "2026-10-15",
    "script": "2026-10-09-deepfake-invest-ad",
-   "status": "ready",
+   "status": "planned",
    "source_video_id": "iU2Gp3kkUAo"
   },
   {
    "date": "2026-10-16",
    "script": "2026-10-09-voice-clone-3-seconds",
-   "status": "ready",
+   "status": "planned",
    "source_video_id": "Jf1239_V0mw"
   },
   {
    "date": "2026-10-17",
    "script": "2026-10-09-fake-map-number",
-   "status": "ready",
+   "status": "planned",
    "source_video_id": "Xz7rLQ62WOs"
   },
   {
    "date": "2026-10-18",
-   "script": "2026-10-09-airbnb-fake-damage-photo",
-   "status": "ready",
-   "source_video_id": "WNu1h71ID_4"
+   "script": "2026-10-09-kid-tap-payment",
+   "status": "planned",
+   "source_video_id": "hpMCY56yDWA"
   },
   {
    "date": "2026-10-19",
    "script": "2026-10-09-kid-password",
-   "status": "ready",
+   "status": "planned",
    "source_video_id": "D1Z-xslsgyg"
+  }
+ ],
+ "deferred": [
+  {
+   "script": "2026-10-09-discord-bot-breach",
+   "reason": "low Korean-viewer relevance (korean_demand_20261010.md); keep rendered file, reconsider later"
+  },
+  {
+   "script": "2026-10-09-ai-crocodile-hoax",
+   "reason": "low Korean-viewer relevance (korean_demand_20261010.md); keep rendered file, reconsider later"
+  },
+  {
+   "script": "2026-10-09-airbnb-fake-damage-photo",
+   "reason": "low Korean-viewer relevance (korean_demand_20261010.md); keep rendered file, reconsider later"
   }
  ]
 }
