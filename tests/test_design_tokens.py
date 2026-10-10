@@ -318,7 +318,8 @@ def test_every_pattern_has_a_renderer():
 
 def test_mascot_follows_the_stage_default():
     src = (ROOT / "video" / "src" / "Mascot.tsx").read_text(encoding="utf-8")
-    assert "scene.mascot ?? theme.mascotDefault" in src
+    # the script wins, then the drama stagings (off; on in dochi_explains), then the stage default
+    assert "typeof scene.mascot === \"boolean\"" in src and "return theme.mascotDefault" in src
     assert "theme.mascotSlot" in src and "mascotPaletteFor" in src
 
 

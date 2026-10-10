@@ -18,11 +18,13 @@
  "cast": {
   "scammer": {
    "voice": "M2",
-   "label": "가짜 은행원"
+   "label": "가짜 은행원",
+   "character": "fake_banker"
   },
   "victim": {
    "voice": "M1",
-   "label": "아버지"
+   "label": "아버지",
+   "character": "father"
   },
   "dochi": {
    "voice": "F1",
@@ -42,7 +44,8 @@
    "lines": [
     {
      "speaker": "scammer",
-     "text": "아버님, 연소득으로 한도가 나왔어요."
+     "text": "아버님, 연소득으로 한도가 나왔어요.",
+     "bubble": "한도가 나왔어요"
     },
     {
      "speaker": "victim",
@@ -50,18 +53,21 @@
     },
     {
      "speaker": "scammer",
-     "text": "대출신청서 앱부터 까세요."
+     "text": "대출신청서 앱부터 까세요.",
+     "bubble": "앱부터 까세요"
     },
     {
      "speaker": "scammer",
-     "text": "기존 대출은 먼저 갚으시고요."
+     "text": "기존 대출은 먼저 갚으시고요.",
+     "bubble": "먼저 갚으시고요"
     },
     {
      "speaker": "victim",
      "text": "은행이 그러면, 해야지요."
     }
    ],
-   "twist": "사기였습니다"
+   "twist": "사기였습니다",
+   "staging": "pip_call"
   },
   {
    "headline": "유출 정보에 연소득·대출한도",
@@ -74,7 +80,8 @@
      "speaker": "dochi",
      "text": "보도에 따르면, 한 은행 유출 정보엔 연소득과 대출한도도 있었어요."
     }
-   ]
+   ],
+   "staging": "dochi_explains"
   },
   {
    "layout": "compare",
@@ -105,7 +112,8 @@
      "speaker": "dochi",
      "text": "금융당국은 내 정보를 정확히 말해도, 믿지 말라고 했어요."
     }
-   ]
+   ],
+   "staging": "dochi_explains"
   },
   {
    "layout": "checklist",
@@ -132,7 +140,8 @@
      "speaker": "dochi",
      "text": "공식 앱이나 홈페이지의 대표번호로 거세요."
     }
-   ]
+   ],
+   "staging": "dochi_explains"
   }
  ],
  "sources": [

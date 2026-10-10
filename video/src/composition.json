@@ -1,0 +1,106 @@
+{
+ "_doc": "Character system (드라마 등장인물): the rig's geometry in local units and every staging's shots in screen px. One source of truth for video/src/rig.ts, Character.tsx, CastScene.tsx and tests/test_characters.py, which checks the composition rules: eyes in the eye band, faces and hands never in the caption band / bottom 20% / right UI column, size minimums, at most 3 characters per shot. Local rig units: origin at the base of the neck, y down; a character drawn with scale k at (x, eyeY) has its neck at (x, eyeY - rig.eyeY * k).",
+ "frame": {"w": 1080, "h": 1920, "captionBand": [1255, 1500], "bottomSafe": 1536, "rightColumn": {"x": 930, "y": [900, 1700]},
+  "eyeBand": [560, 860], "maxCharacters": 3, "minHeight": {"single": 0.42, "twoShot": 0.28, "window": 0.2}},
+ "characters": ["father", "mother", "daughter", "son", "scammer", "fake_banker", "ad"],
+ "_characters": "ad = the voice of an on-screen ad (watch_ad): drawn as a generic invented presenter inside the TV frame, never a real person",
+ "family": ["father", "mother", "daughter", "son"],
+ "callers": ["scammer", "fake_banker"],
+ "stagings": ["pip_call", "split_call", "solo", "over_shoulder_chat", "watch_ad", "twist_closeup", "dochi_explains"],
+ "expressions": ["neutral", "worried", "shocked", "panicked", "relieved", "suspicious", "smug", "fakeKind", "excited"],
+ "gestures": ["rest", "phoneEar", "phoneRead", "phoneType", "handOnHead", "handsOnCheeks", "point", "palmOut", "clutchChest"],
+ "bubbleMaxChars": 8,
+ "rig": {
+  "head": {"cx": 0, "cy": -205, "rx": 160, "ry": 172, "top": -415, "chin": -33},
+  "back": {"phone": [206, -160], "hand": [168, -92], "elbow": [262, 150]},
+  "eyeY": -190, "eyeDX": 62, "mouthY": -100, "shoulderX": 212, "shoulderY": 44, "waist": 470, "handR": 46,
+  "_hands": "hand centres per gesture and side (L = viewer's left, R = viewer's right); rest arms hang behind the torso (no hand drawn)",
+  "hands": {
+   "rest": {},
+   "back": {"R": [168, -92]},
+   "phoneEar": {"R": [166, -150]},
+   "phoneRead": {"L": [-64, 140], "R": [64, 140]},
+   "phoneType": {"L": [-64, 140], "R": [64, 140]},
+   "handOnHead": {"R": [96, -350]},
+   "handsOnCheeks": {"L": [-150, -120], "R": [150, -120]},
+   "point": {"R": [330, -60]},
+   "palmOut": {"R": [150, 30], "L": [-64, 140]},
+   "clutchChest": {"R": [60, 120]}
+  },
+  "elbows": {
+   "back": {"R": [262, 150]},
+   "phoneEar": {"R": [262, 150]},
+   "phoneRead": {"L": [-222, 236], "R": [222, 236]},
+   "phoneType": {"L": [-222, 236], "R": [222, 236]},
+   "handOnHead": {"R": [300, -40]},
+   "handsOnCheeks": {"L": [-250, 130], "R": [250, 130]},
+   "point": {"R": [250, 150]},
+   "palmOut": {"R": [292, 170], "L": [-222, 236]},
+   "clutchChest": {"R": [236, 230]}
+  }
+ },
+ "_shots": "Per staging, the shots it cuts between. A character entry: who (victim | caller | other | presenter), x (neck x), eyeY, k (scale), turn (-1..1, face turned to the viewer's left/right), gesture used in that shot (for the hand checks; the performance may vary it among those listed in gestures), view (front | back). windows: framed insets in screen px.",
+ "stagings_spec": {
+  "pip_call": {
+   "shots": {
+    "wide": {"chars": [{"who": "victim", "x": 380, "eyeY": 770, "k": 1.0, "turn": 0.3, "gestures": ["phoneEar", "clutchChest"]}],
+     "window": {"x": 612, "y": 246, "w": 420, "h": 450, "scale": 1.0}},
+    "close": {"chars": [{"who": "victim", "x": 410, "eyeY": 735, "k": 1.3, "turn": 0.3, "gestures": ["phoneEar"]}],
+     "window": {"x": 612, "y": 246, "w": 420, "h": 450, "scale": 0.86}},
+    "caller": {"chars": [{"who": "caller", "x": 520, "eyeY": 760, "k": 1.45, "turn": -0.2, "gestures": ["rest"]}]}
+   },
+   "windowChar": {"x": 210, "eyeY": 220, "k": 0.62},
+   "bubble": {"caller": [770, 770], "victim": [250, 345]}
+  },
+  "split_call": {
+   "shots": {
+    "split": {"chars": [{"who": "caller", "x": 540, "eyeY": 560, "k": 1.45, "turn": -0.1, "gestures": ["rest"]},
+      {"who": "victim", "x": 520, "eyeY": 1000, "k": 1.05, "turn": 0.2, "gestures": ["phoneEar"]}]}
+   },
+   "_split": "the caller's panel is the top part (y 236 to the border), the victim's the bottom (border to 1250); the border is tilted 3 degrees",
+   "border": {"y": 800, "tilt": 3},
+   "eyeBandOverride": {"victim": [900, 1060]}
+  },
+  "solo": {
+   "shots": {
+    "victim": {"chars": [{"who": "victim", "x": 540, "eyeY": 670, "k": 1.5, "turn": 0.1, "gestures": ["phoneEar", "phoneRead", "clutchChest"]}]},
+    "caller": {"chars": [{"who": "caller", "x": 540, "eyeY": 740, "k": 1.55, "turn": -0.1, "gestures": ["rest"]}]},
+    "other": {"chars": [{"who": "other", "x": 540, "eyeY": 690, "k": 1.45, "turn": -0.1, "gestures": ["phoneEar", "phoneRead", "phoneType", "palmOut"]}]}
+   }
+  },
+  "over_shoulder_chat": {
+   "shots": {
+    "over": {"chars": [{"who": "victim", "x": 280, "eyeY": 1050, "k": 1.2, "view": "back", "gestures": ["back"]}],
+     "panel": {"x": 196, "y": 236, "scale": 0.86}},
+    "face": {"chars": [{"who": "victim", "x": 520, "eyeY": 760, "k": 1.2, "turn": 0.1, "gestures": ["phoneRead", "phoneType"]}]},
+    "other": {"chars": [{"who": "other", "x": 540, "eyeY": 720, "k": 1.35, "turn": -0.15, "gestures": ["phoneRead", "phoneType", "palmOut"]}]},
+    "caller": {"chars": [{"who": "caller", "x": 540, "eyeY": 700, "k": 1.4, "turn": -0.15, "gestures": ["phoneType"]}]}
+   },
+   "_over": "back view: the eye line stands for the back of the head (no face); the phone glows in the hand and the mockup panel floats above it",
+   "reactionMs": 600
+  },
+  "watch_ad": {
+   "shots": {
+    "wide": {"chars": [{"who": "victim", "x": 730, "eyeY": 830, "k": 1.0, "turn": -0.45, "gestures": ["rest", "point"],
+      "mirror": true}],
+     "tv": {"x": 48, "y": 250, "w": 600, "h": 400}},
+    "face": {"chars": [{"who": "victim", "x": 600, "eyeY": 760, "k": 1.4, "turn": -0.35, "gestures": ["rest"]}]},
+    "tv": {"chars": [], "tv": {"x": 40, "y": 330, "w": 1000, "h": 660}}
+   },
+   "presenter": {"eyeYFrac": 0.42, "kFrac": 0.0016}
+  },
+  "twist_closeup": {
+   "shots": {
+    "twist": {"chars": [{"who": "victim", "x": 540, "eyeY": 640, "k": 1.75, "turn": 0, "gestures": ["handsOnCheeks"]}]}
+   },
+   "stamp": {"x": 540, "y": 1092, "h": 196}
+  },
+  "dochi_explains": {
+   "shots": {
+    "explain": {"chars": [{"who": "victim", "x": 190, "eyeY": 700, "k": 0.98, "turn": 0.55, "gestures": ["rest", "handOnHead", "clutchChest"]}]}
+   },
+   "content": {"scale": 0.72, "x": 277, "y": 170},
+   "dochi": {"x": 660, "y": 1236, "size": 220}
+  }
+ }
+}

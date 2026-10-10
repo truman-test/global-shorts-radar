@@ -18,7 +18,8 @@ import {ALERT_LAND, chatBeats, chatFollowsLines, checklistTicks, compareBeats, d
   timelineBeats, TOGGLE_CIRCLE, toggleTaps} from "./schedule";
 import {toggleRowY} from "./ToggleScene";
 import {MASCOT_PALETTES, MascotPalette, MascotSlot, mascotPaletteFor, Theme, useTheme} from "./themes";
-import {SceneProps, ShortProps} from "./types";
+import {isDrama, SPEC, stagingOf} from "./rig";
+import {CastMember, SceneProps, ShortProps} from "./types";
 
 export type Expr = "neutral" | "alarmed" | "worried" | "curious" | "happy";
 export type Paw = "none" | "point" | "pencil" | "cheer";
@@ -323,6 +324,7 @@ const watchCall = (scene: SceneProps, p0: Pose, f: number, ms: number, fps: numb
 export const scenePose = (scene: SceneProps, f: number, fps: number, first = false,
   slot: MascotSlot = DEFAULT_SLOT, shift = 0): Pose => {
   const mx = slot.x;
+  if (scene.staging === "dochi_explains") return explainPose(scene, f, fps, shift);
   // a margin spot: feet clamped to the stage's range
   const base = (x: number, y: number, size = SIZE) => pose0(x, Math.min(slot.maxY, Math.max(slot.minY, y)), size);
   if (scene.layout === "call" && scene.lines?.length) {
@@ -469,8 +471,38 @@ export const scenePose = (scene: SceneProps, f: number, fps: number, first = fal
   }
 };
 
-/** Is 도치 on in this scene? The script's `mascot` wins; else the stage's mascotDefault (on for notebook stages). */
-export const mascotOn = (scene: SceneProps, theme: Theme) => scene.mascot ?? theme.mascotDefault;
+/**
+ * Is 도치 on in this scene? The script's `mascot` wins; else off while characters play a drama staging (the frame
+ * belongs to them), on in dochi_explains (it is the one explaining), else the stage's mascotDefault.
+ */
+export const mascotOn = (scene: SceneProps, theme: Theme, cast: Record<string, CastMember> = {}) => {
+  if (typeof scene.mascot === "boolean") return scene.mascot;
+  const staging = stagingOf(scene, cast);
+  if (staging === "dochi_explains") return true;
+  if (isDrama(staging)) return false;
+  return theme.mascotDefault;
+};
+
+/**
+ * dochi_explains: 도치 stands in front, beside the family, big enough for a two-shot; it points up at the cards while
+ * it talks (a small hop as each line starts), happy on safe scenes, worried on danger ones until it has said its piece.
+ */
+const explainPose = (scene: SceneProps, f: number, fps: number, shift: number): Pose => {
+  const spot = SPEC.dochi_explains.dochi;
+  let p = pose0(spot.x, spot.y, spot.size);
+  const ms = ((f - shift) / fps) * 1000;
+  const lines = scene.lines ?? [];
+  const k = activeLine(lines, ms);
+  p.lookX = 0.7;
+  p.lookY = -0.6;
+  p.expr = scene.accent === "green" ? "happy" : scene.accent === "red" && k <= 0 ? "worried" : "curious";
+  if (k >= 0) {
+    p = {...p, paw: "point", pawAngle: -58};
+    const at = Math.round((lines[k].startMs / 1000) * fps) + shift;
+    p = withHop(p, hop(f, at, 9, 22));
+  }
+  return p;
+};
 
 const MOVE = 14; // frames for the move from one scene's spot to the next
 
@@ -508,15 +540,15 @@ export const MascotTrack: React.FC<{props: ShortProps; spans: {from: number; fra
   let pose: Pose | null;
   let rim = rimOf(0);
   if (frame >= end) {
-    pose = mascotOn(props.scenes[0], theme) ? scenePose(props.scenes[0], poster, fps, true, slot, poster) : null;
+    pose = mascotOn(props.scenes[0], theme, cast) ? scenePose(props.scenes[0], poster, fps, true, slot, poster) : null;
   } else {
     let i = spans.findIndex((s) => frame < s.from + s.frames);
     if (i < 0) i = n - 1;
     const tIn = frame - spans[i].from;
     const k = i > 0 ? Math.min(1, tIn / 10) : 1;
     rim = i > 0 ? rimOf(i - 1) + (rimOf(i) - rimOf(i - 1)) * k : rimOf(i);
-    const on = mascotOn(props.scenes[i], theme);
-    const prevOn = i > 0 && mascotOn(props.scenes[i - 1], theme);
+    const on = mascotOn(props.scenes[i], theme, cast);
+    const prevOn = i > 0 && mascotOn(props.scenes[i - 1], theme, cast);
     const t = frame - spans[i].from;
     if (!on) {
       pose = prevOn && t < 8 ? {...poseAt(i - 1, spans[i].from - 1), opacity: 1 - t / 8} : null;
@@ -529,6 +561,10 @@ export const MascotTrack: React.FC<{props: ShortProps; spans: {from: number; fra
         pose = {...to, x: from.x + (to.x - from.x) * h.u, y: from.y + (to.y - from.y) * h.u, sy: h.sy, lift: h.lift,
           curl: 0, bristle: 0, shiver: 0, walk: level ? t * 0.9 : 0, clipY: t > MOVE - 3 ? to.clipY : undefined,
           size: from.size + (to.size - from.size) * h.u};
+      } else if (props.scenes[i].staging === "dochi_explains") {
+        // 도치 hops in from the left edge to explain (after a drama scene it was not on screen)
+        const h = hop(t, 0, MOVE - 2, 120);
+        pose = {...to, x: -180 + (to.x + 180) * h.u, sy: h.sy, lift: h.lift, paw: "none", walk: 0};
       } else {
         const s = spr(t, 0, 10, 0.08);
         pose = {...to, opacity: Math.min(1, s * 1.5), sy: to.sy * (0.6 + 0.4 * s)};

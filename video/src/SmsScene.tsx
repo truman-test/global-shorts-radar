@@ -14,7 +14,7 @@ const LINK_RE = /((?:https?:\/\/)?●+[^\s]*)/;
  * Invented text-message screen: one incoming message lands, then the (masked) link inside it is
  * boxed in red with a pulsing "의심 링크" tag pointing at it.
  */
-export const SmsScene: React.FC<{scene: SceneProps}> = ({scene}) => {
+export const SmsScene: React.FC<{scene: SceneProps; bare?: boolean}> = ({scene, bare}) => {
   const visual = useCurrentFrame();
   const {fps} = useVideoConfig();
   const t = useTheme();
@@ -51,7 +51,7 @@ export const SmsScene: React.FC<{scene: SceneProps}> = ({scene}) => {
 
   return (
     <SceneShell>
-      <SceneHeader scene={scene} />
+      {bare ? null : <SceneHeader scene={scene} />}
       <PhonePanel header={
         <>
           <Avatar label="" color={`linear-gradient(160deg, ${t.avatar[0]}, ${t.avatar[1]})`}>

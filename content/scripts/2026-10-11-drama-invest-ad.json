@@ -18,12 +18,14 @@
   "ad": {
    "voice": "M3",
    "label": "광고",
-   "role": "neutral"
+   "role": "neutral",
+   "character": "ad"
   },
   "leader": {
    "voice": "M2",
    "label": "방장",
-   "role": "scammer"
+   "role": "scammer",
+   "character": "scammer"
   },
   "member": {
    "voice": "F2",
@@ -33,7 +35,8 @@
   "father": {
    "voice": "M1",
    "label": "아버지",
-   "role": "victim"
+   "role": "victim",
+   "character": "father"
   },
   "dochi": {
    "voice": "F1",
@@ -50,13 +53,16 @@
    "lines": [
     {
      "speaker": "ad",
-     "text": "제가 고른 종목, 무료로 드려요."
+     "text": "제가 고른 종목, 무료로 드려요.",
+     "bubble": "무료로 드려요"
     },
     {
      "speaker": "father",
-     "text": "어, 그 유명인이네?"
+     "text": "어, 그 유명인이네?",
+     "face": "excited"
     }
-   ]
+   ],
+   "staging": "watch_ad"
   },
   {
    "layout": "chat",
@@ -77,9 +83,11 @@
     },
     {
      "speaker": "father",
-     "text": "어, 벌써 올랐네!"
+     "text": "어, 벌써 올랐네!",
+     "face": "excited"
     }
-   ]
+   ],
+   "staging": "over_shoulder_chat"
   },
   {
    "layout": "chat",
@@ -96,14 +104,16 @@
     },
     {
      "speaker": "father",
-     "text": "번 돈 좀 빼 볼게요."
+     "text": "번 돈 좀 빼 볼게요.",
+     "face": "suspicious"
     },
     {
      "speaker": "leader",
      "text": "지금 빼면 손해예요."
     }
    ],
-   "twist": "사기였습니다"
+   "twist": "사기였습니다",
+   "staging": "over_shoulder_chat"
   },
   {
    "layout": "timeline",
@@ -138,7 +148,8 @@
      "speaker": "dochi",
      "text": "칭찬하던 회원도 한패일 수 있어요."
     }
-   ]
+   ],
+   "staging": "dochi_explains"
   },
   {
    "layout": "checklist",
@@ -161,7 +172,8 @@
      "speaker": "dochi",
      "text": "증권사 직원이라면, 공식 고객센터에 재직 여부부터 확인하세요."
     }
-   ]
+   ],
+   "staging": "dochi_explains"
   }
  ],
  "sources": [

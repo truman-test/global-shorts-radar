@@ -43,6 +43,13 @@ spoken one after another, each in its speaker's voice, with the script-level
 colour and the mockup side: scammer | victim | narrator | dochi | neutral, default = the speaker id if it is a role).
 The victim is the phone's owner (the "me" side of a call/chat/sms mockup); narrator and dochi are voice-over.
 "twist": "사기였습니다" on a scene freezes its last frame for a moment under a hand-drawn red stamp (the reveal).
+Characters (드라마 등장인물, video/src/Character.tsx): a cast entry may name the rig that plays it,
+  "character": father | mother | daughter | son | scammer | fake_banker | ad   (ad = the voice of an on-screen ad)
+and a dialogue scene whose speakers include one is staged with characters instead of a full-screen mockup:
+  "staging": pip_call | split_call | solo | over_shoulder_chat | watch_ad | twist_closeup | dochi_explains
+(default from the layout: call -> pip_call, chat/sms -> over_shoulder_chat, a card with an ad voice -> watch_ad;
+dochi_explains, the explainer beside the family, is opt-in). A line may carry acting notes: "face" (one of
+EXPRESSIONS), "gesture" (one of GESTURES) and "bubble", a keyword speech bubble of <= 8 characters taken from the line.
 Dialogue is an invented re-enactment: the disclaimer must say 재연, and every line passes the same checks as the
 narration (speakable, no URLs, masked numbers, no brand names).
 """
@@ -70,6 +77,20 @@ LINE_PAD, SENTENCE_PAD, COMMA_PAD = 0.18, 0.5, 0.13
 TWIST_DELAY = 0.08           # after the last word the frame freezes and the reveal stamp lands...
 TWIST_HOLD = 0.45            # ...and holds; a twist scene ends on its freeze-frame (no tail gap)
 SPEAKER_ROLES = ("scammer", "victim", "narrator", "dochi", "neutral")
+# Character system (video/src/composition.json; tests/test_characters.py keeps the two in sync)
+CHARACTERS = ("father", "mother", "daughter", "son", "scammer", "fake_banker", "ad")
+FAMILY = ("father", "mother", "daughter", "son")
+CALLERS = ("scammer", "fake_banker")
+STAGINGS = ("pip_call", "split_call", "solo", "over_shoulder_chat", "watch_ad", "twist_closeup", "dochi_explains")
+EXPRESSIONS = ("neutral", "worried", "shocked", "panicked", "relieved", "suspicious", "smug", "fakeKind", "excited")
+GESTURES = ("rest", "phoneEar", "phoneRead", "phoneType", "handOnHead", "handsOnCheeks", "point", "palmOut",
+            "clutchChest")
+KEYWORD_BUBBLE_MAX_CHARS = 8   # a speech bubble keyword in a staging (not a chat bubble, see BUBBLE_MAX_CHARS)
+EXPLAINER_LAYOUTS = ("card", "stat", "timeline", "checklist", "compare", "toggle", "flow", "dots")
+# which layouts each staging can play (the picture it reuses or replaces)
+STAGING_LAYOUTS = {"pip_call": ("call",), "split_call": ("call",), "solo": ("call", "chat", "sms", "card"),
+                   "over_shoulder_chat": ("chat", "sms"), "watch_ad": ("card",),
+                   "twist_closeup": ("call", "chat", "sms", "card"), "dochi_explains": EXPLAINER_LAYOUTS}
 DEFAULT_CAST = {"narrator": {"voice": "F1", "label": "", "role": "narrator"},
                 "dochi": {"voice": "F1", "label": "도치", "role": "dochi"}}
 SCENE_GAP = 0.25             # seconds of silence after each scene (remotion_render.TAIL_GAP)
@@ -98,6 +119,9 @@ class Line:
     speaker: str
     text: str
     tts: str = ""
+    face: str = ""        # acting note: the speaker's expression (EXPRESSIONS), default from the line
+    gesture: str = ""     # acting note: the speaker's arm pose (GESTURES), default from the staging
+    bubble: str = ""      # a keyword speech bubble (<= BUBBLE_MAX_CHARS, a part of the text), optional
 
     def tts_text(self) -> str:
         return self.tts.strip() or normalize_for_tts(self.text)
@@ -138,6 +162,7 @@ class Scene:
     mascot: object = None       # 도치 the hedgehog mascot: True / False, None = by stage (on for paper, off for dark)
     lines: list[Line] = field(default_factory=list)      # dialogue: spoken in order, each in its speaker's voice
     twist: str = ""             # the reveal stamp at the scene's end, e.g. "사기였습니다" (freeze-frame ~0.45 s)
+    staging: str = ""           # character staging (STAGINGS); "" = default from the layout (see default_staging)
 
     def tts_text(self) -> str:
         if self.lines:
@@ -216,7 +241,8 @@ def _lines(raw) -> list[Line]:
     if not isinstance(raw, list):
         raise TypeError("'lines' must be a list")
     return [Line(speaker=str(x.get("speaker", "narrator")).strip(), text=str(x.get("text", "")).strip(),
-                 tts=str(x.get("tts", ""))) for x in raw]
+                 tts=str(x.get("tts", "")), face=str(x.get("face", "")).strip(),
+                 gesture=str(x.get("gesture", "")).strip(), bubble=str(x.get("bubble", "")).strip()) for x in raw]
 
 
 def _narration(s: dict) -> str:
@@ -234,7 +260,8 @@ def _cast(raw) -> dict:
     out = {}
     for key, entry in raw.items():
         entry = entry if isinstance(entry, dict) else {"voice": entry}
-        out[str(key).strip()] = {k: str(entry[k]).strip() for k in ("voice", "label", "role") if k in entry}
+        out[str(key).strip()] = {k: str(entry[k]).strip() for k in ("voice", "label", "role", "character")
+                                 if k in entry}
     return out
 
 
@@ -273,7 +300,8 @@ def load_script(path: str | Path) -> Script:
                         stages=[{"label": str(t.get("label", "")).strip(), "count": _int(t.get("count", 0))}
                                 for t in s.get("stages", [])],
                         unit=str(s.get("unit", "명")).strip() or "명", mascot=s.get("mascot"),
-                        lines=_lines(s.get("lines")), twist=str(s.get("twist", "")).strip())
+                        lines=_lines(s.get("lines")), twist=str(s.get("twist", "")).strip(),
+                        staging=str(s.get("staging", "")).strip())
                   for s in data["scenes"]]
         return Script(id=str(data["id"]), source_video_id=str(data["source_video_id"]), title=str(data["title"]).strip(),
                       description=str(data.get("description", "")).strip(), tags=[str(t) for t in data.get("tags", [])],
@@ -447,6 +475,79 @@ def mockup_side(role: str) -> str | None:
     return "me" if role == "victim" else "them" if role in ("scammer", "neutral") else None
 
 
+def victim_character(cast: dict) -> str | None:
+    """The cast member the drama follows: role victim with a family character, else the first family character."""
+    for key, entry in cast.items():
+        if entry.get("role") == "victim" and entry.get("character") in FAMILY:
+            return key
+    return next((k for k, e in cast.items() if e.get("character") in FAMILY), None)
+
+
+def default_staging(scene: Scene, cast: dict) -> str | None:
+    """The staging a scene gets without its own: a dialogue scene with a rigged speaker is staged by its layout
+    (call -> pip_call, chat/sms -> over_shoulder_chat, a card with an ad voice -> watch_ad); anything else stays the
+    layout's own picture (dochi_explains is opt-in). Mirrors video/src/rig.ts stagingOf."""
+    if scene.staging:
+        return scene.staging
+    chars = [cast.get(line.speaker, {}).get("character") for line in scene.lines]
+    if not any(chars):
+        return None
+    if scene.layout == "call":
+        return "pip_call"
+    if scene.layout in ("chat", "sms"):
+        return "over_shoulder_chat"
+    if scene.layout == "card" and "ad" in chars:
+        return "watch_ad"
+    return None
+
+
+def _character_errors(script: Script) -> list[str]:
+    """Characters, stagings and acting notes."""
+    errors = []
+    cast = cast_of(script)
+    for key, entry in script.cast.items():
+        ch = entry.get("character", "")
+        if ch and ch not in CHARACTERS:
+            errors.append(f"cast '{key}': unknown character '{ch}' (use {', '.join(CHARACTERS)})")
+    victim = victim_character(cast)
+    callers = [k for k, e in cast.items() if e.get("character") in CALLERS]
+    for i, sc in enumerate(script.scenes, start=1):
+        for k, line in enumerate(sc.lines, start=1):
+            where = f"scene {i} line {k}"
+            if line.face and line.face not in EXPRESSIONS:
+                errors.append(f"{where}: unknown face '{line.face}' (use {', '.join(EXPRESSIONS)})")
+            if line.gesture and line.gesture not in GESTURES:
+                errors.append(f"{where}: unknown gesture '{line.gesture}' (use {', '.join(GESTURES)})")
+            if line.bubble:
+                if len(line.bubble) > KEYWORD_BUBBLE_MAX_CHARS:
+                    errors.append(f"{where}: bubble '{line.bubble}' is longer than {KEYWORD_BUBBLE_MAX_CHARS} characters")
+                if line.bubble not in line.text:
+                    errors.append(f"{where}: bubble '{line.bubble}' must be a part of the line's text")
+                errors += [f"{where}: bubble {p}" for p in mockup_text_problems(line.bubble)]
+        if not sc.staging:
+            continue
+        where = f"scene {i}"
+        if sc.staging not in STAGINGS:
+            errors.append(f"{where}: unknown staging '{sc.staging}' (use {', '.join(STAGINGS)})")
+            continue
+        if sc.layout not in STAGING_LAYOUTS[sc.staging]:
+            errors.append(f"{where}: staging '{sc.staging}' plays the layouts {', '.join(STAGING_LAYOUTS[sc.staging])}, "
+                          f"not '{sc.layout}'")
+        if not victim:
+            errors.append(f"{where}: staging '{sc.staging}' needs a family character in the cast (the victim)")
+        if sc.staging == "dochi_explains":
+            if not sc.lines:
+                errors.append(f"{where}: dochi_explains needs 도치's lines")
+            continue
+        if not sc.lines:
+            errors.append(f"{where}: staging '{sc.staging}' needs dialogue lines")
+        if sc.staging in ("pip_call", "split_call") and not callers:
+            errors.append(f"{where}: staging '{sc.staging}' needs a caller character (scammer or fake_banker)")
+        if sc.staging == "watch_ad" and not any(cast.get(x.speaker, {}).get("character") == "ad" for x in sc.lines):
+            errors.append(f"{where}: watch_ad needs a line by a cast member with character 'ad' (the TV)")
+    return errors
+
+
 def _dialogue_errors(script: Script) -> tuple[list[str], list[str]]:
     """Checks for the dialogue format: the cast, every line (like a narration) and the twist stamp."""
     errors, warnings = [], []
@@ -499,6 +600,7 @@ def _dialogue_errors(script: Script) -> tuple[list[str], list[str]]:
             errors += [f"scene {i}: twist {p}" for p in mockup_text_problems(sc.twist)]
     if sum(1 for sc in script.scenes if sc.twist) > 1:
         warnings.append("more than one twist stamp; keep one reveal per video")
+    errors += _character_errors(script)
     if dialogue and "재연" not in script.disclaimer:
         errors.append("dialogue scenes are an invented re-enactment: the disclaimer must say 재연")
     unused = sorted(set(script.cast) - used - set(DEFAULT_CAST))
