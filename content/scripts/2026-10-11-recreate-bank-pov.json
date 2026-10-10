@@ -105,7 +105,8 @@
      "speaker": "dochi",
      "text": "보도된 한 은행 유출 정보엔 연소득과 대출한도도 있었어요."
     }
-   ]
+   ],
+   "staging": "dochi_explains"
   },
   {
    "layout": "checklist",
@@ -132,7 +133,8 @@
      "speaker": "dochi",
      "text": "공식 앱이나 홈페이지의 대표번호로 거세요."
     }
-   ]
+   ],
+   "staging": "dochi_explains"
   }
  ],
  "sources": [

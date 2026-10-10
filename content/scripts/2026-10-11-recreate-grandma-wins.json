@@ -127,7 +127,8 @@
      "speaker": "dochi",
      "text": "자녀 목소리도 AI로 흉내 낼 수 있어요."
     }
-   ]
+   ],
+   "staging": "dochi_explains"
   },
   {
    "layout": "checklist",
@@ -154,7 +155,8 @@
      "speaker": "dochi",
      "text": "오늘, 가족 암호를 정해 두세요."
     }
-   ]
+   ],
+   "staging": "dochi_explains"
   }
  ],
  "sources": [
@@ -171,5 +173,6 @@
    "url": "https://consumer.ftc.gov/consumer-alerts/2023/03/scammers-use-ai-enhance-their-family-emergency-schemes"
   }
  ],
- "author": "llm:claude-opus-5-5 (story-writer, 재창조 샘플). Structure from the clean-room beat sheet content/week2/recreate_AHM0QE7bC0o.md only (idea credit: https://www.youtube.com/shorts/AHM0QE7bC0o; original not watched). Facts reused from the fact-checked 2026-10-09-voice-clone-3-seconds (content/week1/Jf1239_V0mw.md + .review.md) and 2026-10-08-family-password (FBI PSA241203). The call is an adapted re-enactment of the reported method; no amount, no reported case outcome."
+ "author": "llm:claude-opus-5-5 (story-writer, 재창조 샘플). Structure from the clean-room beat sheet content/week2/recreate_AHM0QE7bC0o.md only (idea credit: https://www.youtube.com/shorts/AHM0QE7bC0o; original not watched). Facts reused from the fact-checked 2026-10-09-voice-clone-3-seconds (content/week1/Jf1239_V0mw.md + .review.md) and 2026-10-08-family-password (FBI PSA241203). The call is an adapted re-enactment of the reported method; no amount, no reported case outcome.",
+ "theme": "kraft-board"
 }

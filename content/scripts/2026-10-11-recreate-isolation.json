@@ -105,7 +105,8 @@
      "speaker": "dochi",
      "text": "셋 중 한 명이 60대 이상이었어요."
     }
-   ]
+   ],
+   "staging": "dochi_explains"
   },
   {
    "headline": "모텔 투숙 요구는 100% 사기",
@@ -118,7 +119,8 @@
      "speaker": "dochi",
      "text": "수사기관은 절대 모텔 투숙을 요구하지 않아요."
     }
-   ]
+   ],
+   "staging": "dochi_explains"
   },
   {
    "layout": "checklist",
@@ -145,7 +147,8 @@
      "speaker": "dochi",
      "text": "112나 1394에 직접 거세요."
     }
-   ]
+   ],
+   "staging": "dochi_explains"
   }
  ],
  "sources": [
@@ -174,5 +177,6 @@
    "url": "https://newstomato.com/ReadNews.aspx?no=1315540"
   }
  ],
- "author": "llm:claude-opus-5-5 (story-writer, 재창조 샘플). Structure from the clean-room beat sheet content/week2/recreate_64wbBbs1Mes.md only (idea credit: https://www.youtube.com/shorts/64wbBbs1Mes; original not watched, no captions read). source_video_id 7H7-ORelZdQ is the radar signal for the same method (fake officials isolating the victim, 'digital arrest'); its verification record carries this episode's Korean sources. Facts from content/week2/prosecutor-isolation.md (경찰청 2025-09-18, 금융위·금감원 10계명 2026-02-10, 경찰청 2026-09-29). The call is an adapted re-enactment of the reported method (기관 사칭 + 셀프감금); no amount, no reported case outcome; the 중수청 report appears only in the description, attributed."
+ "author": "llm:claude-opus-5-5 (story-writer, 재창조 샘플). Structure from the clean-room beat sheet content/week2/recreate_64wbBbs1Mes.md only (idea credit: https://www.youtube.com/shorts/64wbBbs1Mes; original not watched, no captions read). source_video_id 7H7-ORelZdQ is the radar signal for the same method (fake officials isolating the victim, 'digital arrest'); its verification record carries this episode's Korean sources. Facts from content/week2/prosecutor-isolation.md (경찰청 2025-09-18, 금융위·금감원 10계명 2026-02-10, 경찰청 2026-09-29). The call is an adapted re-enactment of the reported method (기관 사칭 + 셀프감금); no amount, no reported case outcome; the 중수청 report appears only in the description, attributed.",
+ "theme": "paper"
 }
