@@ -328,3 +328,18 @@ def test_handwriting_font_is_only_used_for_accents():
     src = ROOT / "video" / "src"
     users = sorted(p.name for p in src.glob("*.ts*") if re.search(r"\bHAND\b|Gaegu", p.read_text(encoding="utf-8")))
     assert users == ["Handwriting.tsx", "fonts.ts"], users
+
+
+SPEAKERS = {k: v for k, v in TOKENS["speakers"].items() if k != "_doc"}
+
+
+@pytest.mark.parametrize("role", sorted(SPEAKERS))
+def test_speaker_chips_read_on_every_stage(role):
+    """Dialogue speaker chip: its label on the pill >= 4.5:1; against each stage's caption band (the chip sits just
+    above the captions) the pill or its ring separates at >= 3:1. The scammer chip is the danger solid."""
+    chip = SPEAKERS[role]
+    assert contrast(chip["text"], chip["bg"]) >= TEXT_MIN, role
+    for stage in STAGES:
+        for bg in stage_backgrounds(stage, "caption"):
+            assert max(contrast(chip["bg"], bg), contrast(chip["ring"], bg)) >= GRAPHIC_MIN, (role, stage, bg)
+    assert SPEAKERS["scammer"]["bg"] == TOKENS["tones"]["danger"]["solid"]

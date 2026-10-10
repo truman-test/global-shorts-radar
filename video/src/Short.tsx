@@ -3,6 +3,7 @@ import {
   AbsoluteFill,
   Audio,
   Freeze,
+  interpolate,
   Sequence,
   spring,
   staticFile,
@@ -10,10 +11,12 @@ import {
   useVideoConfig,
 } from "remotion";
 import {FONT} from "./fonts";
-import {CALL_AVATAR, CallScene} from "./CallScene";
+import {CallScene, callAvatar} from "./CallScene";
 import {BADGE, CardScene} from "./CardScene";
+import {CastContext} from "./dialogue";
+import {Stamp} from "./Handwriting";
 import {CHIP} from "./kit";
-import {AnchorSpec, MORPH, SceneContext, Transition} from "./motion";
+import {AnchorSpec, fadeOut, MORPH, RealFrameContext, SceneContext, Transition, useScene} from "./motion";
 import {Backdrop} from "./Backdrop";
 import {BRAND, CATEGORIES, CategoryContext, categoryFor, isLight, SeedContext, ThemeContext, themeFor, useCategory,
   useTheme} from "./themes";
@@ -24,7 +27,7 @@ import {Captions} from "./Captions";
 import {AlertScene} from "./AlertScene";
 import {ChatScene} from "./ChatScene";
 import {ChecklistScene} from "./ChecklistScene";
-import {ALERT_LAND, chatBeats, checklistTicks, compareBeats, dotBeats, flowBeats, SMS_ARRIVE, STAT_COUNT, TOGGLE_CIRCLE,
+import {ALERT_LAND, chatBeats, checklistTicks, compareBeats, dotBeats, flowBeats, smsBeats, STAT_COUNT, TOGGLE_CIRCLE,
   timelineBeats, toggleTaps} from "./schedule";
 import {CompareScene} from "./CompareScene";
 import {DotsScene} from "./DotsScene";
@@ -100,6 +103,55 @@ const Sfx: React.FC<{name: string; at: number; volume: number; until?: number}> 
   </Sequence>
 );
 
+/** Where the twist stamp lands: over the middle of the mockup / card, well above the speaker chip and captions. */
+const STAMP_Y = 640;
+
+/**
+ * A scene's visuals. A twist scene freezes at the reveal (Remotion's Freeze from twist.atMs on, slightly
+ * desaturated, a 6-frame shake as the stamp hits; the stamp itself is TwistStamp, a layer above the travellers); the
+ * exit fade and the shared-element hand-off keep running on the real frame (RealFrameContext), and 도치
+ * (MascotTrack) stays alive and reacts.
+ */
+const SceneVisual: React.FC<{scene: SceneProps; shift: number}> = ({scene, shift}) => {
+  const frame = useCurrentFrame();
+  const {fps} = useVideoConfig();
+  if (!scene.twist) return <SceneBody scene={scene} />;
+  const at = Math.round((scene.twist.atMs / 1000) * fps) + shift;
+  const frozen = frame >= at;
+  const k = frozen ? Math.min(1, (frame - at + 1) / 3) : 0;
+  const hit = frame - at;
+  const shake = frozen && hit < 6 ? Math.sin(hit * 2.9) * 9 * (1 - hit / 6) : 0;
+  return (
+    <RealFrameContext.Provider value={frame}>
+      <div style={{position: "absolute", inset: 0, filter: k ? `grayscale(${0.65 * k}) brightness(${1 - 0.12 * k})` : undefined,
+        transform: shake ? `translate(${shake}px, ${shake * 0.4}px)` : undefined}}>
+        <Freeze frame={at} active={frozen}>
+          <SceneBody scene={scene} />
+        </Freeze>
+      </div>
+    </RealFrameContext.Provider>
+  );
+};
+
+/**
+ * The twist stamp, drawn above the scene and the shared-element traveller (so the caller's avatar flies out from
+ * under it into the next scene). Scene-local frames on the audio clock; it fades with the scene's exit.
+ */
+const TwistStamp: React.FC<{scene: SceneProps}> = ({scene}) => {
+  const frame = useCurrentFrame();
+  const {fps} = useVideoConfig();
+  const s = useScene();
+  if (!scene.twist) return null;
+  const at = Math.round((scene.twist.atMs / 1000) * fps);
+  const exit = s.mode === "continuity" && !s.last ? fadeOut(frame, s.frames)
+    : interpolate(frame, [s.frames - 7, s.frames], [1, 0], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
+  return (
+    <div style={{position: "absolute", inset: 0, opacity: exit}}>
+      <Stamp text={scene.twist.text} at={at} x={s.mascot ? 589 : 540} y={STAMP_Y} />
+    </div>
+  );
+};
+
 const SceneBody: React.FC<{scene: SceneProps}> = ({scene}) => {
   switch (scene.layout) {
     case "call": return <CallScene scene={scene} />;
@@ -117,15 +169,33 @@ const SceneBody: React.FC<{scene: SceneProps}> = ({scene}) => {
   }
 };
 
-/** Synthesized SFX, timed from the same schedules the scene components animate with. */
-const SceneSfx: React.FC<{scene: SceneProps; first: boolean; last: boolean; lead: number; words: number;
-  fps: number}> = ({scene, first, last, lead, words, fps}) => {
+type SfxProps = {scene: SceneProps; first: boolean; last: boolean; lead: number; words: number; fps: number};
+
+/** Synthesized SFX, timed from the same schedules the scene components animate with; plus the twist stamp. */
+const SceneSfx: React.FC<SfxProps> = (props) => {
+  const {scene, fps} = props;
+  // the reveal: a stamp thud with a pop as the stamp lands on the frozen frame
+  const at = scene.twist ? Math.round((scene.twist.atMs / 1000) * fps) : 0;
+  return (
+    <>
+      <LayoutSfx {...props} />
+      {scene.twist ? <Sfx name="stamp" at={at} volume={0.7} /> : null}
+      {scene.twist ? <Sfx name="pop" at={at + 1} volume={0.32} /> : null}
+    </>
+  );
+};
+
+const LayoutSfx: React.FC<SfxProps> = ({scene, first, last, lead, words, fps}) => {
   const whoosh = first ? null : <Sfx name="whoosh" at={0} volume={0.35} />;
   const pops = (frames: number[], volume = 0.28) => frames.map((f, k) => (
     <Sfx key={k} name={last && k === frames.length - 1 ? "ding" : "pop"} at={f} volume={volume} />
   ));
   switch (scene.layout) {
     case "call":
+      // a dialogue call rings only through its lead-in (none in the opening scene: the voice starts at once)
+      if (scene.lines?.length) {
+        return lead >= 15 ? <Sfx name="ring" at={0} volume={0.5} until={lead - 2} /> : null;
+      }
       return (
         <>
           <Sfx name="ring" at={0} volume={0.55} until={lead + 6} />
@@ -133,15 +203,18 @@ const SceneSfx: React.FC<{scene: SceneProps; first: boolean; last: boolean; lead
         </>
       );
     case "chat":
-      return <>{whoosh}{pops(chatBeats(scene, fps).map((b) => b.showAt), 0.26)}</>;
-    case "sms":
+      return <>{whoosh}{pops(chatBeats(scene, fps).map((b) => b.showAt).filter((f) => f >= 0), 0.26)}</>;
+    case "sms": {
+      const b = smsBeats(scene, fps);
       return (
         <>
           {whoosh}
-          <Sfx name="vibrate" at={SMS_ARRIVE - 2} volume={0.4} until={SMS_ARRIVE + 14} />
-          <Sfx name="pop" at={SMS_ARRIVE} volume={0.3} />
+          <Sfx name="vibrate" at={b.arrive - 2} volume={0.4} until={b.arrive + 14} />
+          <Sfx name="pop" at={b.arrive} volume={0.3} />
+          {b.replies.map((r, k) => <Sfx key={k} name="pop" at={r.at} volume={0.24} />)}
         </>
       );
+    }
     case "alert":
       return (
         <>
@@ -200,7 +273,7 @@ const MusicBed: React.FC<{props: ShortProps}> = ({props}) => {
 /** The element a scene hands over at a continuity transition (see Traveller.tsx). */
 const anchorSpec = (scene: SceneProps): AnchorSpec => {
   if (scene.layout === "call") {
-    return {look: {kind: "avatar", letter: (scene.caller ?? "알 수 없음").slice(0, 1)}, size: CALL_AVATAR};
+    return {look: {kind: "avatar", letter: (scene.caller ?? "알 수 없음").slice(0, 1)}, size: callAvatar(scene)};
   }
   const look = {kind: "chip", icon: scene.icon, accent: scene.accent} as const;
   return scene.layout === "card" ? {look, size: BADGE, glow: 60} : {look, size: CHIP};
@@ -221,6 +294,7 @@ export const Short: React.FC<ShortProps> = (props) => {
   return (
     <ThemeContext.Provider value={theme}>
     <SeedContext.Provider value={seed}>
+    <CastContext.Provider value={props.cast ?? {}}>
     <CategoryContext.Provider value={categoryFor(props.category)}>
     <AbsoluteFill style={{fontFamily: FONT, color: "#fff", wordBreak: "keep-all"}}>
       <Backdrop props={props} />
@@ -237,13 +311,14 @@ export const Short: React.FC<ShortProps> = (props) => {
                 // Poster start: the first scene's visuals run POSTER frames ahead, so frame 0 (the feed preview,
                 // and the moment viewers decide to swipe) already shows the finished hook, not an empty screen.
                 <Sequence from={-POSTER} layout="none">
-                  <SceneContext.Provider value={{mode, index: i, frames: frames + POSTER, first: true, last, mascot: on[i]}}>
-                    <SceneBody scene={scene} />
+                  <SceneContext.Provider value={{mode, index: i, frames: frames + POSTER, first: true, last, mascot: on[i],
+                    shift: POSTER}}>
+                    <SceneVisual scene={scene} shift={POSTER} />
                   </SceneContext.Provider>
                 </Sequence>
               ) : (
                 <SceneContext.Provider value={{mode, index: i, frames, first: false, last, mascot: on[i]}}>
-                  <SceneBody scene={scene} />
+                  <SceneVisual scene={scene} shift={0} />
                 </SceneContext.Provider>
               )}
             </Sequence>
@@ -251,9 +326,18 @@ export const Short: React.FC<ShortProps> = (props) => {
         })}
         {cont ? props.scenes.slice(1).map((scene, j) => (
           <Sequence key={`t${j}`} from={spans[j + 1].from} durationInFrames={MORPH}>
-            <Traveller index={j} from={anchorSpec(props.scenes[j])} to={anchorSpec(scene)} />
+            <Traveller index={j} from={anchorSpec(props.scenes[j])} to={anchorSpec(scene)}
+              hideFrom={Boolean(props.scenes[j].twist)} />
           </Sequence>
         )) : null}
+        {props.scenes.map((scene, i) => scene.twist ? (
+          <Sequence key={`tw${i}`} from={spans[i].from} durationInFrames={spans[i].frames + (cont && i < n - 1 ? MORPH : 0)}>
+            <SceneContext.Provider value={{mode, index: i, frames: spans[i].frames, first: i === 0, last: i === n - 1,
+              mascot: on[i]}}>
+              <TwistStamp scene={scene} />
+            </SceneContext.Provider>
+          </Sequence>
+        ) : null)}
       </div>
       {/* 도치 the mascot: one continuous track over the whole video (in the margin, never on text or captions) */}
       <MascotTrack props={props} spans={spans} poster={POSTER} />
@@ -283,7 +367,8 @@ export const Short: React.FC<ShortProps> = (props) => {
               so the scene is shifted by POSTER and frozen at its local frame 0 = the opening frame's POSTER */}
           <Sequence from={-POSTER} layout="none">
             <Freeze frame={0}>
-              <SceneContext.Provider value={{mode, index: 0, frames: spans[0].frames + POSTER, first: true, last: false, mascot: on[0]}}>
+              <SceneContext.Provider value={{mode, index: 0, frames: spans[0].frames + POSTER, first: true, last: false, mascot: on[0],
+                shift: POSTER}}>
                 <SceneBody scene={props.scenes[0]} />
               </SceneContext.Provider>
             </Freeze>
@@ -300,6 +385,7 @@ export const Short: React.FC<ShortProps> = (props) => {
       </Sequence>
     </AbsoluteFill>
     </CategoryContext.Provider>
+    </CastContext.Provider>
     </SeedContext.Provider>
     </ThemeContext.Provider>
   );

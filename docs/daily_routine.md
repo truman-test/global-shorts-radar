@@ -34,7 +34,8 @@ The only thing left to the owner is **uploading in YouTube Studio**. Talk to the
      `radar produce content/scripts/<id>.json --out media/final` (about 3.5 min each), extract a frame at
      ~2.5 s and ~50% to look at it, check loudness (target −14 LUFS ±1.5), and set status `ready`;
    - if the owner rejected a fact (status `false`), drop the entry and pull the next approved story forward.
-   Fill empty future dates from approved, unscheduled scripts (`content/scripts/2026-10-09-*.json` etc.).
+   Fill empty future dates from approved, unscheduled scripts (`content/scripts/2026-10-09-*.json` etc.). Never
+   schedule a script with a `"pilot"` field (format samples such as the 드라마형 견본; `script-check` warns about them).
    Before marking a video `ready`, have a `video-qa` agent check it (or do the same checks yourself).
    Prefer variety: don't put two stories of the same kind (e.g. two voice-clone calls) back to back.
 4. **Notepad:** `PYTHONUTF8=1 .venv/Scripts/python.exe tools/upload_notepad.py` writes

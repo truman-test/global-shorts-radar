@@ -12,7 +12,7 @@
 // Names match radar.production.themes (Python picks a stage + category per script and passes `theme`/`category`).
 import {createContext, useContext} from "react";
 import TOKENS from "./tokens.json";
-import {Accent} from "./types";
+import {Accent, SpeakerRole} from "./types";
 
 export const FAMILIES = ["alert", "notebook"] as const;
 export type Family = (typeof FAMILIES)[number];
@@ -210,6 +210,17 @@ const parsePalette = (k: "paper" | "night"): MascotPalette => {
     rim: str(raw, "rim", w), rimWidth: num(raw, "rimWidth", w)};
 };
 export const MASCOT_PALETTES = {paper: parsePalette("paper"), night: parsePalette("night")};
+
+/** Dialogue speaker chips (tokens.json "speakers"): label on a solid pill with a light ring, per role. */
+export type SpeakerChip = {bg: string; text: string; ring: string};
+const parseChip = (k: SpeakerRole): SpeakerChip => {
+  const raw: unknown = (TOKENS.speakers as Record<string, unknown>)[k];
+  const w = `speakers.${k}`;
+  if (!isObj(raw)) return fail(w, "missing");
+  return {bg: str(raw, "bg", w), text: str(raw, "text", w), ring: str(raw, "ring", w)};
+};
+export const SPEAKER_CHIPS: Record<SpeakerRole, SpeakerChip> = {scammer: parseChip("scammer"),
+  victim: parseChip("victim"), neutral: parseChip("neutral"), narrator: parseChip("narrator"), dochi: parseChip("dochi")};
 
 /** The palette 도치 wears in a scene of this tone on this stage. */
 export const mascotPaletteFor = (t: Theme, accent: Accent, last: boolean): "paper" | "night" =>

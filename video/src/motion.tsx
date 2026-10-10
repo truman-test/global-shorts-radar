@@ -37,11 +37,25 @@ export const IN_AT = 2; // scene N+1's content starts fading in this many frames
 export const IN_DUR = 9;
 
 // mascot: 도치 is on in this scene (the layouts then leave the left margin free for it, see kit.useBody)
-export type SceneCtx = {mode: Transition; index: number; frames: number; first: boolean; last: boolean; mascot?: boolean};
+// shift: frames the visuals run ahead of the audio (the first scene's poster start); speech-synced elements (the
+// active speaker in a dialogue) subtract it, see useSpeechMs in dialogue.tsx
+export type SceneCtx = {mode: Transition; index: number; frames: number; first: boolean; last: boolean; mascot?: boolean;
+  shift?: number};
 
 // Standalone renders (Studio sample, stills) behave like the classic single scene.
 export const SceneContext = createContext<SceneCtx>({mode: "classic", index: 0, frames: 1e9, first: true, last: true});
 export const useScene = () => useContext(SceneContext);
+
+/**
+ * The scene's real (running) frame while its picture is frozen (the twist freeze-frame, see Short.tsx): the exit
+ * fade and the shared-element hand-off keep running on it, everything else sees the frozen frame.
+ */
+export const RealFrameContext = createContext<number | null>(null);
+export const useRealFrame = () => {
+  const frame = useCurrentFrame();
+  const real = useContext(RealFrameContext);
+  return real ?? frame;
+};
 
 /** True when this scene morphs in from the previous one (its own entrance is replaced by the traveller). */
 export const useMorphIn = () => {
@@ -95,7 +109,7 @@ export const Face: React.FC<AnchorSpec> = ({look, size, glow}) => {
 export const Anchor: React.FC<{size: number; children: React.ReactNode; style?: React.CSSProperties}> = ({
   size, children, style,
 }) => {
-  const frame = useCurrentFrame();
+  const frame = useRealFrame();
   const s = useScene();
   const hidden = s.mode === "continuity" && ((!s.first && frame < MORPH) || (!s.last && frame >= s.frames));
   return (

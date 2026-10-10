@@ -191,8 +191,14 @@ def _script_command(cmd, args, db) -> int:
                   + ("" if script.theme else " (by topic/schedule)"))
             for w in style_warnings:
                 print(f"  warning: {w}")
+        from radar.production.script import line_voice
         for i, scene in enumerate(script.scenes, start=1):
-            print(f"  [{i}] spoken: {scene.tts_text()}")
+            if not scene.lines:
+                print(f"  [{i}] spoken: {scene.tts_text()}")
+            for k, line in enumerate(scene.lines, start=1):
+                print(f"  [{i}.{k}] {line.speaker} ({line_voice(script, line.speaker)}): {line.tts_text()}")
+            if scene.twist:
+                print(f"  [{i}] twist stamp: {scene.twist}")
         return 1 if errors else 0
     if errors:
         print("refusing to produce: fix the errors above")

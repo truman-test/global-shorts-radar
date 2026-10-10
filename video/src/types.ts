@@ -5,7 +5,20 @@ export type Accent = "red" | "yellow" | "green" | "blue";
 
 export type Word = {text: string; startMs: number; endMs: number};
 
-export type CaptionPage = {startMs: number; endMs: number; words: Word[]};
+/** A page of words on screen; in a dialogue scene it carries its speaker (cast id) and the line it belongs to. */
+export type CaptionPage = {startMs: number; endMs: number; words: Word[]; speaker?: string; line?: number};
+
+/** Dialogue roles: the caption chip colour and the side of the phone mockup (victim = the phone's owner). */
+export type SpeakerRole = "scammer" | "victim" | "narrator" | "dochi" | "neutral";
+
+/** A cast member as the renderer needs it: the chip label ("" = no chip), its role and mockup side. */
+export type CastMember = {label: string; role: SpeakerRole; side?: "me" | "them"};
+
+/** One spoken line of a dialogue scene (scene time, lead-in included). */
+export type SpokenLine = {speaker: string; text: string; startMs: number; endMs: number; side?: "me" | "them"};
+
+/** The reveal: at atMs the scene's frame freezes and a hand-drawn stamp lands on it. */
+export type Twist = {text: string; atMs: number};
 
 export type Layout = "card" | "call" | "chat" | "sms" | "alert" | "stat" | "timeline" | "checklist" | "compare"
   | "toggle" | "flow" | "dots";
@@ -58,6 +71,8 @@ export type SceneProps = {
   stages?: DotStage[]; // dots: 2-4 stages
   unit?: string; // dots: counter unit, default "명"
   mascot?: boolean; // 도치 the hedgehog mascot in this scene; default: the stage's mascotDefault (on for notebook stages)
+  lines?: SpokenLine[]; // dialogue: who speaks when (the mockup and 도치 react to the active speaker)
+  twist?: Twist; // the reveal stamp over a freeze-frame at the scene's end
 };
 
 export type Music = {
@@ -78,6 +93,7 @@ export type ShortProps = {
   category?: string; // topic category (tokens.json categories): the brand chip label and the one accent colour
   episode?: string; // script id (deterministic per-episode variants of the stage; never random at render time)
   seed?: number; // CRC32 of the episode id, computed in Python (wins over a hash of `episode`)
+  cast?: Record<string, CastMember>; // dialogue speakers (only when a scene has lines)
   scenes: SceneProps[];
 };
 

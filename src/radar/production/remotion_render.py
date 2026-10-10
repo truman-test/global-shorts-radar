@@ -16,13 +16,14 @@ from pathlib import Path
 from radar.config import PROJECT_ROOT
 from radar.production.assemble import (TRIM, ProductionError, ProductionResult, ffmpeg_exe, media_info, run_ffmpeg,
                                        write_meta)
-from radar.production.script import Script, caption_chunks
+from radar.production.script import (LINE_GAP, TWIST_DELAY, TWIST_HOLD, Script, cast_of, caption_chunks, line_voice,
+                                     mockup_side)
 from radar.production.textnorm import speakable_length, split_sentences
 from radar.production.themes import record_style, resolve_style_report
 from radar.production.tts import TTSError
 
 VIDEO_DIR = PROJECT_ROOT / "video"
-TAIL_GAP = 0.25          # seconds after each scene's speech
+TAIL_GAP = 0.25          # seconds after each scene's speech (a twist scene ends on its freeze-frame instead)
 CALL_LEAD_IN = 0.9       # the phone rings before the first line
 LEAD_IN = {"call": CALL_LEAD_IN, "alert": 0.5}   # alert: the banner lands (ding) before the narration
 FIRST_SCENE_MAX_LEAD_IN = 0.4   # the voice must start almost at once in the opening scene (swipe decision)
@@ -37,6 +38,9 @@ SFX = {
     "vibrate": "aevalsrc=exprs='0.55*sin(2*PI*150*t)*(0.6+0.4*sin(2*PI*28*t))*lt(mod(t,1),0.55)':s=44100:d=2.4",
     "whoosh": "anoisesrc=d=0.45:c=pink:a=0.6:r=44100",
     "pop": "aevalsrc=exprs='0.7*sin(2*PI*(500+1400*t)*t)*exp(-t*26)':s=44100:d=0.2",
+    # the twist stamp: a low thud (falling pitch) with a short paper slap on top
+    "stamp": "aevalsrc=exprs='0.85*sin(2*PI*(70+90*exp(-t*28))*t)*exp(-t*16)+0.35*(random(0)*2-1)*exp(-t*90)'"
+             ":s=44100:d=0.35",
     "ding": "aevalsrc=exprs='0.4*(sin(2*PI*1318.5*t)+0.5*sin(2*PI*1975.5*t))*exp(-t*4.5)':s=44100:d=1.1",
 }
 SFX_FILTERS = {
@@ -44,6 +48,7 @@ SFX_FILTERS = {
     "vibrate": "lowpass=f=400,afade=t=out:st=2.1:d=0.3",
     "whoosh": "highpass=f=350,lowpass=f=5000,afade=t=in:d=0.2,afade=t=out:st=0.2:d=0.25",
     "pop": "afade=t=out:st=0.12:d=0.08",
+    "stamp": "lowpass=f=3200,afade=t=out:st=0.24:d=0.1",
     "ding": "afade=t=out:st=0.8:d=0.3",
 }
 
@@ -122,11 +127,17 @@ def caption_pages(narration: str, words: list[tuple[str, float, float]], scene_e
 
 def _speech(scene, i: int, tts, work: Path) -> tuple[Path, float, list[tuple[str, float, float]]]:
     """Synthesize one scene; return (wav path, speech seconds, word timings relative to the wav)."""
-    display = scene.narration.split()
-    raw = work / f"raw{i}{tts.ext}"
-    wav = work / f"s{i}.wav"
+    return _speech_text(scene.narration, scene.tts_text(), str(i), tts, work)
+
+
+def _speech_text(narration: str, spoken: str, tag: str, tts, work: Path
+                 ) -> tuple[Path, float, list[tuple[str, float, float]]]:
+    """Synthesize one caption text (`spoken` is its TTS form) into work/s<tag>.wav (44.1 kHz mono)."""
+    display = narration.split()
+    raw = work / f"raw{tag}{tts.ext}"
+    wav = work / f"s{tag}.wav"
     if tts.name == "edge":
-        marks = edge_words(scene.tts_text(), tts.voice, tts.rate, raw)
+        marks = edge_words(spoken, tts.voice, tts.rate, raw)
         duration, _ = media_info(raw)
         cut_a = max(0.0, marks[0][0] - 0.05)
         cut_b = min(duration, marks[-1][1] + 0.12)
@@ -135,14 +146,123 @@ def _speech(scene, i: int, tts, work: Path) -> tuple[Path, float, list[tuple[str
         seconds, _ = media_info(wav)
         return wav, seconds, word_timings(display, shifted, 0.0, seconds)
     if tts.name == "supertonic":
-        spans = tts.synthesize_sentences(scene.tts_text(), raw)
-        run_ffmpeg(["-i", raw.name, "-ar", "44100", "-ac", "1", wav.name], cwd=work)
-        seconds, _ = media_info(wav)
-        return wav, seconds, sentence_word_timings(scene.narration, spans, seconds)
-    tts.synthesize(scene.tts_text(), raw)
-    run_ffmpeg(["-i", raw.name, "-af", TRIM, "-ac", "1", wav.name], cwd=work)
+        spans = tts.synthesize_sentences(spoken, raw)
+        return _timed_clip(raw, wav, narration, spans, work)
+    tts.synthesize(spoken, raw)
+    run_ffmpeg(["-i", raw.name, "-af", TRIM, "-ar", "44100", "-ac", "1", wav.name], cwd=work)
     seconds, _ = media_info(wav)
     return wav, seconds, word_timings(display, None, 0.0, seconds)
+
+
+def _timed_clip(raw: Path, wav: Path, narration: str, spans: list[tuple[float, float, str]], work: Path
+                ) -> tuple[Path, float, list[tuple[str, float, float]]]:
+    """A Supertonic clip with its sentence spans -> 44.1 kHz mono wav + word timings."""
+    run_ffmpeg(["-i", raw.name, "-ar", "44100", "-ac", "1", wav.name], cwd=work)
+    seconds, _ = media_info(wav)
+    return wav, seconds, sentence_word_timings(narration, spans, seconds)
+
+
+# ------------------------------------------------------------------ dialogue (드라마형): one voice per speaker
+
+def presynth_lines(script: Script, tts, work: Path) -> dict[tuple[int, int], tuple[Path, list]]:
+    """Supertonic: every dialogue line of the script, one worker call per voice of the cast.
+    Returns {(scene index, line index): (raw clip, sentence spans)}; {} for the other backends."""
+    if tts.name != "supertonic":
+        return {}
+    by_voice: dict[str, list] = {}
+    for i, scene in enumerate(script.scenes):
+        for k, line in enumerate(scene.lines):
+            by_voice.setdefault(line_voice(script, line.speaker), []).append((i, k, line))
+    out = {}
+    for voice, items in by_voice.items():
+        raws = [work / f"raw{i}_{k}{tts.ext}" for i, k, _ in items]
+        spans = tts.synthesize_batch([(line.tts_text(), raw) for (_, _, line), raw in zip(items, raws)], voice=voice)
+        for (i, k, _), raw, sp in zip(items, raws, spans):
+            out[(i, k)] = (raw, sp)
+    return out
+
+
+def join_wavs(parts: list[Path], gap: float, out: Path) -> list[tuple[float, float]]:
+    """Concatenate same-format wavs with `gap` seconds of silence between them (sample exact).
+    Returns each part's (start_s, end_s) inside `out`."""
+    import wave
+
+    spans, chunks, pos, params = [], [], 0, None
+    for k, part in enumerate(parts):
+        with wave.open(str(part), "rb") as w:
+            p = w.getparams()
+            if params is None:
+                params = p
+            elif (p.nchannels, p.sampwidth, p.framerate) != (params.nchannels, params.sampwidth, params.framerate):
+                raise ProductionError(f"dialogue clip {part.name} has a different audio format")
+            data = w.readframes(p.nframes)
+        if k:
+            silence = int(round(gap * params.framerate))
+            chunks.append(b"\0" * silence * params.sampwidth * params.nchannels)
+            pos += silence
+        spans.append((pos / params.framerate, (pos + p.nframes) / params.framerate))
+        chunks.append(data)
+        pos += p.nframes
+    with wave.open(str(out), "wb") as w:
+        w.setnchannels(params.nchannels)
+        w.setsampwidth(params.sampwidth)
+        w.setframerate(params.framerate)
+        w.writeframes(b"".join(chunks))
+    return spans
+
+
+def _dialogue_speech(scene, i: int, tts, work: Path, pre: dict
+                     ) -> tuple[Path, float, list[list[tuple[str, float, float]]], list[tuple[float, float]]]:
+    """Synthesize a dialogue scene line by line (each in its speaker's voice) and join the clips with LINE_GAP.
+    Returns (wav, speech seconds, word timings per line, (start, end) per line), all relative to the wav."""
+    clips = []
+    for k, line in enumerate(scene.lines):
+        if (i, k) in pre:
+            raw, spans = pre[(i, k)]
+            clips.append(_timed_clip(raw, work / f"s{i}_{k}.wav", line.text, spans, work))
+        else:
+            clips.append(_speech_text(line.text, line.tts_text(), f"{i}_{k}", tts, work))
+    wav = work / f"s{i}.wav"
+    spans = join_wavs([c[0] for c in clips], LINE_GAP, wav)
+    words = [[(w, a + s0, b + s0) for w, a, b in clip[2]] for clip, (s0, _) in zip(clips, spans)]
+    return wav, spans[-1][1], words, spans
+
+
+def dialogue_pages(scene, words: list[list[tuple[str, float, float]]], spans: list[tuple[float, float]],
+                   scene_end: float) -> list[dict]:
+    """Caption pages line by line (a page never mixes two speakers), each tagged with its speaker and line index.
+    A line's last page stays up until the next line starts (no blank flash in the short gap between speakers)."""
+    pages = []
+    for k, (line, timed) in enumerate(zip(scene.lines, words)):
+        nxt = spans[k + 1][0] if k + 1 < len(spans) else scene_end
+        own = caption_pages(line.text, timed, nxt)
+        if own and k + 1 < len(spans):
+            own[-1]["endMs"] = round(nxt * 1000)
+        for page in own:
+            page["speaker"] = line.speaker
+            page["line"] = k
+        pages += own
+    return pages
+
+
+def lines_props(scene, spans: list[tuple[float, float]], cast: dict) -> list[dict]:
+    """[{speaker, text, startMs, endMs, side?}]: side "me" (the phone's owner) / "them" places the line in a
+    call/chat/sms mockup; voice-over lines (narrator, 도치) have none."""
+    out = []
+    for line, (a, b) in zip(scene.lines, spans):
+        side = mockup_side(cast.get(line.speaker, {}).get("role", "neutral"))
+        out.append({"speaker": line.speaker, "text": line.text, "startMs": round(a * 1000), "endMs": round(b * 1000),
+                    **({"side": side} if side else {})})
+    return out
+
+
+def cast_props(script: Script) -> dict:
+    """{speaker: {label, role, side}} for every speaker who has a line (the caption chip and the mockup side)."""
+    cast = cast_of(script)
+    used = [line.speaker for scene in script.scenes for line in scene.lines]
+    return {s: {"label": cast[s].get("label", ""), "role": cast[s]["role"],
+                **({"side": mockup_side(cast[s]["role"])} if mockup_side(cast[s]["role"]) else {})}
+            for s in dict.fromkeys(used) if s in cast}
 
 
 def sentence_word_timings(narration: str, spans: list[tuple[float, float, str]], total: float
@@ -196,6 +316,9 @@ def build_props(script: Script, scenes: list[dict], channel_name: str, sfx: bool
              "episode": script.id, "seed": episode_seed(script.id), "scenes": scenes}
     if category:
         props["category"] = category
+    cast = cast_props(script)
+    if cast:
+        props["cast"] = cast
     return props
 
 
@@ -205,6 +328,7 @@ def layout_props(scene) -> dict:
         return {"caller": scene.caller, "callerSub": scene.caller_sub or "휴대전화",
                 "callLabel": scene.call_label or "수신 전화"}
     if scene.layout == "chat":
+        # a dialogue chat without its own messages: the bubbles come from the lines (ChatScene times them to speech)
         return {"chatTitle": scene.chat_title or "대화",
                 "messages": [{"from": m["from"], "text": m["text"]} for m in scene.messages]}
     if scene.layout == "sms":
@@ -228,12 +352,23 @@ def layout_props(scene) -> dict:
     return {}
 
 
-def scene_props(scene, audio: str, lead: float, speech: float, length: float, pages: list[dict]) -> dict:
+def scene_props(scene, audio: str, lead: float, speech: float, length: float, pages: list[dict],
+                lines: list[dict] | None = None) -> dict:
+    """Props of one scene. Dialogue: `lines` = [{speaker, text, startMs, endMs}] (scene time, lead-in included);
+    a twist scene gets {text, atMs}: the frame freezes and the stamp lands at atMs."""
     return {"layout": scene.layout, "audio": audio, "leadInMs": round(lead * 1000), "speechMs": round(speech * 1000),
             "durationMs": round(length * 1000), "pages": pages, "headline": scene.headline, "sub": scene.sub,
             "icon": scene.icon, "accent": scene.accent, **({"mark": scene.mark} if scene.mark else {}),
             **({"mascot": scene.mascot} if isinstance(scene.mascot, bool) else {}),
+            **({"lines": lines} if lines else {}),
+            **({"twist": {"text": scene.twist, "atMs": round((lead + speech + TWIST_DELAY) * 1000)}}
+               if scene.twist else {}),
             **layout_props(scene)}
+
+
+def scene_length(scene, lead: float, speech: float) -> float:
+    """Lead-in + speech + the tail gap, or + the freeze-frame under the stamp for a twist scene."""
+    return lead + speech + (TWIST_DELAY + TWIST_HOLD if scene.twist else TAIL_GAP)
 
 
 def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name: str, sfx: bool = True,
@@ -253,18 +388,27 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
         ensure_sfx()
 
     scenes, total = [], 0.0
+    pre = presynth_lines(script, tts, work)   # dialogue: one Supertonic call per voice of the cast
     for i, scene in enumerate(script.scenes):
-        wav, speech, words = _speech(scene, i, tts, work)
-        if speech < 0.3:
-            raise ProductionError(f"scene {i + 1}: TTS produced no usable audio")
-        shutil.copy(wav, public_job / wav.name)
         lead = LEAD_IN.get(scene.layout, 0.0)
         if not scenes:
             lead = min(lead, FIRST_SCENE_MAX_LEAD_IN)
-        length = lead + speech + TAIL_GAP
-        timed = [(w, a + lead, b + lead) for w, a, b in words]
-        scenes.append(scene_props(scene, f"jobs/{script.id}/{wav.name}", lead, speech, length,
-                                  caption_pages(scene.narration, timed, length)))
+        if scene.lines:
+            wav, speech, per_line, spans = _dialogue_speech(scene, i, tts, work, pre)
+            length = scene_length(scene, lead, speech)
+            shifted = [(a + lead, b + lead) for a, b in spans]
+            pages = dialogue_pages(scene, [[(w, a + lead, b + lead) for w, a, b in ws] for ws in per_line], shifted,
+                                   length)
+            lines = lines_props(scene, shifted, cast_of(script))
+        else:
+            wav, speech, words = _speech(scene, i, tts, work)
+            length = scene_length(scene, lead, speech)
+            pages = caption_pages(scene.narration, [(w, a + lead, b + lead) for w, a, b in words], length)
+            lines = None
+        if speech < 0.3:
+            raise ProductionError(f"scene {i + 1}: TTS produced no usable audio")
+        shutil.copy(wav, public_job / wav.name)
+        scenes.append(scene_props(scene, f"jobs/{script.id}/{wav.name}", lead, speech, length, pages, lines))
         total += round(length * 1000) / 1000
     music, music_item = music_props(script)
     props_path = out_dir / "props.json"
@@ -294,12 +438,16 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
     duration, size = media_info(video)
     if size != "1080x1920":
         raise ProductionError(f"output is {size or 'unknown size'}, expected 1080x1920")
+    total += POSTER_TAIL_MS / 1000   # the composition ends with the poster tail (Root.calculateMetadata)
     if abs(duration - total) > 0.6:
         raise ProductionError(f"output length {duration:.2f}s differs from the planned {total:.2f}s")
     warnings = [] if 15 <= duration <= 45 else [f"length {duration:.1f}s outside the 15-45s target"]
     warnings += style_warnings
     if not tts.publishable:
         warnings.append(f"voice backend '{tts.name}' is for local preview only; re-produce with --backend google to publish")
+    if pre == {} and any(scene.lines for scene in script.scenes):
+        warnings.append(f"voice backend '{tts.name}' has one voice: every dialogue line used it (the cast's voices need "
+                        "--backend supertonic)")
     # thumbnail = frame 0, the poster (identical to the 0.5 s loop tail), so the file matches the frame the owner
     # can pick in the app and can be uploaded as-is where custom Shorts thumbnails are allowed
     subprocess.run([ffmpeg_exe(), "-hide_banner", "-loglevel", "error", "-y",
@@ -308,6 +456,8 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
     extra = {"engine": "remotion", "render_seconds": round(render_seconds, 1), "transition": transition,
              "theme": theme, "stage": style.family, "category": style.category, "luminance": style.luminance,
              "mascot": bool(style.mascot), "visual_group": style.visual_group}
+    if any(scene.lines for scene in script.scenes):
+        extra["cast"] = {s: {"voice": line_voice(script, s), **c} for s, c in cast_props(script).items()}
     if music_item:
         extra["music"] = {k: music_item[k] for k in ("id", "title", "artist", "license", "license_url",
                                                        "attribution_required", "sha256")}

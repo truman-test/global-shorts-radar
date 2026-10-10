@@ -1,0 +1,101 @@
+{
+ "id": "2026-10-10-skit-voice-clone",
+ "pilot": "드라마형 견본: 업로드·편성 금지. 대사(재연)와 제목은 fact-checker 재검수 전. 사실 문장은 2026-10-09-voice-clone-3-seconds 승인본 재사용.",
+ "source_video_id": "Jf1239_V0mw",
+ "title": "딥보이스 사기, 아들 목소리 전화가 온다면 (가족 필수확인)",
+ "description": "AI로 흉내 낸 가족 목소리 전화를 재연했습니다. 목소리 3초도 복제 재료가 될 수 있습니다. 급한 가족 전화는 일단 끊고, 저장된 번호로 다시 걸어 확인하세요.",
+ "tags": [
+  "딥보이스",
+  "보이스피싱",
+  "AI 음성 복제",
+  "가족 사칭",
+  "사기 예방"
+ ],
+ "disclaimer": "※ 실제 수법을 바탕으로 한 재연입니다",
+ "theme": "night-lamp",
+ "category": "voice",
+ "music": "tense",
+ "cast": {
+  "scammer": {"voice": "M2", "label": "사기범"},
+  "victim": {"voice": "F2", "label": "엄마"},
+  "dochi": {"voice": "F1", "label": "도치"}
+ },
+ "scenes": [
+  {
+   "layout": "call",
+   "caller": "아들",
+   "caller_sub": "휴대전화",
+   "headline": "엄마, 나 사고 났어",
+   "sub": "",
+   "icon": "phone",
+   "accent": "red",
+   "lines": [
+    {"speaker": "scammer", "text": "엄마, 나 사고 났어. 합의금이 급해."},
+    {"speaker": "victim", "text": "어머, 어떡해. 얼마면 돼?"},
+    {"speaker": "scammer", "text": "지금 바로 이 계좌로 보내줘."}
+   ],
+   "twist": "사기였습니다"
+  },
+  {
+   "headline": "목소리 3초면 복제 재료 될 수도",
+   "sub": "아들 목소리여도 가짜일 수 있어요",
+   "icon": "voice",
+   "accent": "red",
+   "mark": "복제 재료",
+   "lines": [
+    {"speaker": "dochi", "text": "목소리 3초면, 복제 재료가 될 수 있어요."}
+   ]
+  },
+  {
+   "layout": "stat",
+   "headline": "3초 음성, 85% 일치",
+   "sub": "맥아피 2023년 보고서",
+   "icon": "warning",
+   "accent": "yellow",
+   "stat_value": "85%",
+   "stat_label": "3초 음성으로 만든 목소리 일치율",
+   "lines": [
+    {"speaker": "dochi", "text": "맥아피는 2023년 실험에서, 3초 음성으로 85% 일치하는 목소리를 만들었다고 밝혔어요."}
+   ]
+  },
+  {
+   "layout": "checklist",
+   "headline": "급한 가족 전화, 이렇게",
+   "sub": "",
+   "icon": "lock",
+   "accent": "green",
+   "items": [
+    "급한 가족 전화는 일단 끊기",
+    "저장된 번호로 다시 걸기",
+    "목소리 영상 공개 범위 줄이기"
+   ],
+   "lines": [
+    {"speaker": "dochi", "text": "급한 가족 전화는 일단 끊고, 저장된 번호로 다시 거세요."},
+    {"speaker": "dochi", "text": "목소리 영상은 공개 범위를 줄여 두세요."}
+   ]
+  }
+ ],
+ "sources": [
+  {
+   "title": "McAfee 보도자료(Business Wire), Artificial Intelligence Voice Scams on the Rise with 1 in 4 Adults Impacted (2023-05-02)",
+   "url": "https://www.businesswire.com/news/home/20230501005587/en/Artificial-Intelligence-Voice-Scams-on-the-Rise-with-1-in-4-Adults-Impacted"
+  },
+  {
+   "title": "같은 보도자료 사본 (financialcontent)",
+   "url": "https://markets.financialcontent.com/stocks/article/bizwire-2023-5-2-artificial-intelligence-voice-scams-on-the-rise-with-1-in-4-adults-impacted"
+  },
+  {
+   "title": "미국 FTC 소비자 경보, Scammers use AI to enhance their family emergency schemes (2023-03-20)",
+   "url": "https://consumer.ftc.gov/consumer-alerts/2023/03/scammers-use-ai-enhance-their-family-emergency-schemes"
+  },
+  {
+   "title": "FBI IC3 공익 경보 PSA241203 (2024-12-03)",
+   "url": "https://www.ic3.gov/PSA/2024/PSA241203"
+  },
+  {
+   "title": "금융위원회·금융감독원, 보이스피싱 피해예방 10계명 (2026-02-10)",
+   "url": "https://www.fsc.go.kr/no010101/86250"
+  }
+ ],
+ "author": "llm:claude-opus-5-5 (motion-designer, 드라마형 견본). Facts reused verbatim in meaning from the fact-checked 2026-10-09-voice-clone-3-seconds (content/week1/Jf1239_V0mw.review.md); the dialogue is an invented re-enactment with no amount or number."
+}
