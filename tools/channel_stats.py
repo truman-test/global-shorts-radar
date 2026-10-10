@@ -67,7 +67,12 @@ def main() -> int:
         f.write(json.dumps(snap, ensure_ascii=False) + "\n")
 
     plan = json.loads(SCHEDULE.read_text(encoding="utf-8"))
-    by_title = {r["title"]: r for r in rows}
+    import re
+
+    def norm(title: str) -> str:   # Studio may append hashtags or the owner may edit spacing
+        return re.sub(r"\s+", " ", re.sub(r"#\S+", "", title)).strip()
+
+    by_title = {norm(r["title"]): r for r in rows}
     changed = False
     for e in plan["entries"]:
         meta = ROOT / "media" / "final" / e["script"] / "meta.json"
@@ -75,7 +80,7 @@ def main() -> int:
         if not meta.is_file() or not script.is_file():
             continue
         title = json.loads(meta.read_text(encoding="utf-8"))["title"]
-        hit = by_title.get(title)
+        hit = by_title.get(norm(title))
         if hit and e.get("status") != "published":
             url = f"https://www.youtube.com/shorts/{hit['id']}"
             src = json.loads(script.read_text(encoding="utf-8"))["source_video_id"]
