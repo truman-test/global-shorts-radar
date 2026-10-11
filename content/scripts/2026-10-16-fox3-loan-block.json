@@ -1,0 +1,153 @@
+{
+ "id": "2026-10-16-fox3-loan-block",
+ "pilot": "시리즈 제작분: 검수 전 업로드 금지",
+ "series": "여우의 영업비밀",
+ "ep": 3,
+ "source_video_id": "tRI9-0drNcw",
+ "title": "명의도용 대출, 엄마가 미리 켜 둔 안심차단",
+ "hook_title": "남의 이름으로\n몰래 대출?",
+ "description": "여우의 영업비밀 #3 · 재연 · 진돗개네 5 : 여우 0\n남의 이름으로 대출을 누르려던 사기꾼 여우. 그런데 황 여사는 지난주에 은행 앱에서 대출 안심차단을 직접 켜 두었습니다.\n금융위원회·금융감독원은 2026년 10월 6일 소비자경보 '주의'(2026-26호)에서, 사기범이 악성앱 등을 통해 확보한 정보로 피해자 명의의 대출을 무단 실행하는 피해도 우려된다며 「금융거래 안심차단서비스」 가입과 파인 「개인정보노출자 사고예방시스템」 등록을 권고했습니다. 여신거래 안심차단(2024년 8월 23일 시행)에 가입하면 신용대출, 카드론, 신용카드 발급, 할부금융, 예·적금 담보대출 등 내 명의의 여신거래가 차단됩니다. 비대면 계좌개설 안심차단과 오픈뱅킹 안심차단도 있습니다. 거래 중인 금융회사 영업점, 내계좌한눈에(payinfo.or.kr), 또는 은행 앱에서 신청할 수 있고(메뉴 이름은 앱마다 다를 수 있음), 필요하면 언제든 영업점에서 해제할 수 있습니다. 파인(fine.fss.or.kr)의 개인정보노출자 사고예방시스템에 등록하면 본인 명의의 신규 계좌개설·신용카드 발급 등이 제한됩니다. 부모님 폰으로 부모님 옆에서 함께 해 보세요. 이번 유출로 실제 명의도용 대출 피해가 났다는 공식 발표는 없습니다(2026년 10월 6일 기준). 이 영상은 당국이 우려한 수법을 재연한 것입니다.",
+ "tags": [
+  "명의도용 대출",
+  "안심차단서비스",
+  "개인정보 유출",
+  "여신거래 안심차단",
+  "여우의 영업비밀"
+ ],
+ "disclaimer": "※ 실제 수법을 바탕으로 각색한 재연입니다",
+ "category": "security",
+ "music": "tech",
+ "cast_style": "animal",
+ "cast": {
+  "fox_inner": {
+   "voice": "M5",
+   "label": "여우 속마음",
+   "role": "inner",
+   "character": "scammer"
+  },
+  "fox": {
+   "voice": "M2",
+   "label": "여 과장",
+   "role": "scammer",
+   "character": "scammer"
+  },
+  "mom": {
+   "voice": "F3",
+   "label": "황 여사",
+   "role": "victim",
+   "character": "mother"
+  },
+  "daughter": {
+   "voice": "F2",
+   "label": "딸",
+   "role": "neutral",
+   "character": "daughter"
+  }
+ },
+ "scenes": [
+  {
+   "layout": "card",
+   "staging": "solo",
+   "headline": "여우의 영업비밀",
+   "sub": "",
+   "icon": "money",
+   "accent": "blue",
+   "lines": [
+    {
+     "speaker": "fox_inner",
+     "text": "남의 이름으로 대출, 제 특기죠.",
+     "face": "excited"
+    },
+    {
+     "speaker": "fox_inner",
+     "text": "악성앱으로 얻은 정보로 시도하죠.",
+     "face": "smug"
+    },
+    {
+     "speaker": "fox",
+     "text": "황 여사 명의로, 대출 신청!",
+     "face": "excited",
+     "spike": "대출 신청"
+    }
+   ],
+   "twist": "차단!",
+   "twist_on": "fox",
+   "twist_face": "shocked"
+  },
+  {
+   "layout": "call",
+   "staging": "solo",
+   "caller": "딸",
+   "caller_sub": "저장된 번호",
+   "headline": "언제 막았지?",
+   "sub": "",
+   "icon": "phone",
+   "accent": "green",
+   "lines": [
+    {
+     "speaker": "fox_inner",
+     "text": "차단? 언제 막았지?",
+     "face": "panicked"
+    },
+    {
+     "speaker": "daughter",
+     "text": "엄마, 대출 안심차단 했어?",
+     "face": "neutral"
+    },
+    {
+     "speaker": "mom",
+     "text": "지난주에 은행 앱으로, 내가 직접.",
+     "face": "smug"
+    },
+    {
+     "speaker": "mom",
+     "text": "풀 때도 내가 영업점 가서 풀어.",
+     "face": "smug"
+    }
+   ]
+  },
+  {
+   "layout": "card",
+   "staging": "solo",
+   "headline": "진돗개네 5 : 여우 0",
+   "sub": "",
+   "icon": "lock",
+   "accent": "yellow",
+   "lines": [
+    {
+     "speaker": "fox_inner",
+     "text": "미리 막아 둔 집은… 못 들어가요.",
+     "face": "shocked"
+    },
+    {
+     "speaker": "fox_inner",
+     "text": "벌써 다섯 판째… 다음 집은…",
+     "face": "worried"
+    }
+   ]
+  }
+ ],
+ "sources": [
+  {
+   "title": "금융위원회·금융감독원 보도참고자료, 최근 금융권 개인정보 유출사고에 따른 보이스피싱·스미싱 등 피해에 주의하세요 (소비자경보 2026-26호, 2026-10-06)",
+   "url": "https://www.fsc.go.kr/no010101/87882"
+  },
+  {
+   "title": "금융결제원 내계좌한눈에 (안심차단 신청 경로)",
+   "url": "https://www.payinfo.or.kr"
+  },
+  {
+   "title": "금융감독원 금융소비자 정보포털 파인 (개인정보노출자 사고예방시스템)",
+   "url": "https://fine.fss.or.kr"
+  },
+  {
+   "title": "금융위원회 보도자료, 여신거래 안심차단 시행(8.23.) 이후 89,817명의 금융소비자가 이용하고 있습니다 (2024-09-30)",
+   "url": "https://www.fsc.go.kr/po010101/83151"
+  },
+  {
+   "title": "금융위원회 보도참고자료, 더 많은 소비자들이 안심하고 금융거래를 할 수 있도록 안심차단서비스 편의성을 대폭 개선하였습니다 (2025-05-16)",
+   "url": "https://www.fsc.go.kr/no010101/84607"
+  }
+ ],
+ "author": "llm:claude-opus-5-5 (story-writer, 시리즈 바이블 S2 = 여우의 영업비밀 #3). Facts only from content/week2/parents-loan-block.md (+ parents-loan-block.review.md); 87882 re-read 2026-10-11: '사기범이 악성앱 등을 통해 확보한 정보로 피해자 명의의 대출을 무단 실행하는 피해도 우려된다', 여신거래 안심차단 = 개인 명의 여신거래 차단 ('24.8.23 시행), 신청 = 영업점·내계좌한눈에·은행앱, 해제 = 영업점. Method re-enactment of a feared method (no reported 명의도용 case, no amount, no bank name). Mom applies herself (본인 신청, 83151); the daughter only asks. No time/cost promise. 파인 re-opened (checked 2026-10-11). 여 과장 = fox phone voice M2, fox inner voice M5. 도치 has no lines (silent spike on '대출 신청')."
+}
