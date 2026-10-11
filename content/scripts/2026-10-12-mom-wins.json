@@ -1,0 +1,143 @@
+{
+ "id": "2026-10-12-mom-wins",
+ "pilot": "새 포맷 시범: 검수 전 업로드 금지",
+ "source_video_id": "Jf1239_V0mw",
+ "title": "아들 목소리 보이스피싱, 엄마가 암호를 물었더니",
+ "hook_title": "67살 엄마 vs\n아들 목소리",
+ "description": "\"엄마, 나야. 사고 났어.\" 아들 목소리로 급한 돈 전화가 걸려 오자, 엄마는 우리 집 암호를 묻고 끊은 뒤 저장된 번호로 아들에게 직접 걸었습니다.\n이 영상은 실제 수법을 바탕으로 각색한 재연입니다.\n미국 연방거래위원회(FTC)는 사기범이 온라인에 올라온 짧은 음성으로 가족 목소리를 흉내 낼 수 있다고 경고했습니다(2023-03-20). 금융위원회·금융감독원 보이스피싱 피해예방 10계명(2026-02-10)은 자녀 목소리도 AI로 조작해 들려줄 수 있으니, 급박한 상황이라도 일단 끊고 직접 확인하라고 당부합니다. FTC는 연락해 온 가족에게 '내가 알고 있는 그 사람 번호'로 직접 걸어 확인하라고 안내하고, 미국 FBI는 가족끼리 비밀 단어(암호)를 정해 두라고 권고했습니다(2024-12-03).",
+ "tags": [
+  "보이스피싱",
+  "AI 음성 복제",
+  "딥보이스",
+  "가족 암호",
+  "역관광"
+ ],
+ "disclaimer": "※ 실제 수법을 바탕으로 각색한 재연입니다",
+ "category": "voice",
+ "music": "tense",
+ "cast_style": "animal",
+ "cast": {
+  "caller": {
+   "voice": "M3",
+   "label": "아들?",
+   "role": "scammer",
+   "character": "scammer"
+  },
+  "mom": {
+   "voice": "F3",
+   "label": "엄마",
+   "role": "victim",
+   "character": "mother"
+  },
+  "son": {
+   "voice": "M3",
+   "label": "진짜 아들",
+   "role": "neutral",
+   "character": "son"
+  }
+ },
+ "scenes": [
+  {
+   "layout": "call",
+   "caller": "모르는 번호",
+   "caller_sub": "010-●●●●-●●●●",
+   "headline": "아들한테서 온 전화",
+   "sub": "",
+   "icon": "phone",
+   "accent": "red",
+   "lines": [
+    {
+     "speaker": "caller",
+     "text": "엄마, 나야. 사고 났어.",
+     "face": "panicked"
+    },
+    {
+     "speaker": "mom",
+     "text": "어머, 다친 데는 없고?",
+     "face": "worried"
+    },
+    {
+     "speaker": "caller",
+     "text": "급해, 돈 좀 보내 줘!",
+     "face": "panicked",
+     "spike": true
+    },
+    {
+     "speaker": "mom",
+     "text": "우리 집 암호부터 대 봐.",
+     "face": "suspicious"
+    }
+   ]
+  },
+  {
+   "layout": "call",
+   "caller": "모르는 번호",
+   "caller_sub": "010-●●●●-●●●●",
+   "headline": "우리 집 암호?",
+   "sub": "",
+   "icon": "phone",
+   "accent": "red",
+   "lines": [
+    {
+     "speaker": "caller",
+     "text": "암호? 그럴 시간 없어!",
+     "face": "panicked"
+    },
+    {
+     "speaker": "mom",
+     "text": "암호 모르는 아들은 없지.",
+     "face": "smug"
+    },
+    {
+     "speaker": "mom",
+     "text": "끊고, 내 아들한테 직접 걸게.",
+     "face": "smug"
+    }
+   ]
+  },
+  {
+   "layout": "call",
+   "staging": "solo",
+   "caller": "아들",
+   "caller_sub": "저장된 번호",
+   "call_label": "발신 전화",
+   "headline": "저장된 번호로",
+   "sub": "",
+   "icon": "phone",
+   "accent": "green",
+   "lines": [
+    {
+     "speaker": "son",
+     "text": "엄마? 나 회사인데, 무슨 사고?",
+     "face": "neutral"
+    },
+    {
+     "speaker": "mom",
+     "text": "가짜 아들이 암호를 모르더라.",
+     "face": "smug"
+    },
+    {
+     "speaker": "son",
+     "text": "역시 우리 엄마!",
+     "face": "excited"
+    }
+   ],
+   "twist": "역관광!"
+  }
+ ],
+ "sources": [
+  {
+   "title": "금융위원회·금융감독원, 보이스피싱 피해예방 10계명 (2026-02-10)",
+   "url": "https://www.fsc.go.kr/no010101/86250"
+  },
+  {
+   "title": "FBI IC3 공익 경보 PSA241203 (2024-12-03)",
+   "url": "https://www.ic3.gov/PSA/2024/PSA241203"
+  },
+  {
+   "title": "미국 FTC 소비자 경보, Scammers use AI to enhance their family emergency schemes (2023-03-20)",
+   "url": "https://consumer.ftc.gov/consumer-alerts/2023/03/scammers-use-ai-enhance-their-family-emergency-schemes"
+  }
+ ],
+ "author": "llm:claude-opus-5-5 (story-writer, 새 포맷 B '부모의 역관광' 시범). Facts reused from the fact-checked 2026-10-11-recreate-grandma-wins (content/week2/recreate-grandma-wins.review.md) and content/week1/Jf1239_V0mw.md: FSC 86250 ❸ (가족 목소리도 AI 조작 의심, 일단 끊고 직접 확인), FBI PSA241203 (가족 비밀 단어), FTC 2023-03-20 (짧은 음성 클립, 아는 번호로 직접 확인). Method re-enactment (수법 재연): no amount, no reported case outcome; the '다른 계좌' beat of the earlier sample is not used. The fake and the real son share voice M3 (the cloned voice); 도치 has no lines (silent spike cue on the money request)."
+}

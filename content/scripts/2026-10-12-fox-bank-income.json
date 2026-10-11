@@ -1,0 +1,155 @@
+{
+ "id": "2026-10-12-fox-bank-income",
+ "pilot": "새 포맷 시범: 검수 전 업로드 금지",
+ "source_video_id": "R6MMIC7RBAc",
+ "title": "은행 사칭 전화, 사기꾼이 제일 무서워하는 한마디",
+ "hook_title": "여우의 영업비밀 #1\n소득 맞히는 은행 전화",
+ "description": "내 소득까지 아는 '은행 직원' 전화. 사기꾼 여우는 자신만만했지만, 아버지의 한마디에 작전이 끝납니다.\n이 영상은 실제 수법을 바탕으로 각색한 재연입니다.\n금융위원회·금융감독원은 2026년 10월 6일 금융권 개인정보 유출에 따른 소비자경보 '주의'(2026-26호)를 내고, 사기범이 소득·대출한도 같은 내 금융정보를 정확히 말하며 금융회사 대출 안내처럼 접근할 수 있다고 경고했습니다. 내 정보를 안다는 이유만으로 정상적인 연락이라고 믿으면 안 됩니다. 금융회사는 대출 과정에서 어떤 명목으로도 선입금이나 앱 설치를 요구하지 않으며, 대출을 이유로 선입금·기존 대출 상환·앱 설치를 요구하면 사기입니다. 악성앱이 깔리면 경찰(112)이나 금감원(1332)에 전화를 걸어도 사기범에게 연결될 수 있습니다(금융위원회, 2026-09-18). 이런 전화는 일단 끊고, 해당 금융회사의 공식 앱·홈페이지 또는 고객센터 대표번호로 직접 확인하세요. 당국은 10월 6일 기준으로 이번 유출로 고객 자금이 빠져나간 사례는 확인되지 않았다고 밝혔습니다.",
+ "tags": [
+  "은행 사칭 전화",
+  "보이스피싱",
+  "개인정보 유출",
+  "앱 설치 요구",
+  "소비자경보"
+ ],
+ "disclaimer": "※ 실제 수법을 바탕으로 각색한 재연입니다",
+ "theme": "night-lamp",
+ "category": "voice",
+ "music": "suspense",
+ "cast_style": "animal",
+ "cast": {
+  "fox_inner": {
+   "voice": "M3",
+   "label": "여우 속마음",
+   "role": "inner",
+   "character": "scammer"
+  },
+  "fox": {
+   "voice": "M2",
+   "label": "여우",
+   "role": "scammer",
+   "character": "scammer"
+  },
+  "father": {
+   "voice": "M1",
+   "label": "아버지",
+   "role": "victim",
+   "character": "father"
+  }
+ },
+ "scenes": [
+  {
+   "layout": "card",
+   "staging": "solo",
+   "headline": "여우의 영업비밀",
+   "sub": "",
+   "icon": "phone",
+   "accent": "red",
+   "lines": [
+    {
+     "speaker": "fox_inner",
+     "text": "소득만 맞히면, 은행인 줄 알죠.",
+     "face": "smug"
+    }
+   ]
+  },
+  {
+   "layout": "call",
+   "caller": "모르는 번호",
+   "caller_sub": "02-●●●●-●●●●",
+   "headline": "은행이라는 전화",
+   "sub": "",
+   "icon": "phone",
+   "accent": "red",
+   "lines": [
+    {
+     "speaker": "fox",
+     "text": "아버님, 연소득으로 한도 나왔어요.",
+     "face": "fakeKind"
+    },
+    {
+     "speaker": "father",
+     "text": "그걸 어떻게 알아요?",
+     "face": "shocked"
+    },
+    {
+     "speaker": "fox_inner",
+     "text": "그건 영업비밀.",
+     "face": "smug"
+    },
+    {
+     "speaker": "fox",
+     "text": "신청서 쓰게 앱만 깔아 주세요.",
+     "face": "fakeKind",
+     "spike": true
+    },
+    {
+     "speaker": "fox_inner",
+     "text": "깔면, 경찰에 걸어도 제가 받을 수 있죠.",
+     "face": "smug"
+    }
+   ]
+  },
+  {
+   "layout": "call",
+   "caller": "모르는 번호",
+   "caller_sub": "02-●●●●-●●●●",
+   "headline": "대출에 앱을 깔라고?",
+   "sub": "",
+   "icon": "phone",
+   "accent": "yellow",
+   "lines": [
+    {
+     "speaker": "father",
+     "text": "대출에 웬 앱이요?",
+     "face": "suspicious"
+    },
+    {
+     "speaker": "father",
+     "text": "끊고, 은행 대표번호로 직접 걸게요.",
+     "face": "suspicious"
+    }
+   ],
+   "twist": "뚝!"
+  },
+  {
+   "layout": "card",
+   "staging": "solo",
+   "headline": "작전 실패",
+   "sub": "",
+   "icon": "phone",
+   "accent": "yellow",
+   "lines": [
+    {
+     "speaker": "fox_inner",
+     "text": "직접 건다는 말이… 제일 무서워요.",
+     "face": "shocked"
+    },
+    {
+     "speaker": "fox_inner",
+     "text": "다음 집은…",
+     "face": "worried"
+    }
+   ]
+  }
+ ],
+ "sources": [
+  {
+   "title": "금융위원회·금융감독원 보도참고자료, 최근 금융권 개인정보 유출사고에 따른 보이스피싱·스미싱 등 피해에 주의하세요 (소비자경보 2026-26호, 2026-10-06)",
+   "url": "https://www.fsc.go.kr/no010101/87882"
+  },
+  {
+   "title": "금융위원회 보도자료, 추석 명절 전후 보이스피싱 피해에 주의하세요 (2026-09-18)",
+   "url": "https://www.fsc.go.kr/no010101/87779"
+  },
+  {
+   "title": "금융위원회 보도자료, 全금융권 긴급 점검회의 (2026-10-06 게시)",
+   "url": "https://www.fsc.go.kr/no010101/87876"
+  },
+  {
+   "title": "머니투데이방송, 은행 개인정보 유출 보도 (2026-10-01)",
+   "url": "https://news.mtn.co.kr/news-detail/2026100115465611895"
+  }
+ ],
+ "author": "llm:claude-opus-5-5 (story-writer, 새 포맷 A '여우의 영업비밀' 시범). Facts only from content/week2/bank-caller-knows-income.md (+ .review.md, recreate-bank-pov.review.md): 87882 (소득·대출한도를 정확히 언급하며 대출 안내처럼 접근; 대출신청서 명목 앱 설치 = 사기; 공식 대표번호로 직접 확인), 87779 (악성앱 설치 시 112·1332에 걸어도 사기범 연결 가능). Method re-enactment (수법 재연): no amount, no reported case, no bank name; the father hangs up before installing anything. Fox POV with two voices (phone M2, inner M3); 도치 has no lines (silent spike cue on the app request)."
+}
