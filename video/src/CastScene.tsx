@@ -17,6 +17,7 @@ import {actingAt, adOf, ASIDE, blinkAt, bubbleOf, callerOf, CharSpot, isCaller, 
   RIG, otherOf, planShots, punchZoom, shockShake, shotAt, shotSpec, SPEC, speakerAt, strSeed, talkWeight, twistCutMs,
   victimOf, Who} from "./rig";
 import {CallCentreSet, FocusLines, ForegroundProp, HomeSet, HomeVariant, PropKind, SetMode} from "./Sets";
+import {POSTER_PROPS, PosterPropView} from "./Props";
 import {FONT} from "./fonts";
 import {DRAMA, isLight, NOTE, TONES, useTheme} from "./themes";
 import {CastMember, CharacterId, Expression, Gesture, SceneProps, Staging} from "./types";
@@ -36,7 +37,15 @@ type Ctx = {
   fps: number; index: number;
   shake: number; // camera shake (screen px) of a shocked line
   victim?: string; caller?: string; other?: string; ad?: string;
+  home: HomeVariant; // the family's room of this scene (scene.set): living, or the side-dish shop for every family shot
+  cold: boolean; // the cold open's frozen copy (the twist keeps its colour)
 };
+
+/** A family shot's room: the scene's set when it is the shop (every family shot is in the shop), else `fallback`. */
+const roomOf = (c: Ctx, fallback: HomeVariant): HomeVariant => (c.home === "shop" ? "shop" : fallback);
+
+/** The home's table is the shop's counter in a shop scene. */
+const propKind = (c: Ctx, kind: string): PropKind => (kind === "table" && c.home === "shop" ? "counter" : kind as PropKind);
 
 const exprFx = (e: Expression, since: number, who: Who): Fx[] => {
   switch (e) {
@@ -105,7 +114,7 @@ const shiftOf = (c: Ctx) => c.frame - (c.ms / 1000) * c.fps;
 
 /** The foreground prop of a shot (composition.json shot "prop"), drawn in front of the characters. */
 const Prop: React.FC<{c: Ctx; spec: {prop?: {kind: string; top: number}}}> = ({c, spec}) =>
-  spec.prop ? <ForegroundProp kind={spec.prop.kind as PropKind} top={spec.prop.top} mode={c.mode} /> : null;
+  spec.prop ? <ForegroundProp kind={propKind(c, spec.prop.kind)} top={spec.prop.top} mode={c.mode} /> : null;
 
 const Camera: React.FC<{zoom: number; fx: number; fy: number; shake?: number; children: React.ReactNode;
   filter?: string}> = ({zoom, fx, fy, shake = 0, children, filter}) => (
@@ -211,7 +220,9 @@ const TwistShot: React.FC<{c: Ctx; variant: HomeVariant}> = ({c, variant}) => {
   const at = c.scene.twist ? c.scene.twist.atMs : 1e9;
   const hit = ((c.ms - at) / 1000) * c.fps;
   const cut = ((c.ms - twistCutMs(c.scene)) / 1000) * c.fps;
-  const k = hit >= 0 ? Math.min(1, (hit + 1) / 3) : 0;
+  const landed = hit >= 0 ? Math.min(1, (hit + 1) / 3) : 0;
+  // the room desaturates under the stamp; the cold open's copy (the poster) keeps its colour
+  const k = c.cold ? 0 : landed;
   const flash = hit < 0 ? 0 : hit < 2 ? 0.85 : Math.max(0, 0.85 * (1 - (hit - 2) / 5));
   const shake = hit >= 0 && hit < 8 ? Math.sin(hit * 2.7) * 6 * (1 - hit / 8) : 0;
   const zoom = 0.965 + 0.035 * Math.min(1, spr(cut, 0, 8, 0.02));
@@ -232,7 +243,7 @@ const TwistShot: React.FC<{c: Ctx; variant: HomeVariant}> = ({c, variant}) => {
         <div style={{position: "absolute", inset: 0, filter: `grayscale(${k}) brightness(${1 - 0.15 * k})`}}>
           {isCallerId ? <CallCentreSet w={1080} h={1920} frame={c.frameA} /> : <HomeSet mode={c.mode} variant={variant} />}
         </div>
-        <FocusLines cx={spot.x} cy={spot.eyeY} color={focus} opacity={0.32 * k} />
+        <FocusLines cx={spot.x} cy={spot.eyeY} color={focus} opacity={0.32 * landed} />
         <Character pose={pose} uid={`tw${c.index}`} frame={c.frameA} />
         <div style={{position: "absolute", inset: 0, filter: `grayscale(${k}) brightness(${1 - 0.15 * k})`}}>
           <Prop c={c} spec={SPEC.twist_closeup.shots.twist} />
@@ -287,13 +298,13 @@ const AsideShot: React.FC<{c: Ctx; zoom: number; startMs: number}> = ({c, zoom, 
     <>
       <Camera zoom={zoom} shake={c.shake} fx={spot.x} fy={spot.eyeY}>
         <div style={{position: "absolute", inset: 0, filter: dim}}>
-          {caller ? <CallCentreSet w={1080} h={1920} frame={c.frameA} /> : <HomeSet mode={c.mode} variant="living" />}
+          {caller ? <CallCentreSet w={1080} h={1920} frame={c.frameA} /> : <HomeSet mode={c.mode} variant={roomOf(c, "living")} />}
         </div>
         <div style={{position: "absolute", inset: 0,
           background: `radial-gradient(ellipse 62% 48% at ${spot.x}px ${spot.eyeY - 40}px, rgba(0,0,0,0) 45%, ${t.vignette} 100%)`}} />
         <Character pose={pose} uid={`as${c.index}`} frame={c.frameA} />
         <div style={{position: "absolute", inset: 0, filter: dim}}>
-          <ForegroundProp kind={prop.kind as PropKind} top={prop.top} mode={c.mode} />
+          <ForegroundProp kind={propKind(c, prop.kind)} top={prop.top} mode={c.mode} />
         </div>
       </Camera>
       <ThoughtTag frame={c.frame} from={from} />
@@ -307,7 +318,7 @@ const PipCall: React.FC<{c: Ctx; shot: string; zoom: number}> = ({c, shot, zoom}
   const spec = shotSpec("pip_call", shot) as {chars: CharSpot[]; window?: {x: number; y: number; w: number; h: number;
     scale: number}; prop?: {kind: string; top: number}};
   const callerTalks = talkWeight(c.scene, c.caller, c.msA) > 0.5;
-  if (shot === "other") return <Solo c={c} shot="other" zoom={zoom} variant="living" />;
+  if (shot === "other") return <Solo c={c} shot="other" zoom={zoom} variant={roomOf(c, "living")} />;
   if (shot === "caller") {
     const spot = spec.chars[0];
     const fake = c.caller ? c.cast[c.caller]?.character === "fake_banker" : false;
@@ -335,7 +346,7 @@ const PipCall: React.FC<{c: Ctx; shot: string; zoom: number}> = ({c, shot, zoom}
   return (
     <>
       <Camera zoom={zoom} shake={c.shake} fx={spot.x} fy={full ? spot.eyeY + 300 * spot.k : spot.eyeY}>
-        <HomeSet mode={c.mode} variant="living" />
+        <HomeSet mode={c.mode} variant={roomOf(c, "living")} />
         <Character pose={pose} uid={`pv${c.index}`} frame={c.frameA}
           style={{filter: callerTalks ? "brightness(0.9)" : undefined}} />
         <Prop c={c} spec={spec} />
@@ -369,7 +380,7 @@ const SplitCall: React.FC<{c: Ctx; zoom: number}> = ({c, zoom}) => {
       </div>
       <div style={{position: "absolute", inset: 0, clipPath: `polygon(0 ${border.y + dy + 8}px, 100% ${border.y - dy + 8}px, 100% 100%, 0 100%)`}}>
         <Camera zoom={zoom} shake={c.shake} fx={bottom.x} fy={bottom.eyeY}>
-          <HomeSet mode={c.mode} variant="living" floor={1500} />
+          <HomeSet mode={c.mode} variant={roomOf(c, "living")} floor={1500} />
           <Character pose={victimPose} uid={`sv${c.index}`} frame={c.frameA}
             style={{filter: speaker === c.victim ? undefined : "brightness(0.9)"}} />
           <Prop c={c} spec={spec as {prop?: {kind: string; top: number}}} />
@@ -403,14 +414,18 @@ const Solo: React.FC<{c: Ctx; shot: string; zoom: number; variant?: HomeVariant}
     );
   }
   const id = shot === "other" ? c.other : c.victim;
-  const pose = poseOf(c, spot, id, shot === "other" ? "other" : "victim", {gesture: c.scene.layout === "call" ? "phoneEar"
-    : "phoneRead", look: [0.2, -0.1]});
-  const set = variant ?? (shot === "other" ? "work" : "living");
+  // an evidence prop on the wall (scene posterProp, solo staging): the character steps left so the face stays clear
+  const poster = c.staging === "solo" && c.scene.posterProp ? c.scene.posterProp : undefined;
+  const at = poster ? {...spot, x: POSTER_PROPS[poster].charX} : spot;
+  const pose = poseOf(c, at, id, shot === "other" ? "other" : "victim", {gesture: c.scene.layout === "call" ? "phoneEar"
+    : "phoneRead", look: poster ? [0.45, -0.1] : [0.2, -0.1]});
+  const set = roomOf(c, variant ?? (shot === "other" ? "work" : "living"));
   // a family member in the victim's room (pip_call "other") stands behind the home's table, not an office desk
   const prop = soloSpec.prop && set !== "work" ? {...soloSpec.prop, kind: "table"} : soloSpec.prop;
   return (
-    <Camera zoom={zoom} shake={c.shake} fx={spot.x} fy={spot.eyeY}>
+    <Camera zoom={zoom} shake={c.shake} fx={at.x} fy={at.eyeY}>
       <HomeSet mode={c.mode} variant={set} />
+      {poster ? <PosterPropView kind={poster} /> : null}
       <Character pose={pose} uid={`ov${c.index}`} frame={c.frameA} />
       <Prop c={c} spec={{prop}} />
     </Camera>
@@ -455,7 +470,7 @@ const OverShoulder: React.FC<{c: Ctx; shot: string; zoom: number; body: React.Re
     return (
       <>
         <Camera zoom={zoom} shake={c.shake} fx={540} fy={760}>
-          <HomeSet mode={c.mode} variant="living" />
+          <HomeSet mode={c.mode} variant={roomOf(c, "living")} />
           <Character pose={pose} uid={`ob${c.index}`} frame={c.frameA} />
           <Prop c={c} spec={osSpec} />
         </Camera>
@@ -485,7 +500,7 @@ const OverShoulder: React.FC<{c: Ctx; shot: string; zoom: number; body: React.Re
   return (
     <>
       <Camera zoom={zoom} shake={c.shake} fx={spot.x} fy={spot.eyeY}>
-        <HomeSet mode={c.mode} variant={other ? "work" : "living"} />
+        <HomeSet mode={c.mode} variant={roomOf(c, other ? "work" : "living")} />
         <Character pose={pose} uid={`of${c.index}`} frame={c.frameA} />
         <Prop c={c} spec={osSpec} />
       </Camera>
@@ -618,7 +633,7 @@ const DochiExplains: React.FC<{c: Ctx; body: React.ReactNode}> = ({c, body}) => 
   return (
     <>
       <div style={{position: "absolute", inset: 0, ...shell}}>
-        <HomeSet mode={c.mode} variant="living" dim={0.55} />
+        <HomeSet mode={c.mode} variant={roomOf(c, "living")} dim={0.55} />
         <Character pose={pose} uid={`de${c.index}`} frame={c.frameA} />
       </div>
       <div style={{position: "absolute", left: 0, top: 0, width: 1080, height: 1920, transformOrigin: "0 0",
@@ -656,14 +671,15 @@ export const CastScene: React.FC<{scene: SceneProps; staging: Staging; body: Rea
   const frameA = frame - ((ms - msA) / 1000) * fps;
   const victim = victimOf(cast);
   const c: Ctx = {scene, cast, staging, mode: isLight(theme) ? "light" : "dark", ms, msA, frame, frameA, fps,
-    index: s.index, shake: shockShake(scene, cast, msA, fps), victim, caller: callerOf(scene, cast), other: otherOf(scene, cast, victim), ad: adOf(scene, cast)};
+    index: s.index, shake: shockShake(scene, cast, msA, fps), victim, caller: callerOf(scene, cast), other: otherOf(scene, cast, victim), ad: adOf(scene, cast),
+    home: scene.set === "shop" ? "shop" : "living", cold: Boolean(s.cold)};
   if (staging === "dochi_explains") return <DochiExplains c={c} body={body} />;
   const shot = shotAt(shots, msA);
   // the slow push-in of the shot times the keyword punch-in (1 -> 1.12 in 4 frames); the video's opening shot also
   // punches in within its first 0.3 s (frame 0 itself, the poster, stays unzoomed)
   const open = s.first && shot.startMs <= -1e8 ? openPunch(msA, fps) : 1;
   const zoom = pushIn(c, shot.startMs, shot.endMs) * punchZoom(scene, msA, fps) * open;
-  const variant: HomeVariant = staging === "watch_ad" ? "sofa" : "living";
+  const variant: HomeVariant = staging === "watch_ad" ? "sofa" : roomOf(c, "living");
   let picture: React.ReactNode;
   if (shot.name === "twist" || staging === "twist_closeup") {
     picture = <TwistShot c={c} variant={variant} />;

@@ -16,9 +16,10 @@ from pathlib import Path
 from radar.config import PROJECT_ROOT
 from radar.production.assemble import (TRIM, ProductionError, ProductionResult, ffmpeg_exe, media_info, run_ffmpeg,
                                        write_meta)
-from radar.production.script import (CAST_STYLES, LAYOUT_LEAD_IN, LINE_GAP, TWIST_DELAY, TWIST_HOLD, Script, cast_of,
-                                     caption_chunks, default_staging, hook_title_lines, is_drama, line_voice,
-                                     mockup_side, scene_lead_in)
+from radar.production.script import (CAST_STYLES, COLD_OPEN_LABEL, COLD_OPEN_REWIND, LAYOUT_LEAD_IN, LINE_GAP,
+                                     TWIST_DELAY, TWIST_HOLD, Scene, Script, cast_of, caption_chunks, cold_open_hold,
+                                     cold_open_line, cold_open_stamp, default_staging, hook_title_lines, is_drama,
+                                     line_voice, mockup_side, scene_lead_in, score_of, series_chip, twist_scene_index)
 from radar.production.textnorm import speakable_length, split_sentences
 from radar.production.themes import episode_number, record_style, resolve_style_report
 from radar.production.tts import TTSError
@@ -319,11 +320,44 @@ def episode_seed(script_id: str) -> int:
     return zlib.crc32(script_id.encode("utf-8"))
 
 
+def cold_open_props(script: Script, audio: str, speech: float, pages: list[dict], lines: list[dict]) -> dict | None:
+    """The flash-forward (video/src/ColdOpen.tsx): the twist scene `scene` frozen with `stamp` on, the exclamation's
+    audio from 0.0 s; holdMs = the frozen shot (>= the line + COLD_OPEN_PAD, so the rewind's sound never covers it),
+    durationMs = hold + the 8-frame rewind; the story starts after it. None without a cold open."""
+    k = twist_scene_index(script)
+    if cold_open_line(script) is None or k is None:
+        return None
+    hold = cold_open_hold(script, speech)
+    return {"audio": audio, "speechMs": round(speech * 1000), "holdMs": round(hold * 1000),
+            "durationMs": round((hold + COLD_OPEN_REWIND) * 1000), "pages": pages, "lines": lines, "scene": k,
+            "speaker": script.cold_open.get("speaker", ""), "stamp": cold_open_stamp(script),
+            "label": script.cold_open.get("label") or COLD_OPEN_LABEL}
+
+
+def _cold_open_speech(script: Script, tts, work: Path, public_job: Path) -> dict | None:
+    """Synthesize the cold open's exclamation like any dialogue line (the speaker's voice) -> its props."""
+    line = cold_open_line(script)
+    if line is None or twist_scene_index(script) is None:
+        return None
+    scene = Scene(narration=line.text, headline="", lines=[line])
+    pre = {}
+    if tts.name == "supertonic":   # the cast's voices: one worker call for this voice (as presynth_lines does)
+        raw = work / f"rawc_0{tts.ext}"
+        pre[("c", 0)] = (raw, tts.synthesize_batch([(line.tts_text(), raw)],
+                                                   voice=line_voice(script, line.speaker))[0])
+    wav, speech, per_line, spans = _dialogue_speech(scene, "c", tts, work, pre)
+    hold = cold_open_hold(script, speech)
+    pages = dialogue_pages(scene, per_line, spans, hold)
+    shutil.copy(wav, public_job / wav.name)
+    return cold_open_props(script, f"jobs/{script.id}/{wav.name}", speech, pages,
+                           lines_props(scene, spans, cast_of(script)))
+
+
 def build_props(script: Script, scenes: list[dict], channel_name: str, sfx: bool = True,
                 music: dict | None = None, voice_label: str | None = VOICE_LABEL,
                 transition: str = "continuity", theme: str = "classic", category: str | None = None,
                 episode_no: int | None = None, share_line: str | None = SHARE_LINE,
-                cta: str | None = VALUE_CTA) -> dict:
+                cta: str | None = VALUE_CTA, cold_open: dict | None = None) -> dict:
     """Props for video/src/Short.tsx. `episode` stays the script id (seed fallback); the series number shown on the
     poster is `episodeNo` (only for scheduled scripts, see themes.episode_number)."""
     props = {"channel": channel_name, "voiceLabel": voice_label, "disclaimer": script.disclaimer, "sfx": sfx,
@@ -349,8 +383,27 @@ def build_props(script: Script, scenes: list[dict], channel_name: str, sfx: bool
         for key in ("episodeNo", "shareLine", "cta"):
             props.pop(key, None)
         props.update(packaging="drama", hookTitle=hook_title_lines(script.hook_title), disclosure=DRAMA_DISCLOSURE,
-                     scenes=[{**sc, "sub": ""} for sc in scenes])
+                     scenes=[{**sc, "sub": "", **set_dressing(script, src)}
+                             for sc, src in zip(scenes, list(script.scenes) + [None] * len(scenes))])
+        # the series chip above the title, the closing scoreboard, the flash-forward (Packaging.tsx, ColdOpen.tsx)
+        chip = series_chip(script)
+        if chip:
+            props["seriesChip"] = chip
+        score = score_of(script)
+        if score:
+            props["score"] = score
+        if cold_open:
+            props["coldOpen"] = cold_open
     return props
+
+
+def set_dressing(script: Script, scene: Scene | None) -> dict:
+    """A drama scene's room ("set": the script's or its own, living by default) and its poster prop."""
+    if scene is None:
+        return {}
+    home = scene.home_set or script.home_set
+    return {**({"set": home} if home and home != "living" else {}),
+            **({"posterProp": scene.poster_prop} if scene.poster_prop else {})}
 
 
 def cast_style_of(script: Script) -> str:
@@ -461,6 +514,9 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
         scenes.append(scene_props(scene, f"jobs/{script.id}/{wav.name}", lead, speech, length, pages, lines,
                                   default_staging(scene, cast_of(script))))
         total += round(length * 1000) / 1000
+    cold = _cold_open_speech(script, tts, work, public_job)   # the flash-forward before the story (dramas only)
+    if cold:
+        total += cold["durationMs"] / 1000
     music, music_item = music_props(script)
     props_path = out_dir / "props.json"
     # own fields, else topic + the stage-family rules over the schedule (see themes.py)
@@ -468,7 +524,7 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
     theme = style.theme
     episode_no = episode_number(script.id)   # position in content/schedule.json; None if not scheduled
     props = build_props(script, scenes, channel_name, sfx, music, transition=transition, theme=theme,
-                        category=style.category, episode_no=episode_no)
+                        category=style.category, episode_no=episode_no, cold_open=cold)
     props_path.write_text(json.dumps(props, ensure_ascii=False, indent=1), encoding="utf-8")
 
     video = out_dir / "video.mp4"
@@ -507,6 +563,13 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
     record_style(script, style)   # content/style_log.json: stage, theme, layouts (next episodes' constraints)
     extra = meta_extra(style, transition, render_seconds, None if is_drama(script) else episode_no, music_item)
     extra["packaging"] = props.get("packaging", "explainer")
+    if props.get("seriesChip"):
+        extra["series"] = {"name": script.series, "ep": script.ep, "chip": props["seriesChip"]}
+    if props.get("score"):
+        extra["score"] = props["score"]
+    if props.get("coldOpen"):
+        extra["cold_open"] = {"line": script.cold_open.get("line"), "stamp": props["coldOpen"]["stamp"],
+                              "seconds": round(props["coldOpen"]["durationMs"] / 1000, 2)}
     if any(scene.lines for scene in script.scenes):
         extra["cast"] = {s: {"voice": line_voice(script, s), **c} for s, c in cast_props(script).items()}
         if "castStyle" in props:

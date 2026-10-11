@@ -64,6 +64,13 @@ export const Stamp: React.FC<{text: string; at: number; x: number; y: number; si
   );
 };
 
+/** A handwritten word on a set's sign (SVG text, centred at x; e.g. the shop's "오늘의 반찬"): set dressing, an accent. */
+export const SignText: React.FC<{text: string; x: number; y: number; size: number; fill: string; opacity?: number}> = ({
+  text, x, y, size, fill, opacity = 1}) => (
+  <text x={x} y={y} textAnchor="middle" fontFamily={HAND} fontWeight={700} fontSize={size} fill={fill}
+    fillOpacity={opacity}>{text}</text>
+);
+
 export const Handwrite: React.FC<{text: string; x: number; y: number; size: number; color: string; at: number;
   dur?: number; rotate?: number; underline?: string; align?: "left" | "center"}> = ({
   text, x, y, size, color, at, dur = 14, rotate = -4, underline, align = "left",
