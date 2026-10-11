@@ -85,7 +85,8 @@
     {
      "speaker": "mom",
      "text": "암호 모르는 아들은 없지.",
-     "face": "smug"
+     "face": "smug",
+     "pause": 0.6
     },
     {
      "speaker": "mom",

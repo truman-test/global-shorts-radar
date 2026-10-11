@@ -344,9 +344,16 @@ const MusicBed: React.FC<{props: ShortProps}> = ({props}) => {
   const music = props.music;
   if (!music) return null;
   const spans = sceneFrames(props, fps);
-  const windows = props.scenes.map((s, i) => {
+  // one duck window per scene's speech, merged across short gaps (a scene's tail, a twist freeze): the bed stays
+  // down between scenes instead of swelling ~8 dB for half a second and dropping again under the next line
+  const HOLD = Math.round(1.2 * fps);
+  const windows: [number, number][] = [];
+  props.scenes.forEach((s, i) => {
     const a = spans[i].from + Math.round((s.leadInMs / 1000) * fps);
-    return [a, a + Math.round((s.speechMs / 1000) * fps)] as const;
+    const b = a + Math.round((s.speechMs / 1000) * fps);
+    const prev = windows[windows.length - 1];
+    if (prev && a - prev[1] <= HOLD) prev[1] = Math.max(prev[1], b);
+    else windows.push([a, b]);
   });
   const RAMP = 6;
   const volume = (f: number) => {

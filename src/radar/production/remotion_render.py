@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 import shutil
 import subprocess
 import time
@@ -16,8 +17,8 @@ from pathlib import Path
 from radar.config import PROJECT_ROOT
 from radar.production.assemble import (TRIM, ProductionError, ProductionResult, ffmpeg_exe, media_info, run_ffmpeg,
                                        write_meta)
-from radar.production.script import (CAST_STYLES, LAYOUT_LEAD_IN, LINE_GAP, TWIST_DELAY, TWIST_HOLD, Script, cast_of,
-                                     caption_chunks, default_staging, hook_title_lines, is_drama, line_voice,
+from radar.production.script import (CAST_STYLES, LAYOUT_LEAD_IN, TWIST_DELAY, TWIST_HOLD, Script, cast_of,
+                                     caption_chunks, default_staging, hook_title_lines, is_drama, line_gap, line_voice,
                                      mockup_side, scene_lead_in)
 from radar.production.textnorm import speakable_length, split_sentences
 from radar.production.themes import episode_number, record_style, resolve_style_report
@@ -179,19 +180,39 @@ def presynth_lines(script: Script, tts, work: Path) -> dict[tuple[int, int], tup
         for k, line in enumerate(scene.lines):
             by_voice.setdefault(line_voice(script, line.speaker), []).append((i, k, line))
     out = {}
+    base = float(getattr(tts, "speed", 1.0) or 1.0)
     for voice, items in by_voice.items():
         raws = [work / f"raw{i}_{k}{tts.ext}" for i, k, _ in items]
-        spans = tts.synthesize_batch([(line.tts_text(), raw) for (_, _, line), raw in zip(items, raws)], voice=voice)
+        # each line is one synthesis call (whole=True): one intonation across "엄마, 나야. 사고 났어."
+        spans = tts.synthesize_batch([(line.tts_text(), raw) for (_, _, line), raw in zip(items, raws)], voice=voice,
+                                     whole=True, speeds=[base * line.speed if line.speed else None
+                                                         for _, _, line in items])
         for (i, k, _), raw, sp in zip(items, raws, spans):
             out[(i, k)] = (raw, sp)
     return out
 
 
-def join_wavs(parts: list[Path], gap: float, out: Path) -> list[tuple[float, float]]:
-    """Concatenate same-format wavs with `gap` seconds of silence between them (sample exact).
-    Returns each part's (start_s, end_s) inside `out`."""
+UNCLEAR_CER = 0.4   # a line whose best take still loses this share of its characters in the ASR check is flagged
+
+
+def line_voice_check(pre: dict, scores: dict) -> dict[str, float]:
+    """{"scene-line" (1-based): character error rate of the take that was kept} for the lines whose takes were
+    checked by ASR (Supertonic with takes > 1). Natural sound changes (암호 heard as 아모) cost a little, so only a
+    high rate means a swallowed word."""
+    out = {}
+    for (i, k), (raw, _) in sorted(pre.items()):
+        got = scores.get(str(raw))
+        if got:
+            out[f"{i + 1}-{k + 1}"] = round(min(got), 3)
+    return out
+
+
+def join_wavs(parts: list[Path], gap: float | list[float], out: Path) -> list[tuple[float, float]]:
+    """Concatenate same-format wavs with `gap` seconds of silence between them (sample exact; a list gives the
+    silence before each part after the first). Returns each part's (start_s, end_s) inside `out`."""
     import wave
 
+    gaps = list(gap) if isinstance(gap, (list, tuple)) else [gap] * max(0, len(parts) - 1)
     spans, chunks, pos, params = [], [], 0, None
     for k, part in enumerate(parts):
         with wave.open(str(part), "rb") as w:
@@ -202,7 +223,7 @@ def join_wavs(parts: list[Path], gap: float, out: Path) -> list[tuple[float, flo
                 raise ProductionError(f"dialogue clip {part.name} has a different audio format")
             data = w.readframes(p.nframes)
         if k:
-            silence = int(round(gap * params.framerate))
+            silence = int(round(gaps[k - 1] * params.framerate))
             chunks.append(b"\0" * silence * params.sampwidth * params.nchannels)
             pos += silence
         spans.append((pos / params.framerate, (pos + p.nframes) / params.framerate))
@@ -218,7 +239,8 @@ def join_wavs(parts: list[Path], gap: float, out: Path) -> list[tuple[float, flo
 
 def _dialogue_speech(scene, i: int, tts, work: Path, pre: dict
                      ) -> tuple[Path, float, list[list[tuple[str, float, float]]], list[tuple[float, float]]]:
-    """Synthesize a dialogue scene line by line (each in its speaker's voice) and join the clips with LINE_GAP.
+    """Synthesize a dialogue scene line by line (each in its speaker's voice) and join the clips with LINE_GAP (or
+    a line's own "pause").
     Returns (wav, speech seconds, word timings per line, (start, end) per line), all relative to the wav."""
     clips = []
     for k, line in enumerate(scene.lines):
@@ -228,7 +250,8 @@ def _dialogue_speech(scene, i: int, tts, work: Path, pre: dict
         else:
             clips.append(_speech_text(line.text, line.tts_text(), f"{i}_{k}", tts, work))
     wav = work / f"s{i}.wav"
-    spans = join_wavs([c[0] for c in clips], LINE_GAP, wav)
+    gaps = [line_gap(line, prev) for prev, line in zip(scene.lines, scene.lines[1:])]   # a line's own beat
+    spans = join_wavs([c[0] for c in clips], gaps, wav)
     words = [[(w, a + s0, b + s0) for w, a, b in clip[2]] for clip, (s0, _) in zip(clips, spans)]
     return wav, spans[-1][1], words, spans
 
@@ -284,6 +307,33 @@ def sentence_word_timings(narration: str, spans: list[tuple[float, float, str]],
     return out
 
 
+LOUDNESS_TARGET, PEAK_CEILING = -14.0, -2.0   # LUFS (Shorts plays at ~-14); limiter ceiling dBFS (~-1.4 dBTP after AAC)
+_LUFS_RE = re.compile(r"I:\s+(-?\d+(?:\.\d+)?) LUFS")
+
+
+def measure_loudness(path: Path, seconds: float | None = None) -> float | None:
+    """Integrated loudness (LUFS) of a file's audio (its first `seconds`), from ffmpeg's ebur128 summary; None when
+    it cannot be read."""
+    limit = ["-t", f"{seconds:g}"] if seconds else []
+    proc = subprocess.run([ffmpeg_exe(), "-hide_banner", "-nostats", *limit, "-i", str(path), "-vn", "-af", "ebur128",
+                           "-f", "null", "-"], capture_output=True, text=True, encoding="utf-8", errors="replace")
+    found = _LUFS_RE.findall(proc.stderr or "")
+    return float(found[-1]) if found else None
+
+
+def loudness_filter(path: Path) -> str:
+    """One static gain to LOUDNESS_TARGET plus a fast peak limiter. Single-pass loudnorm is dynamic: it rides the
+    gain over ~3 s windows (measured +7.0..+8.8 dB across one pilot), so the bed breathes between lines; a static
+    gain keeps the mix exactly as rendered. Falls back to loudnorm when the loudness cannot be measured."""
+    measured = measure_loudness(path)
+    if measured is None or measured < -70:
+        return "loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000"
+    gain = max(-20.0, min(20.0, LOUDNESS_TARGET - measured))
+    ceiling = 10 ** (PEAK_CEILING / 20)
+    return (f"aresample=48000,volume={gain:.2f}dB,"
+            f"alimiter=limit={ceiling:.4f}:attack=3:release=60:level=0,aresample=48000")
+
+
 def _npx() -> str:
     exe = shutil.which("npx") or shutil.which("npx.cmd")
     if not exe:
@@ -292,6 +342,7 @@ def _npx() -> str:
 
 
 MUSIC_VOLUME, MUSIC_DUCK = 0.22, 0.09   # ~ -13 dB / -21 dB relative to the track; voice stays on top
+MUSIC_REF_LUFS, MUSIC_MEASURE_SECONDS = -23.0, 40   # every bed is first levelled to the quietest track (suspense)
 
 
 def music_props(script: Script) -> tuple[dict | None, dict | None]:
@@ -303,7 +354,20 @@ def music_props(script: Script) -> tuple[dict | None, dict | None]:
     if item is None:
         raise ProductionError(f"music '{script.music}' is not downloaded: run `radar assets fetch`")
     src = item["file"].split("public/", 1)[1]
-    return {"src": src, "volume": MUSIC_VOLUME, "duckVolume": MUSIC_DUCK}, item
+    scale = music_scale(PROJECT_ROOT / item["file"])
+    return {"src": src, "volume": round(MUSIC_VOLUME * scale, 4), "duckVolume": round(MUSIC_DUCK * scale, 4)}, item
+
+
+def music_scale(path: Path) -> float:
+    """Gain (<= 1) that brings a track's opening MUSIC_MEASURE_SECONDS to MUSIC_REF_LUFS. The library spans -7 to
+    -23 LUFS (2026-10-11), so one fixed volume put "tense" 6.6 dB over "suspense": ducked, it sat only ~6 dB under
+    the voice in the mom-wins pilot and masked the words. 1.0 when the file cannot be measured."""
+    if not path.is_file():
+        return 1.0
+    lufs = measure_loudness(path, seconds=MUSIC_MEASURE_SECONDS)
+    if lufs is None or lufs < -70:
+        return 1.0
+    return min(1.0, 10 ** ((MUSIC_REF_LUFS - lufs) / 20))
 
 
 VOICE_LABEL = "AI 음성"   # every narration is synthetic; OpenRAIL-M (Supertonic) requires an explicit disclaimer
@@ -483,7 +547,7 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
     # one loudness pass on the final mix (voice + music + SFX), video stream copied untouched
     raw_video = out_dir / "video_raw.mp4"
     video.replace(raw_video)
-    run_ffmpeg(["-i", raw_video.name, "-c:v", "copy", "-af", "loudnorm=I=-14:TP=-1.5:LRA=11,aresample=48000",
+    run_ffmpeg(["-i", raw_video.name, "-c:v", "copy", "-af", loudness_filter(raw_video),
                 "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", video.name], cwd=out_dir)
     raw_video.unlink()
 
@@ -500,6 +564,11 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
     if pre == {} and any(scene.lines for scene in script.scenes):
         warnings.append(f"voice backend '{tts.name}' has one voice: every dialogue line used it (the cast's voices need "
                         "--backend supertonic)")
+    voice_check = line_voice_check(pre, getattr(tts, "take_scores", None) or {})
+    unclear = [key for key, c in voice_check.items() if c >= UNCLEAR_CER]
+    if unclear:
+        warnings.append(f"lines {', '.join(unclear)} (scene-line) may sound garbled in every take (ASR check); listen, "
+                        "or respell them in the line's tts")
     # thumbnail = frame 0, the poster (identical to the 0.5 s loop tail), so the file matches the frame the owner
     # can pick in the app and can be uploaded as-is where custom Shorts thumbnails are allowed
     subprocess.run([ffmpeg_exe(), "-hide_banner", "-loglevel", "error", "-y",
@@ -511,6 +580,8 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
         extra["cast"] = {s: {"voice": line_voice(script, s), **c} for s, c in cast_props(script).items()}
         if "castStyle" in props:
             extra["cast_style"] = props["castStyle"]
+    if voice_check:
+        extra["voice_check"] = voice_check
     meta = write_meta(out_dir, script, duration, size, tts, warnings, extra=extra)
     return ProductionResult(video, out_dir / "thumb.png", meta, round(duration, 2), size, bool(tts.publishable), warnings)
 

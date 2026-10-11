@@ -22,8 +22,9 @@ class ProductionConfig:
     font_file: str | None = None
     out_dir: str = "media"
     supertonic_voice: str = "F1"
-    supertonic_speed: float = 1.2
+    supertonic_speed: float = 1.1
     supertonic_steps: int = 16
+    supertonic_takes: int = 3     # takes per clip, the clearest kept by a local ASR check (1 = no check)
     tts_python: str = ".venv-tts/Scripts/python.exe"
     transition: str = "continuity"   # Remotion scene changes: continuity (shared-element morph) | classic (slide/fade)
     google_api_key: str | None = field(default=None, repr=False)  # never printed
@@ -63,6 +64,7 @@ def load_production_config(config_path: str | Path | None = None, env: Mapping[s
         supertonic_voice=str(pr.get("supertonic_voice", d.supertonic_voice)),
         supertonic_speed=float(pr.get("supertonic_speed", d.supertonic_speed)),
         supertonic_steps=int(pr.get("supertonic_steps", d.supertonic_steps)),
+        supertonic_takes=int(pr.get("supertonic_takes", d.supertonic_takes)),
         tts_python=str(pr.get("tts_python", d.tts_python)),
         transition=_transition(pr.get("transition", d.transition)),
         google_api_key=merged.get("GOOGLE_TTS_API_KEY") or None,

@@ -209,6 +209,7 @@ radar produce content/scripts/2026-10-08-family-password.json --backend google #
     uv pip install --python .venv-tts/Scripts/python.exe supertonic==1.3.1 soundfile
     ```
     첫 실행 때 모델을 `~/.cache/supertonic3`에 자동으로 받습니다. 메인 프로그램은 `tools/supertonic_worker.py`를 이 가상환경으로 실행합니다 (`[production] tts_python`).
+  - 대사 음성 품질 (2026-10-11): 대사 한 줄은 문장을 나누지 않고 **한 번에** 합성하고(억양 유지), 모델이 앞뒤에 붙이는 0.3~0.6초 무음은 잘라 냅니다. 속도는 1.1 (1.2에서는 음절이 뭉개짐). `supertonic_takes = 3`이면 줄마다 최대 3번 합성해 로컬 음성 인식(faster-whisper `small`, 이 가상환경에 설치되고 모델이 `~/.cache/huggingface`에 있을 때만, 새로 내려받지 않음)으로 대본과 가장 가까운 것을 고릅니다. 없으면 1번만 합성합니다. 대사에 `"pause"`(앞 쉼, 초)·`"speed"`(속도 배율)를 줄 수 있습니다.
   - 그 밖의 음성: `google`(Google Cloud TTS, 상업 이용 가능, Neural2 월 100만 자 무료 후 유료, 결제 등록 필요). `edge`(edge-tts)는 Microsoft가 상업 이용을 허가한 적이 없어 **로컬 미리보기 전용**이며 `meta.json`에 `publishable: false`로 기록됩니다. 후보 비교: [`docs/research_로컬_한국어_TTS.md`](docs/research_로컬_한국어_TTS.md).
 - **화면**: 1080×1920, 상단 채널명과 첫 장면 재연 배지, 아이콘, 두 줄로 균형 있게 나눈 헤드라인, 화면 66~78% 높이에 굵은 자막(10자 단위, 자동 줄바꿈), 상단 진행 바. 하단 20%와 오른쪽 버튼 영역은 비워 둡니다.
 - **산출물**: `media/<script id>/video.mp4`, `thumb.png`, `meta.json`(제목, 고지·출처·해시태그가 들어간 설명, 태그, 길이, 음성 백엔드, `publishable`). `media/`는 git에 포함되지 않습니다.

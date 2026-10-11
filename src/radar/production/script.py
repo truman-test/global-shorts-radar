@@ -50,6 +50,9 @@ and a dialogue scene whose speakers include one is staged with characters instea
 (default from the layout: call -> pip_call, chat/sms -> over_shoulder_chat, a card with an ad voice -> watch_ad;
 dochi_explains, the explainer beside the family, is opt-in). A line may carry acting notes: "face" (one of
 EXPRESSIONS), "gesture" (one of GESTURES) and "bubble", a keyword speech bubble of <= 8 characters taken from the line.
+Delivery notes (voice director; never change the words): "pause" = seconds of silence before the line (0-1.5, not on
+a scene's first line; default LINE_GAP 0.3) and "speed" = its speaking speed relative to the voice's default
+(0.8-1.25). Each line is synthesized in one call, so punctuation inside it ("…", ",", "?") shapes the delivery.
 The script-level "cast_style" picks the characters' skin over the same rig and stagings: "human" (default, drawn
 people) or "animal" (our own animal cast, video/src/Animal.tsx: a 진돗개 family and 여우 callers); role ids stay the same.
 Dialogue is an invented re-enactment: the disclaimer must say 재연, and every line passes the same checks as the
@@ -76,17 +79,25 @@ from pathlib import Path
 from radar.production.render import ACCENTS, ICONS
 from radar.production.textnorm import normalize_for_tts, speakable_length, split_sentences, tts_problems
 
-SYLLABLES_PER_SECOND = 5.4   # Supertonic F1 at speed 1.2: measured 5.16 spoken chars/s at 1.15 over 40 scenes (2026-10-09)
+SYLLABLES_PER_SECOND = 5.9   # narration, Supertonic F1 at speed 1.1 with trimmed sentences and 0.3 s gaps: measured
+                             # 5.96 spoken chars/s over 20 scenes of 4 explainers (2026-10-11; 5.16 untrimmed at 1.15)
+DIALOGUE_CHARS_PER_SECOND = 7.0   # one dialogue line in one call, trimmed, F1-equivalent at speed 1.1 (fit below)
 # Supertonic voices relative to F1 (the same 6 dialogue lines at speed 1.2, 2026-10-10: F1 4.96 chars/s, F2 5.20,
 # F3 4.79, F4 5.53, F5 5.12, M1 4.96, M2 5.09, M3 5.62, M4 5.23, M5 4.98)
 VOICE_PACE = {"F1": 1.0, "F2": 1.05, "F3": 0.97, "F4": 1.11, "F5": 1.03,
               "M1": 1.0, "M2": 1.03, "M3": 1.13, "M4": 1.05, "M5": 1.0}
 VOICES = tuple(VOICE_PACE)
-LINE_GAP = 0.3               # silence between two dialogue lines (remotion_render.LINE_GAP)
-# Dialogue lines are short, so their pauses matter more than in a narration: measured on the pilot (2026-10-10),
-# a line takes its characters at the voice's pace + 0.18 s, + 0.5 s per further sentence (each is its own clip with
-# a gap), + 0.13 s per comma.
-LINE_PAD, SENTENCE_PAD, COMMA_PAD = 0.18, 0.5, 0.13
+LINE_GAP = 0.3               # silence between two dialogue lines (remotion_render.LINE_GAP); each clip adds its
+                             # own 0.06 s / 0.12 s of room around the voice (tts.CLIP_PAD): ~0.5 s between voices
+PAUSE_RANGE = (0.0, 1.5)     # a line's own "pause" (s): 0.1 cuts in, 0.8-1.2 a comic beat before it
+SPEED_RANGE = (0.8, 1.25)    # a line's own "speed" relative to the voice's default (supertonic_speed)
+SPIKE_GAP = 0.45             # silence after a `spike` line: the 0.24 s "삐빅" (video/src/Short.tsx) ends before the
+                             # next voice (LINE_GAP left only ~0.06 s between the beep and the next word)
+# Dialogue lines are short, so their pauses matter more than in a narration: fitted on the 30 lines of the three
+# 2026-10-12 pilots (2026-10-11, whole-line synthesis, trimmed clips; mean error 0.14 s per line), a line takes its
+# characters at DIALOGUE_CHARS_PER_SECOND x the voice's pace + 0.15 s (the clip's room around the voice), + 0.2 s
+# per further sentence (the model's own pause, no longer a second clip), + 0.06 s per comma.
+LINE_PAD, SENTENCE_PAD, COMMA_PAD = 0.15, 0.2, 0.06
 TWIST_DELAY = 0.08           # after the last word the frame freezes and the reveal stamp lands...
 TWIST_HOLD = 0.45            # ...and holds; a twist scene ends on its freeze-frame (no tail gap)
 SPEAKER_ROLES = ("scammer", "victim", "narrator", "dochi", "neutral", "inner")
@@ -143,6 +154,8 @@ class Line:
     gesture: str = ""     # acting note: the speaker's arm pose (GESTURES), default from the staging
     bubble: str = ""      # a keyword speech bubble (<= BUBBLE_MAX_CHARS, a part of the text), optional
     spike: object = False  # 도치 the 가시 감지기 pops in on this line: True, or a word of the line (as it is said)
+    pause: float | None = None   # delivery: seconds of silence before this line (default LINE_GAP; not the first)
+    speed: float = 0.0           # delivery: speaking speed relative to the voice's default (0.85 slower, 1.1 faster)
 
     def tts_text(self) -> str:
         return self.tts.strip() or normalize_for_tts(self.text)
@@ -234,12 +247,19 @@ def line_voice(script: Script, speaker: str) -> str:
     return str(cast_of(script).get(speaker, {}).get("voice", "F1"))
 
 
-def line_seconds(text: str, voice: str) -> float:
+def line_seconds(text: str, voice: str, speed: float = 0.0) -> float:
     """Estimated speech time of one dialogue line (its spoken form) in `voice`: characters at the voice's pace plus
-    the clip's onset/offset, the pauses between its sentences and at its commas."""
+    the clip's onset/offset, the pauses between its sentences and at its commas; `speed` = the line's own speed."""
     sentences = max(1, len(split_sentences(text)))
-    return (speakable_length(text) / (SYLLABLES_PER_SECOND * VOICE_PACE.get(voice, 1.0)) + LINE_PAD
-            + SENTENCE_PAD * (sentences - 1) + COMMA_PAD * text.count(","))
+    return ((speakable_length(text) / (DIALOGUE_CHARS_PER_SECOND * VOICE_PACE.get(voice, 1.0))
+             + SENTENCE_PAD * (sentences - 1) + COMMA_PAD * text.count(",")) / (speed or 1.0) + LINE_PAD)
+
+
+def line_gap(line: Line, prev: Line | None = None) -> float:
+    """Silence before a line (after the scene's first): its own pause, else LINE_GAP; at least SPIKE_GAP after a
+    line flagged `spike` (도치's "삐빅" plays in that gap, after the words)."""
+    gap = LINE_GAP if line.pause is None else line.pause
+    return max(gap, SPIKE_GAP) if prev is not None and prev.spike else gap
 
 
 def _int(v) -> int:
@@ -270,7 +290,9 @@ def _lines(raw) -> list[Line]:
     return [Line(speaker=str(x.get("speaker", "narrator")).strip(), text=str(x.get("text", "")).strip(),
                  tts=str(x.get("tts", "")), face=str(x.get("face", "")).strip(),
                  gesture=str(x.get("gesture", "")).strip(), bubble=str(x.get("bubble", "")).strip(),
-                 spike=_spike(x.get("spike", False))) for x in raw]
+                 spike=_spike(x.get("spike", False)),
+                 pause=None if x.get("pause") is None else float(x["pause"]),
+                 speed=float(x.get("speed") or 0.0)) for x in raw]
 
 
 def _spike(v) -> object:
@@ -363,8 +385,8 @@ def scene_speech_seconds(script: Script, scene: Scene) -> float:
     """Estimated speech of one scene: the narration at F1's pace, or every line at its voice's pace plus the gaps."""
     if not scene.lines:
         return speakable_length(scene.tts_text()) / SYLLABLES_PER_SECOND
-    return (sum(line_seconds(line.tts_text(), line_voice(script, line.speaker)) for line in scene.lines)
-            + LINE_GAP * (len(scene.lines) - 1))
+    return (sum(line_seconds(line.tts_text(), line_voice(script, line.speaker), line.speed) for line in scene.lines)
+            + sum(line_gap(line, prev) for prev, line in zip(scene.lines, scene.lines[1:])))
 
 
 def scene_lead_in(script: Script, index: int, scene: Scene) -> float:
@@ -595,7 +617,7 @@ def lesson_seconds(script: Script) -> float:
         if staging not in DRAMA_STAGINGS and (sc.layout in EXPLAINER_LAYOUTS or staging == "dochi_explains"):
             total += scene_seconds(script, i, sc)
             continue
-        total += sum(line_seconds(line.tts_text(), line_voice(script, line.speaker)) for line in sc.lines
+        total += sum(line_seconds(line.tts_text(), line_voice(script, line.speaker), line.speed) for line in sc.lines
                      if cast.get(line.speaker, {}).get("role") == "dochi")
     return total
 
@@ -734,6 +756,11 @@ def _dialogue_errors(script: Script) -> tuple[list[str], list[str]]:
             if line.text and _hangul_ratio(line.text) < 0.6:
                 errors.append(f"{where}: line is not mostly Korean")
             errors += [f"{where}: {p}" for p in mockup_text_problems(line.text)]
+            if line.pause is not None and (k == 1 or not PAUSE_RANGE[0] <= line.pause <= PAUSE_RANGE[1]):
+                errors.append(f"{where}: pause is the silence before a line after the scene's first, "
+                              f"{PAUSE_RANGE[0]}-{PAUSE_RANGE[1]} s")
+            if line.speed and not SPEED_RANGE[0] <= line.speed <= SPEED_RANGE[1]:
+                errors.append(f"{where}: speed is relative to the voice's default, {SPEED_RANGE[0]}-{SPEED_RANGE[1]}")
             side = mockup_side(entry["role"]) if entry else None
             if sc.layout == "chat" and not sc.messages and side and len(line.text) > BUBBLE_MAX_CHARS:
                 errors.append(f"{where}: a chat bubble line must be at most {BUBBLE_MAX_CHARS} characters")

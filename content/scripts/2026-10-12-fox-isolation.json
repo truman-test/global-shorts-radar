@@ -17,7 +17,7 @@
  "cast_style": "animal",
  "cast": {
   "fox_inner": {
-   "voice": "M3",
+   "voice": "M5",
    "label": "여우 속마음",
    "role": "inner",
    "character": "scammer"
@@ -155,5 +155,5 @@
    "url": "https://www.korea.kr/briefing/pressReleaseView.do?newsId=156783514"
   }
  ],
- "author": "llm:claude-opus-5-5 (story-writer, 새 포맷 A '여우의 영업비밀' 시범). Facts only from content/week2/prosecutor-isolation.md (+ recreate-isolation.review.md): [B] 10계명 사칭범 예시 대사(혼자 조용한 곳, 아무한테도 말하면 안 됨), 모텔 투숙 요구 100% 사기, 고립 목적, 끊고 신고·가족에게 공유; [A] 셀프감금, 주변에 상황 공유, 현금·가상자산 이체 불응; [C] 2026년 8월 모텔 고립 + 현금 인출 사례, 1394. Method re-enactment (수법 재연): no amount, no agency name (중수청 not used), no investigator name. Fox POV with two voices (phone M2, inner M3); 도치 has no lines (silent spike cue on the motel request)."
+ "author": "llm:claude-opus-5-5 (story-writer, 새 포맷 A '여우의 영업비밀' 시범). Facts only from content/week2/prosecutor-isolation.md (+ recreate-isolation.review.md): [B] 10계명 사칭범 예시 대사(혼자 조용한 곳, 아무한테도 말하면 안 됨), 모텔 투숙 요구 100% 사기, 고립 목적, 끊고 신고·가족에게 공유; [A] 셀프감금, 주변에 상황 공유, 현금·가상자산 이체 불응; [C] 2026년 8월 모텔 고립 + 현금 인출 사례, 1394. Method re-enactment (수법 재연): no amount, no agency name (중수청 not used), no investigator name. Fox POV with two voices (phone M2, inner M5; inner recast from M3 by the voice director 2026-10-11: M3 sat at the phone voice's pitch); 도치 has no lines (silent spike cue on the motel request)."
 }

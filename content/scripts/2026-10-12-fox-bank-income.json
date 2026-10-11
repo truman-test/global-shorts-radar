@@ -17,7 +17,7 @@
  "cast_style": "animal",
  "cast": {
   "fox_inner": {
-   "voice": "M3",
+   "voice": "M5",
    "label": "여우 속마음",
    "role": "inner",
    "character": "scammer"
@@ -128,7 +128,8 @@
     {
      "speaker": "fox_inner",
      "text": "다음 집은…",
-     "face": "worried"
+     "face": "worried",
+     "pause": 0.7
     }
    ]
   }
@@ -151,5 +152,5 @@
    "url": "https://news.mtn.co.kr/news-detail/2026100115465611895"
   }
  ],
- "author": "llm:claude-opus-5-5 (story-writer, 새 포맷 A '여우의 영업비밀' 시범). Facts only from content/week2/bank-caller-knows-income.md (+ .review.md, recreate-bank-pov.review.md): 87882 (소득·대출한도를 정확히 언급하며 대출 안내처럼 접근; 대출신청서 명목 앱 설치 = 사기; 공식 대표번호로 직접 확인), 87779 (악성앱 설치 시 112·1332에 걸어도 사기범 연결 가능). Method re-enactment (수법 재연): no amount, no reported case, no bank name; the father hangs up before installing anything. Fox POV with two voices (phone M2, inner M3); 도치 has no lines (silent spike cue on the app request)."
+ "author": "llm:claude-opus-5-5 (story-writer, 새 포맷 A '여우의 영업비밀' 시범). Facts only from content/week2/bank-caller-knows-income.md (+ .review.md, recreate-bank-pov.review.md): 87882 (소득·대출한도를 정확히 언급하며 대출 안내처럼 접근; 대출신청서 명목 앱 설치 = 사기; 공식 대표번호로 직접 확인), 87779 (악성앱 설치 시 112·1332에 걸어도 사기범 연결 가능). Method re-enactment (수법 재연): no amount, no reported case, no bank name; the father hangs up before installing anything. Fox POV with two voices (phone M2, inner M5; inner recast from M3 by the voice director 2026-10-11: M3 sat at the phone voice's pitch); 도치 has no lines (silent spike cue on the app request)."
 }

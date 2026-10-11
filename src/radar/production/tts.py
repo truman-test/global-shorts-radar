@@ -103,34 +103,48 @@ class ToneTTS:
                     "-ar", "44100", out_path.name], cwd=out_path.parent)
 
 
+# Supertonic clips are trimmed to their speech (the model pads every call with ~0.3-0.6 s of silence at both ends)
+# plus this much (before, after): room for a soft onset and the decay of a final "요", nothing more.
+CLIP_PAD = (0.06, 0.12)
+SENTENCE_GAP = 0.3   # narration: silence between two trimmed sentences (with CLIP_PAD a ~0.5 s pause)
+
+
 class SupertonicTTS:
     name, ext, publishable = "supertonic", ".wav", True
     WORKER = PROJECT_ROOT / "tools" / "supertonic_worker.py"
 
     def __init__(self, python: str | Path, voice: str = "F1", speed: float = 1.12, steps: int = 16,
-                 gap: float = 0.12, runner=None):
+                 gap: float = SENTENCE_GAP, takes: int = 1, runner=None):
         self.python, self.voice, self.speed, self.steps, self.gap = Path(python), voice, speed, steps, gap
+        self.takes = max(1, int(takes))
+        self.take_scores: dict[str, list[float]] = {}   # clip path -> ASR character error rate of each take
         self.runner = runner or subprocess.run
 
     def synthesize_sentences(self, text: str, out_path: str | Path) -> list[tuple[float, float, str]]:
         """Write out_path; return [(start_s, end_s, sentence)] for each sentence of `text`."""
         return self.synthesize_batch([(text, out_path)])[0]
 
-    def synthesize_batch(self, jobs: list[tuple[str, str | Path]], voice: str | None = None
-                         ) -> list[list[tuple[float, float, str]]]:
+    def synthesize_batch(self, jobs: list[tuple[str, str | Path]], voice: str | None = None, whole: bool = False,
+                         speeds: list[float | None] | None = None) -> list[list[tuple[float, float, str]]]:
         """One worker call (one model load) for several clips in one voice (default: this backend's voice).
 
         jobs = [(text, out_path)]; returns, per job, [(start_s, end_s, sentence)] inside its own clip. Dialogue
-        scenes use it once per voice of the cast."""
+        scenes use it once per voice of the cast with whole=True: each line is ONE synthesis call (one intonation,
+        the model's own pause at "나야." instead of two clips joined by dead air); spans are still per sentence.
+        speeds: a speaking speed per job (None = the backend's speed)."""
         if not jobs:
             return []
         if not self.python.is_file():
             raise TTSError(f"Supertonic venv not found at {self.python} (see README: .venv-tts)")
         split = [split_sentences(text) or [text] for text, _ in jobs]
+        speeds = speeds or [None] * len(jobs)
         job = {"voice": voice or self.voice, "speed": self.speed, "steps": self.steps, "gap": self.gap,
-               "items": [{"sentences": s, "out": str(out)} for s, (_, out) in zip(split, jobs)]}
+               "pad": list(CLIP_PAD), "takes": self.takes,
+               "items": [{"sentences": s, "out": str(out), **({"whole": True} if whole else {}),
+                          **({"speed": round(sp, 3)} if sp else {})}
+                         for s, (_, out), sp in zip(split, jobs, speeds)]}
         proc = self.runner([str(self.python), str(self.WORKER)], input=json.dumps(job, ensure_ascii=False),
-                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=600)
+                           capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=1800)
         if proc.returncode != 0:
             raise TTSError(f"supertonic worker failed: {(proc.stderr or '').strip()[-800:]}")
         try:
@@ -143,6 +157,10 @@ class SupertonicTTS:
             if len(got) != len(sentences):
                 raise TTSError("supertonic worker returned a different number of sentences")
             out.append([(s["start"], s["end"], t) for s, t in zip(got, sentences)])
+        for k, (_, path) in enumerate(jobs):   # the ASR check of each clip's takes (empty when not compared)
+            scores = items[k].get("takes") if isinstance(items[k], dict) else None
+            if scores:
+                self.take_scores[str(path)] = [float(x) for x in scores]
         return out
 
     def synthesize(self, text: str, out_path: str | Path) -> None:
@@ -158,5 +176,5 @@ def make_backend(name: str, cfg) -> object:
         return ToneTTS()
     if name == "supertonic":
         return SupertonicTTS(PROJECT_ROOT / cfg.tts_python, cfg.supertonic_voice, cfg.supertonic_speed,
-                             cfg.supertonic_steps)
+                             cfg.supertonic_steps, takes=cfg.supertonic_takes)
     raise TTSError(f"unknown TTS backend '{name}' (supertonic | google | edge | tone)")

@@ -21,7 +21,7 @@ def _script(lines=None, cast=None, twist="", disclaimer="※ 실제 수법을 �
     lines = lines if lines is not None else [Line("scammer", "엄마, 나 사고 났어."), Line("victim", "어머, 얼마면 돼?")]
     first = Scene(" ".join(x.text for x in lines), "엄마, 나 사고 났어", "phone", layout=layout, caller="아들",
                   lines=lines, twist=twist, **kw)
-    rest = [Scene("급한 가족 전화는 일단 끊고, 저장된 번호로 다시 거세요.", "급한 전화는 끊기", "lock") for _ in range(2)]
+    rest = [Scene("급한 가족 전화는 일단 끊고, 저장된 번호로 다시 거세요.", "급한 전화는 끊기", "lock") for _ in range(3)]
     return Script(id="2026-10-10-t", source_video_id="x", title="딥보이스 사기 테스트 제목", description="", tags=[],
                   disclaimer=disclaimer, scenes=[first, *rest], sources=[{"url": "https://example.org"}],
                   cast=dict(CAST) if cast is None else cast)
@@ -136,7 +136,7 @@ def test_dialogue_chat_needs_no_messages_but_short_bubbles():
 def test_estimate_uses_each_voice_and_the_twist():
     fast, slow = line_seconds("엄마 나 사고 났어", "M3"), line_seconds("엄마 나 사고 났어", "F3")
     assert fast < slow
-    assert line_seconds("하나. 둘.", "F1") > line_seconds("하나 둘", "F1") + 0.45   # a pause per extra sentence
+    assert line_seconds("하나. 둘.", "F1") > line_seconds("하나 둘", "F1") + 0.15   # the voice pauses at a full stop
     s = _script()
     speech = scene_speech_seconds(s, s.scenes[0])
     lines = s.scenes[0].lines
@@ -145,7 +145,8 @@ def test_estimate_uses_each_voice_and_the_twist():
     plain = estimate_seconds(s)
     s.scenes[1].twist = "사기"
     assert estimate_seconds(s) == pytest.approx(plain + TWIST_DELAY + TWIST_HOLD - TAIL_GAP)
-    assert 28 <= estimate_seconds(load_script(PILOT)) <= 32
+    # ~30 s rendered with split sentences and untrimmed clips; ~23 s with whole lines and trimmed clips (2026-10-11)
+    assert 21 <= estimate_seconds(load_script(PILOT)) <= 26
 
 
 # ------------------------------------------------------------------ synthesis: one Supertonic call per voice
@@ -188,12 +189,15 @@ class FakeSupertonic:
     """Records synthesize_batch calls and writes 0.5 s of silence per sentence."""
     name, ext, publishable = "supertonic", ".wav", True
 
-    def __init__(self):
-        self.calls = []
+    speed = 1.2
 
-    def synthesize_batch(self, jobs, voice=None):
+    def __init__(self):
+        self.calls, self.options = [], []
+
+    def synthesize_batch(self, jobs, voice=None, whole=False, speeds=None):
         from radar.production.textnorm import split_sentences
         self.calls.append((voice, [t for t, _ in jobs]))
+        self.options.append({"whole": whole, "speeds": speeds})
         out = []
         for text, path in jobs:
             n = len(split_sentences(text)) or 1
@@ -211,6 +215,13 @@ def test_presynth_groups_every_line_by_voice(tmp_path):
     assert len(pre) == sum(len(sc.lines) for sc in s.scenes)
     m2 = next(texts for v, texts in tts.calls if v == "M2")
     assert m2 == [s.scenes[0].lines[0].tts_text(), s.scenes[0].lines[2].tts_text()]
+    # each line is one synthesis call (one intonation), at the backend's speed unless the line sets its own
+    assert all(o["whole"] for o in tts.options) and all(sp is None for o in tts.options for sp in o["speeds"])
+    s.scenes[0].lines[0].speed = 0.9
+    tts = FakeSupertonic()
+    presynth_lines(s, tts, tmp_path)
+    m2 = next(o for (v, _), o in zip(tts.calls, tts.options) if v == "M2")
+    assert m2["speeds"][0] == pytest.approx(1.08) and m2["speeds"][1] is None
     assert presynth_lines(s, type("Tone", (), {"name": "tone"})(), tmp_path) == {}
 
 
@@ -223,6 +234,35 @@ def test_join_wavs_is_sample_exact(tmp_path):
     assert spans == [(0.0, 0.5), (0.8, 1.05), (1.35, 2.35)]
     with wave.open(str(tmp_path / "out.wav"), "rb") as w:
         assert w.getnframes() == round(2.35 * 44100)
+    # a gap per join (a line's own pause)
+    assert join_wavs(parts, [0.1, 1.0], tmp_path / "out2.wav") == [(0.0, 0.5), (0.6, 0.85), (1.85, 2.85)]
+
+
+def test_line_delivery_notes_pause_and_speed():
+    s = _script(lines=[Line("scammer", "엄마, 나 사고 났어."), Line("victim", "어머, 얼마면 돼?", pause=1.0, speed=0.9)])
+    assert not _errors(s)
+    base = _script()
+    gap_diff = scene_speech_seconds(s, s.scenes[0]) - scene_speech_seconds(base, base.scenes[0])
+    slower = line_seconds("어머, 얼마면 돼?", "F2", 0.9) - line_seconds("어머, 얼마면 돼?", "F2")
+    assert slower > 0 and gap_diff == pytest.approx(1.0 - LINE_GAP + slower)
+    s.scenes[0].lines[0].pause = 0.5          # the scene's first line has no line before it
+    s.scenes[0].lines[1].speed = 1.6
+    errors = _errors(s)
+    assert any("pause" in e and "line 1" in e for e in errors) and any("speed" in e for e in errors)
+    s.scenes[0].lines[0].pause = None
+    s.scenes[0].lines[1].pause = 2.0
+    s.scenes[0].lines[1].speed = 1.0
+    assert any("pause" in e for e in _errors(s))
+
+
+def test_load_script_reads_delivery_notes(tmp_path):
+    raw = json.loads(PILOT.read_text(encoding="utf-8"))
+    raw["scenes"][0]["lines"][1].update(pause=0.8, speed=1.1)
+    path = tmp_path / "s.json"
+    path.write_text(json.dumps(raw, ensure_ascii=False), encoding="utf-8")
+    line = load_script(path).scenes[0].lines[1]
+    assert line.pause == 0.8 and line.speed == 1.1
+    assert load_script(PILOT).scenes[0].lines[1].pause is None and load_script(PILOT).scenes[0].lines[1].speed == 0.0
 
 
 def test_dialogue_speech_keeps_exact_line_spans(tmp_path):
@@ -317,3 +357,24 @@ def test_dochi_lines_force_a_mascot_stage():
     assert dochi_speaks(s)
     s.theme = ""
     assert STAGES[pick_style(s).theme].mascot
+
+
+def test_line_voice_check_keeps_the_best_take_per_line(tmp_path):
+    from radar.production.remotion_render import line_voice_check
+    pre = {(0, 0): (tmp_path / "raw0_0.wav", []), (0, 1): (tmp_path / "raw0_1.wav", []),
+           (1, 0): (tmp_path / "raw1_0.wav", [])}
+    scores = {str(tmp_path / "raw0_0.wav"): [0.5, 0.0], str(tmp_path / "raw1_0.wav"): [0.62, 0.45, 0.5]}
+    assert line_voice_check(pre, scores) == {"1-1": 0.0, "2-1": 0.45}   # 0-1: no ASR check, not listed
+    assert line_voice_check(pre, {}) == {}
+
+
+def test_a_spike_line_leaves_room_for_the_beep():
+    from radar.production.script import SPIKE_GAP, line_gap
+    first, second = Line("scammer", "급해, 돈 좀 보내 줘!", spike=True), Line("victim", "우리 집 암호부터 대 봐.")
+    assert line_gap(second, first) == SPIKE_GAP > LINE_GAP
+    assert line_gap(second, Line("scammer", "엄마, 나야.")) == LINE_GAP
+    assert line_gap(Line("victim", "응.", pause=1.0), first) == 1.0       # a longer own pause wins
+    s = _script(lines=[first, second])
+    base = _script(lines=[Line("scammer", "급해, 돈 좀 보내 줘!"), second])
+    assert scene_speech_seconds(s, s.scenes[0]) - scene_speech_seconds(base, base.scenes[0]) == pytest.approx(
+        SPIKE_GAP - LINE_GAP)

@@ -131,8 +131,9 @@ url = "https://www.youtube.com/@digitalsurvivalnote"
 engine = "remotion"        # remotion = animated scenes (video/ project, Node.js); ffmpeg = static cards fallback
 backend = "supertonic"
 supertonic_voice = "F1"        # F1-F5, M1-M5 (built-in voices; no cloning)
-supertonic_speed = 1.2
+supertonic_speed = 1.1          # 1.2 swallowed syllables ("아뇨, 딸이랑" -> "안녕, 따리야"): ASR CER 0.17 -> 0.08 at 1.1
 supertonic_steps = 16
+supertonic_takes = 3           # takes per clip; the clearest (local faster-whisper check in .venv-tts) is kept
 tts_python = ".venv-tts/Scripts/python.exe"   # Python 3.12 venv with `supertonic` installed
 edge_voice = "ko-KR-SunHiNeural"
 edge_rate = "+15%"

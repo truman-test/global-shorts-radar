@@ -57,7 +57,7 @@
    "middle": [
     "call"
    ],
-   "produced_at": "2026-10-11T02:33:29+00:00"
+   "produced_at": "2026-10-11T03:57:56+00:00"
   },
   "2026-10-12-fox-bank-income": {
    "stage": "notebook",
@@ -76,7 +76,7 @@
     "call",
     "call"
    ],
-   "produced_at": "2026-10-11T02:35:20+00:00"
+   "produced_at": "2026-10-11T04:00:08+00:00"
   },
   "2026-10-12-fox-isolation": {
    "stage": "alert",
@@ -95,7 +95,7 @@
     "call",
     "call"
    ],
-   "produced_at": "2026-10-11T02:41:28+00:00"
+   "produced_at": "2026-10-11T04:05:20+00:00"
   }
  },
  "_doc": "Visual style of every produced episode, written by `radar produce` (Remotion engine). stage = family (alert | notebook), luminance (light | dark), mascot (도치 on), visual_group (ruled | cards | desk | evidence | blueprint | sky). themes.resolve_style keeps logged stages in the schedule walk (a script's own theme replaces its entry); `radar script-check` warns when the middle scenes repeat the previous episode's layout sequence."
