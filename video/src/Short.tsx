@@ -17,8 +17,10 @@ import {BADGE, CardScene} from "./CardScene";
 import {CastContext, useCast} from "./dialogue";
 import {CastScene} from "./CastScene";
 import {CastStyleContext} from "./Actor";
-import {isDrama, spikeAtMs, stagingOf, stampLook} from "./rig";
-import {DISCLOSURE, DisclosureChip, HookTitle, packagingOf, SPIKE_FRAMES, SpikeAlert, titleLines} from "./Packaging";
+import {isDrama, PACK, spikeAtMs, stagingOf, stampLook} from "./rig";
+import {DISCLOSURE, DisclosureChip, HookTitle, packagingOf, RewindChip, SeriesTab, SPIKE_FRAMES, SpikeAlert,
+  titleLines} from "./Packaging";
+import {COLD, coldFrames, ColdOpenFrames} from "./ColdOpen";
 import {Stamp} from "./Handwriting";
 import {CHIP} from "./kit";
 import {AnchorSpec, fadeOut, MORPH, RealFrameContext, SceneContext, spr, Transition, useScene} from "./motion";
@@ -43,8 +45,9 @@ import {StatScene} from "./StatScene";
 import {TimelineScene} from "./TimelineScene";
 import {ACCENTS, SceneProps, ShortProps} from "./types";
 
-const sceneFrames = (props: ShortProps, fps: number) => {
-  let from = 0;
+/** Each scene's [from, frames); `offset` = the frames before the first scene (the cold open). */
+const sceneFrames = (props: ShortProps, fps: number, offset = 0) => {
+  let from = offset;
   return props.scenes.map((s) => {
     const frames = Math.max(1, Math.round((s.durationMs / 1000) * fps));
     const out = {from, frames};
@@ -198,23 +201,25 @@ const SceneVisual: React.FC<{scene: SceneProps; shift: number}> = ({scene, shift
  * The twist stamp, drawn above the scene and the shared-element traveller (so the caller's avatar flies out from
  * under it into the next scene). Scene-local frames on the audio clock; it fades with the scene's exit.
  */
-const TwistStamp: React.FC<{scene: SceneProps}> = ({scene}) => {
+const TwistStamp: React.FC<{scene: SceneProps; text?: string}> = ({scene, text}) => {
   const frame = useCurrentFrame();
   const {fps} = useVideoConfig();
   const s = useScene();
   const cast = useCast();
   if (!scene.twist) return null;
   // drama: on the victim's chest in the shocked close-up, under the chin (never over the eyes or the mouth), its look
-  // following the text's length (a round seal for "뚝!", a box for "작전 실패", a slimmer one for "사기였습니다")
+  // following the text's length (a round seal for "뚝!", a box for "작전 실패", a slimmer one for "사기였습니다");
+  // `text` = the cold open's own stamp (one that does not give the winning move away)
   const drama = isDrama(stagingOf(scene, cast));
   const at = Math.round((scene.twist.atMs / 1000) * fps);
   const exit = s.mode === "continuity" && !s.last ? fadeOut(frame, s.frames)
     : interpolate(frame, [s.frames - 7, s.frames], [1, 0], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
   if (drama) {
-    const look = stampLook(scene.twist.text);
+    const word = text || scene.twist.text;
+    const look = text ? stampLook(text) : stampLook(scene.twist.text);
     return (
       <div style={{position: "absolute", inset: 0, opacity: exit}}>
-        <Stamp text={scene.twist.text} at={at} x={look.x} y={look.y} size={look.size} rotate={look.rotate} look={look} />
+        <Stamp text={word} at={at} x={look.x} y={look.y} size={look.size} rotate={look.rotate} look={look} />
       </div>
     );
   }
@@ -339,15 +344,17 @@ const LayoutSfx: React.FC<SfxProps> = ({scene, first, last, lead, words, fps}) =
 };
 
 /** Background music: fades in/out, ducks under narration with short ramps so lines stay clear. */
-const MusicBed: React.FC<{props: ShortProps}> = ({props}) => {
+const MusicBed: React.FC<{props: ShortProps; offset?: number; extra?: (readonly [number, number])[]}> = ({props,
+  offset = 0, extra = []}) => {
   const {fps, durationInFrames} = useVideoConfig();
   const music = props.music;
   if (!music) return null;
-  const spans = sceneFrames(props, fps);
+  // offset / extra: the cold open's frames before the story and its exclamation's window
+  const spans = sceneFrames(props, fps, offset);
   // one duck window per scene's speech, merged across short gaps (a scene's tail, a twist freeze): the bed stays
   // down between scenes instead of swelling ~8 dB for half a second and dropping again under the next line
   const HOLD = Math.round(1.2 * fps);
-  const windows: [number, number][] = [];
+  const windows: [number, number][] = extra.map(([a, b]) => [a, b] as [number, number]);
   props.scenes.forEach((s, i) => {
     const a = spans[i].from + Math.round((s.leadInMs / 1000) * fps);
     const b = a + Math.round((s.speechMs / 1000) * fps);
@@ -386,7 +393,10 @@ export const Short: React.FC<ShortProps> = (input) => {
   const dramaPack = packagingOf(input) === "drama";
   const props: ShortProps = dramaPack ? {...input, shareLine: undefined, cta: undefined, episodeNo: undefined,
     scenes: input.scenes.map((s) => ({...s, sub: ""}))} : input;
-  const spans = sceneFrames(props, fps);
+  // the cold open (Python sends it for dramas only): its frames come before the first scene (Root counts them too)
+  const cold = props.coldOpen && props.scenes.length ? props.coldOpen : undefined;
+  const coldF = cold ? coldFrames(cold, fps) : {hold: 0, total: 0};
+  const spans = sceneFrames(props, fps, coldF.total);
   const mode: Transition = props.transition === "classic" ? "classic" : "continuity";
   const cont = mode === "continuity";
   const n = props.scenes.length;
@@ -401,6 +411,47 @@ export const Short: React.FC<ShortProps> = (input) => {
     noMorphOut: i < n - 1 && (drama[i] || drama[i + 1])});
   // per-episode variants of the stage come from Python's seed (CRC32 of the script id), never from randomness
   const seed = typeof props.seed === "number" ? props.seed >>> 0 : seedOf(props.episode ?? "");
+  // the story's opening frame, frozen (the cold open's rewind wipes to it; the live scene takes over on the same frame)
+  const storyPoster = n ? (
+    <Sequence from={0} layout="none">
+      <Freeze frame={POSTER}>
+        <SceneContext.Provider value={{mode, index: 0, frames: spans[0].frames + POSTER, first: true, last: n === 1,
+          mascot: on[0], shift: POSTER, ...noMorph(0)}}>
+          <SceneBody scene={props.scenes[0]} />
+        </SceneContext.Provider>
+      </Freeze>
+    </Sequence>
+  ) : null;
+  // the cold open's picture: the twist scene frozen packaging.cold.settle frames after its stamp, in colour, with the
+  // cold open's stamp (Freeze inside a Sequence at 0, so the frozen frame is the same live and in the poster tail)
+  const coldK = cold && props.scenes[cold.scene]?.twist ? cold.scene : -1;
+  // the exclamation's caption without the speaker chip: the chip's slot is on the stamp in the close-up, and the one
+  // face on screen already says who cries out
+  const coldPages = cold ? cold.pages.map((p) => ({...p, speaker: undefined})) : [];
+  const coldShot = cold ? (coldK < 0 ? storyPoster : (() => {
+    const sc = props.scenes[coldK];
+    const at = Math.round(((sc.twist?.atMs ?? 0) / 1000) * fps) + COLD.settle;
+    return (
+      <Sequence from={0} layout="none">
+        <Freeze frame={at}>
+          <SceneContext.Provider value={{mode, index: coldK, frames: at + 100000, first: false, last: false,
+            mascot: false, cold: true, noMorphIn: true, noMorphOut: true}}>
+            <SceneBody scene={sc} />
+            <TwistStamp scene={sc} text={cold.stamp} />
+          </SceneContext.Provider>
+        </Freeze>
+      </Sequence>
+    );
+  })()) : null;
+  // the closing scoreboard: the last packaging.score.frames of the story, after a twist stamp in the last scene
+  const B = PACK.score;
+  const scoreFrom = (() => {
+    if (!n || !props.score) return undefined;
+    const lastS = props.scenes[n - 1];
+    let from = Math.max(spans[n - 1].from, end - B.frames);
+    if (lastS.twist) from = Math.max(from, spans[n - 1].from + Math.round((lastS.twist.atMs / 1000) * fps) + B.afterStamp);
+    return Math.min(from, end - B.minFrames);
+  })();
   return (
     <ThemeContext.Provider value={theme}>
     <SeedContext.Provider value={seed}>
@@ -409,10 +460,17 @@ export const Short: React.FC<ShortProps> = (input) => {
     <CategoryContext.Provider value={categoryFor(props.category)}>
     <AbsoluteFill style={{fontFamily: FONT, color: "#fff", wordBreak: "keep-all"}}>
       <Backdrop props={props} />
-      <MusicBed props={props} />
+      <MusicBed props={props} offset={coldF.total}
+        extra={cold ? [[0, Math.round((cold.speechMs / 1000) * fps)] as const] : []} />
       {/* scene visuals; in continuity mode each one stays mounted a little past its end (fading out)
           so the traveller can measure its anchor and the two scenes can crossfade */}
       <div data-scenes="" style={{position: "absolute", inset: 0}}>
+        {cold ? (
+          // the flash-forward: the frozen twist shot under a slow punch-in, then the rewind to the story's opening
+          <Sequence from={0} durationInFrames={coldF.total}>
+            <ColdOpenFrames shot={coldShot} story={storyPoster} hold={coldF.hold} />
+          </Sequence>
+        ) : null}
         {props.scenes.map((scene, i) => {
           const {from, frames} = spans[i];
           const last = i === n - 1;
@@ -463,6 +521,25 @@ export const Short: React.FC<ShortProps> = (input) => {
       }))}
       {/* 도치 the mascot: one continuous track over the whole video (in the margin, never on text or captions) */}
       <MascotTrack props={props} spans={spans} poster={POSTER} />
+      {cold ? (
+        // the cold open's exclamation from 0.0 s, its caption page only; the rewind's whoosh waits for the line's end
+        // (the hold always outlasts it) and fades out within the 8 frames, before the story's first line
+        <>
+          <Sequence from={0} durationInFrames={coldF.hold}>
+            <Captions pages={coldPages} instantFirst />
+            {cold.audio ? <Audio src={staticFile(cold.audio)} /> : null}
+          </Sequence>
+          {props.sfx ? (
+            <Sequence from={coldF.hold} durationInFrames={COLD.rewind}>
+              <Audio src={staticFile("sfx/whoosh.wav")} volume={(f) => 0.3 * Math.max(0, 1 - f / COLD.rewind)} />
+            </Sequence>
+          ) : null}
+          <Sequence from={coldF.total} durationInFrames={PACK.rewind.frames}>
+            <RewindChip label={cold.label || "몇 분 전"} lines={titleLines(props.hookTitle).length}
+              frames={PACK.rewind.frames} />
+          </Sequence>
+        </>
+      ) : null}
       {/* narration, captions and SFX keep the exact scene spans in both modes */}
       {props.scenes.map((scene, i) => {
         const {from, frames} = spans[i];
@@ -481,7 +558,15 @@ export const Short: React.FC<ShortProps> = (input) => {
           </Sequence>
         );
       })}
-      {tail > 0 && n ? (
+      {tail > 0 && n && cold ? (
+        // Poster tail of a cold open: its frame 0 again (the frozen twist shot, unzoomed, the exclamation's page)
+        <Sequence from={end} durationInFrames={Math.max(tail, durationInFrames - end)}>
+          {coldShot}
+          <Freeze frame={0}>
+            <Captions pages={coldPages} instantFirst />
+          </Freeze>
+        </Sequence>
+      ) : tail > 0 && n ? (
         // Poster tail: the opening frame again (first scene settled, first caption page, disclaimer badge), so the
         // loop back to frame 0 is seamless and this frame can be picked as the Shorts thumbnail in the app.
         // (to the composition's last frame: its length rounds the total, the scenes round one by one)
@@ -528,6 +613,8 @@ export const Short: React.FC<ShortProps> = (input) => {
       ) : null}
       {/* the fixed situation title: frame 0 (the poster) to the last frame */}
       {dramaPack ? <HookTitle lines={titleLines(props.hookTitle)} /> : null}
+      {/* the series chip on the title box; in the story's last ~1.2 s it turns into the scoreboard (never in the tail) */}
+      {dramaPack ? <SeriesTab chip={props.seriesChip} score={props.score} scoreFrom={scoreFrom} end={end} /> : null}
     </AbsoluteFill>
     </CategoryContext.Provider>
     </CastStyleContext.Provider>

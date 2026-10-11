@@ -61,8 +61,8 @@
  "_shotSizes": "head height (hair line to chin) as a share of the 1920 frame height, per shot size. The body-length rule (tests): without visible feet, the body below the chin down to bodyRule.line (or a foreground prop's top) is at most bodyRule.maxBelowChin heads; a 'full' shot shows the feet above that line instead.",
  "shotSizes": {"ecu": [0.45, 0.55], "cu": [0.35, 0.42], "bust": [0.28, 0.35], "medium": [0.18, 0.25], "full": [0.18, 0.22]},
  "bodyRule": {"maxBelowChin": 1.1, "line": 1536},
- "props": ["table", "desk", "ccDesk"],
- "_props": "foreground props drawn in front of the characters (Sets.tsx ForegroundProp): table = the home's table edge (living room, sofa corner), desk = the office desk (work), ccDesk = the call centre's desk. top = the prop's top edge in screen px; it hides the body and the resting paws below it.",
+ "props": ["table", "desk", "ccDesk", "counter"],
+ "_props": "foreground props drawn in front of the characters (Sets.tsx ForegroundProp): table = the home's table edge (living room, sofa corner), desk = the office desk (work), ccDesk = the call centre's desk, counter = the side-dish shop's counter (the table of a shop scene). top = the prop's top edge in screen px; it hides the body and the resting paws below it.",
  "_shots": "Per staging, the shots it cuts between. A character entry: who (victim | caller | other | presenter), x (neck x), eyeY, k (scale), turn (-1..1, face turned to the viewer's left/right), gestures used in that shot (for the hand checks; the performance may vary it among those listed in gestures), view (front | back). size: the shot size (shotSizes); prop: the foreground prop; windows: framed insets in screen px.",
  "stagings_spec": {
   "pip_call": {
@@ -148,7 +148,17 @@
   "prop": {"kind": "ccDesk", "top": 1236}, "familyProp": {"kind": "table", "top": 1236}, "tag": {"x": 44, "y": 404}},
  "_packaging": "drama packaging over every staging: the disclosure chip (top-left) and the fixed situation title (centred, 1-2 lines of <= 12 characters); content that must stay readable (caller window, floating thread, keyword bubbles) starts below safeTop. spike = where 도치 the 가시 감지기 pops in (feet line, from the left edge; outside the caption band, the bottom 20% and the right column)",
  "packaging": {"chip": {"x": 40, "y": 112, "h": 46, "font": 27}, "title": {"top": 168, "font": 72, "lineH": 84, "padX": 34, "padY": 12, "border": 5,
-   "maxLines": 2, "maxChars": 12}, "safeTop": 392, "bubbleY": 448, "spike": {"x": 160, "feetY": 1186, "size": 226, "frames": 34}},
+   "maxLines": 2, "maxChars": 12}, "safeTop": 392, "bubbleY": 448, "spike": {"x": 160, "feetY": 1186, "size": 226, "frames": 34},
+  "series": {"h": 50, "font": 30, "padX": 24, "overlap": 14, "ring": 3, "maxChars": 8},
+  "score": {"h": 88, "font": 34, "digit": 54, "tile": 64, "gap": 14, "padX": 26, "frames": 36, "flipAt": 12, "flipFrames": 8,
+   "minFrames": 24, "afterStamp": 10},
+  "rewind": {"font": 34, "h": 58, "gap": 16, "icon": 32, "frames": 30},
+  "cold": {"settle": 10, "rewind": 8, "punch": 1.06, "shrink": 0.04}},
+ "_series": "series = the chip above the title box (script series + ep): centred, its bottom overlapping the box's top border by `overlap` (a tab on the box), clear of the disclosure chip at the left. score = the scoreboard the chip turns into for the last `frames` of the story (never in the poster tail): it grows out of the chip in place, the winner's tile flips at flipAt (+1). rewind = the 'label' chip under the title box for `frames` after a cold open. cold = the flash-forward: the twist frame `settle` frames after the stamp, a slow punch-in to `punch`, an 8-frame rewind wipe (`shrink` = the frame shrinking under it)",
+ "homeSets": ["living", "shop"],
+ "_homeSets": "the family's room in a drama scene (script set): living = the living room (window, lamp), shop = the side-dish shop (반찬가게: shelves of side-dish tubs, a fridge, a handwritten sign; the home's table becomes the shop counter)",
+ "posterProps": {"mail_notice": {"x": 640, "y": 440, "w": 380, "h": 430, "rotate": 3, "charX": 318}},
+ "_posterProps": "evidence props for the hook frame (script scene poster_prop), taped on the wall beside the character of a solo shot: the box in screen px (x, y = top-left before the small rotation); the character moves to charX so its face stays clear of the prop. mail_notice = a generic '우편물 도착 안내서' (no agency name or mark, masked number and name, an undecodable code square)",
  "motion": {"punchIn": 1.12, "punchFrames": 4, "openPunch": 1.08, "openFrames": 7, "releaseFrames": 8, "shakePx": 10, "shakeFrames": 8, "squash": [0.92, 1.05, 1.015, 1]},
  "_motion": "cheap motion, all pure functions of the frame: a punch-in on the scene's keyword (the line's bubble, else the scene's mark when a line says it), a camera shake as a shocked/panicked line starts, a 4-frame squash when a face changes"
 }

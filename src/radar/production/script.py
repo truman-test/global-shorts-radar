@@ -68,6 +68,22 @@ A cast entry with "role": "inner" and the same "character" as another member is 
 (or a word of the line) to have 도치 the 가시 감지기 pop in with its spikes up as it is said (no voice). The gate
 warns when lesson-like time (explainer layouts, dochi_explains, 도치's lines) passes 10% of the runtime and
 rejects a checklist scene.
+
+Series, scoreboard, cold open and set dressing (dramas only; explainers ignore them with a warning):
+  "series": "영업비밀", "ep": 3        # a small chip above the title box: "여우의 영업비밀 #3" ("역관광" ->
+                                       # "진돗개네 역관광 EP2"; any other name of <= 8 characters -> "<name> #<ep>"),
+                                       # so the hook_title lines can stay short (<= 10 characters recommended)
+  "score": {"home": 4, "fox": 0}       # the standing AFTER this episode: in the last 1.2 s the chip turns into a
+                                       # scoreboard "진돗개네 3 : 0 여우" and the winner's number ticks up to 4
+                                       # (optional "winner": "home" | "fox", default home)
+  "cold_open": {"line": "어, 어어…?", "speaker": "fox", "seconds": 0.9,       # flash-forward: the video opens on
+                "stamp": "작전 실패", "label": "몇 분 전"}                     # the twist close-up (stamp on), the
+       # exclamation (<= 6 syllables, the loser's voice) at 0.0 s, an 8-frame rewind, a "몇 분 전" chip, then the
+       # story; thumbnail and loop tail are that frame. stamp (default the twist's) must not give the winning move away.
+  "set": "shop"                        # the family's room in every staged scene: living (default) | shop (반찬가게);
+                                       # a scene may set its own "set"
+  scene "poster_prop": "mail_notice"   # an evidence prop on the wall beside the character (solo staging): a generic
+                                       # "우편물 도착 안내서" (no agency name, logo or real number)
 """
 from __future__ import annotations
 
@@ -121,6 +137,28 @@ INNER_LABEL = "속마음"         # default chip of an inner-voice cast member (
 HOOK_TITLE_MAX_LINES = 2
 HOOK_TITLE_LINE_CHARS = 12     # one line of the title at 72 px fits the frame with margins (composition.json packaging)
 LESSON_SHARE_MAX = 0.10        # lesson-like time (explainer layouts, dochi_explains, 도치's lines) over the runtime
+# Series chip (composition.json packaging.series): "series" + "ep" -> the chip text above the title box
+SERIES = {"역관광": ("진돗개네 역관광", "EP"), "영업비밀": ("여우의 영업비밀", "#")}
+SERIES_MAX_CHARS = 8           # a free series name (the known ones map to their full chip text)
+EP_MAX = 999
+HOOK_TITLE_LINE_TARGET = 10    # with a series chip the title's lines are the situation only: <= 10 recommended
+# Scoreboard (packaging.score): the standing after this episode, the winner's number ticks up in the last 1.2 s
+SCORE_SIDES = ("home", "fox")
+SCORE_LABELS = {"home": "진돗개네", "fox": "여우"}
+SCORE_MAX = 999
+# Cold open (flash-forward, packaging.cold): the twist frame + one exclamation, an 8-frame rewind, then the story
+COLD_OPEN_SECONDS = 0.9        # the frozen twist shot's hold (at least the exclamation + COLD_OPEN_PAD)
+COLD_OPEN_SECONDS_RANGE = (0.6, 1.5)
+COLD_OPEN_PAD = 0.15           # after the exclamation, before the rewind (no rewind sound over the line)
+COLD_OPEN_REWIND = 8 / 30      # the rewind wipe: 8 frames at 30 fps (packaging.cold.rewind)
+COLD_OPEN_SYLLABLES = 6        # the exclamation: a short cry, no facts
+COLD_OPEN_LINE_MAX_CHARS = 12
+COLD_OPEN_LABEL = "몇 분 전"    # the rewind chip; never an invented exact time ("3분 전")
+COLD_OPEN_LABEL_MAX_CHARS = 6
+COLD_OPEN_REVEALS = ("끊", "112", "대표번호", "직접", "스피커")   # words that give the winning move away
+COLD_OPEN_MAX_SECONDS = 27.0   # a flash-forward episode stays <= 27 s (reports/직원회의_패키징.md 2-3)
+HOME_SETS = ("living", "shop")  # the family's room (video/src/Sets.tsx HomeSet): living room or the side-dish shop
+POSTER_PROPS = ("mail_notice",)  # evidence props beside the character in a solo shot (video/src/Props.tsx)
 DEFAULT_CAST = {"narrator": {"voice": "F1", "label": "", "role": "narrator"},
                 "dochi": {"voice": "F1", "label": "도치", "role": "dochi"}}
 SCENE_GAP = 0.25             # seconds of silence after each scene (remotion_render.TAIL_GAP)
@@ -199,6 +237,8 @@ class Scene:
     twist_on: str = ""          # cast id in the twist close-up (default: the victim); e.g. the fox when he loses
     twist_face: str = ""        # that character's expression there (EXPRESSIONS; default "shocked")
     staging: str = ""           # character staging (STAGINGS); "" = default from the layout (see default_staging)
+    home_set: str = ""          # JSON "set": the family's room in this scene (HOME_SETS); "" = the script's set
+    poster_prop: str = ""       # an evidence prop beside the character in a solo shot (POSTER_PROPS)
 
     def tts_text(self) -> str:
         if self.lines:
@@ -225,6 +265,11 @@ class Script:
     cast: dict = field(default_factory=dict)   # dialogue speakers: {"id": {"voice", "label", "role"}} (see cast_of)
     cast_style: str = ""        # the characters' skin (CAST_STYLES); "" = human
     hook_title: str = ""        # drama packaging: the fixed top situation title, 1-2 lines ("\n" breaks)
+    series: str = ""            # drama: the series ("역관광", "영업비밀" or a name of <= 8 characters), with ep
+    ep: object = None           # drama: the episode number in the series (int 1-999)
+    score: dict = field(default_factory=dict)       # drama: {"home": n, "fox": m, "winner"?} after this episode
+    cold_open: dict = field(default_factory=dict)   # drama: the flash-forward {"line", "speaker", "seconds", ...}
+    home_set: str = ""          # JSON "set": the family's room in every staged scene (HOME_SETS); "" = living
 
 
 def speaker_role(speaker: str) -> str:
@@ -329,6 +374,26 @@ def _hook_title(v) -> str:
     return str(v or "").strip()
 
 
+def _score(v) -> dict:
+    """score as given (validated later); a non-object is malformed."""
+    if v in (None, "", {}):
+        return {}
+    if not isinstance(v, dict):
+        raise TypeError("'score' must be an object like {\"home\": 4, \"fox\": 0}")
+    return dict(v)
+
+
+def _cold_open(v) -> dict:
+    """cold_open with its text fields stripped (seconds kept as given; validated later)."""
+    if v in (None, "", {}):
+        return {}
+    if not isinstance(v, dict):
+        raise TypeError("'cold_open' must be an object like {\"line\": \"어, 어어…?\", \"speaker\": \"fox\"}")
+    out = {k: str(v.get(k, "") or "").strip() for k in ("line", "speaker", "stamp", "label", "tts")}
+    out["seconds"] = v.get("seconds", COLD_OPEN_SECONDS)
+    return out
+
+
 def load_script(path: str | Path) -> Script:
     path = Path(path)
     try:
@@ -366,7 +431,8 @@ def load_script(path: str | Path) -> Script:
                         unit=str(s.get("unit", "명")).strip() or "명", mascot=s.get("mascot"),
                         lines=_lines(s.get("lines")), twist=str(s.get("twist", "")).strip(),
                         twist_on=str(s.get("twist_on", "")).strip(), twist_face=str(s.get("twist_face", "")).strip(),
-                        staging=str(s.get("staging", "")).strip())
+                        staging=str(s.get("staging", "")).strip(), home_set=str(s.get("set", "")).strip(),
+                        poster_prop=str(s.get("poster_prop", "")).strip())
                   for s in data["scenes"]]
         return Script(id=str(data["id"]), source_video_id=str(data["source_video_id"]), title=str(data["title"]).strip(),
                       description=str(data.get("description", "")).strip(), tags=[str(t) for t in data.get("tags", [])],
@@ -376,6 +442,9 @@ def load_script(path: str | Path) -> Script:
                       category=str(data.get("category", "")).strip(), path=str(path), cast=_cast(data.get("cast")),
                       cast_style=str(data.get("cast_style", "")).strip(),
                       hook_title=_hook_title(data.get("hook_title", "")),
+                      series=str(data.get("series", "") or "").strip(), ep=data.get("ep"),
+                      score=_score(data.get("score")), cold_open=_cold_open(data.get("cold_open")),
+                      home_set=str(data.get("set", "")).strip(),
                       extra={"pilot": str(data["pilot"]).strip()} if data.get("pilot") else {})
     except (KeyError, TypeError, AttributeError) as exc:
         raise ScriptError(f"{path}: missing or malformed field {exc}") from exc
@@ -405,7 +474,86 @@ def scene_seconds(script: Script, index: int, scene: Scene) -> float:
 
 
 def estimate_seconds(script: Script) -> float:
-    return POSTER_TAIL + sum(scene_seconds(script, i, s) for i, s in enumerate(script.scenes))
+    """Estimated final length: the cold open (if any), every scene and the poster tail."""
+    return (cold_open_seconds(script) + POSTER_TAIL
+            + sum(scene_seconds(script, i, s) for i, s in enumerate(script.scenes)))
+
+
+# ------------------------------------------------------------------ series chip, scoreboard, cold open (dramas)
+
+def series_chip(script: Script) -> str:
+    """The chip above the title box: "진돗개네 역관광 EP2", "여우의 영업비밀 #3", "<name> #<ep>"; "" without both
+    fields (or with an invalid ep: validation reports it)."""
+    name = script.series.strip()
+    ep = script.ep
+    if not name or not isinstance(ep, int) or isinstance(ep, bool) or not 1 <= ep <= EP_MAX:
+        return ""
+    full, mark = SERIES.get(name, (name, "#"))
+    return f"{full} {mark}{ep}"
+
+
+def score_of(script: Script) -> dict | None:
+    """{"home", "fox", "winner"} for the renderer's scoreboard, or None (no score / not valid)."""
+    sc = script.score
+    if not sc:
+        return None
+    vals = {k: sc.get(k) for k in SCORE_SIDES}
+    if any(not isinstance(v, int) or isinstance(v, bool) or not 0 <= v <= SCORE_MAX for v in vals.values()):
+        return None
+    winner = str(sc.get("winner", "home") or "home")
+    if winner not in SCORE_SIDES or vals[winner] < 1:
+        return None
+    return {**vals, "winner": winner}
+
+
+def twist_scene_index(script: Script) -> int | None:
+    """The scene a cold open flashes forward to: the first twist scene whose dialogue is played by characters."""
+    cast = cast_of(script)
+    for i, sc in enumerate(script.scenes):
+        if sc.twist and sc.lines and default_staging(sc, cast) in DRAMA_STAGINGS:
+            return i
+    return None
+
+
+def _cold_seconds_field(script: Script) -> float | None:
+    v = script.cold_open.get("seconds", COLD_OPEN_SECONDS)
+    if isinstance(v, bool) or not isinstance(v, (int, float)):
+        return None
+    lo, hi = COLD_OPEN_SECONDS_RANGE
+    return float(v) if lo <= v <= hi else None
+
+
+def cold_open_line(script: Script) -> Line | None:
+    """The cold open's exclamation as a dialogue line (synthesized like any line), or None (no cold open, or the
+    script is not a drama: explainers ignore it)."""
+    co = script.cold_open
+    if not co or not co.get("line") or not is_drama(script):
+        return None
+    return Line(speaker=co.get("speaker", ""), text=co["line"], tts=co.get("tts", ""))
+
+
+def cold_open_hold(script: Script, speech: float) -> float:
+    """Seconds the frozen twist shot holds: the script's seconds, at least the exclamation + COLD_OPEN_PAD."""
+    return max(_cold_seconds_field(script) or COLD_OPEN_SECONDS, speech + COLD_OPEN_PAD)
+
+
+def cold_open_seconds(script: Script) -> float:
+    """Estimated time the cold open adds before the story: the hold + the rewind (0 without a cold open)."""
+    line = cold_open_line(script)
+    if line is None:
+        return 0.0
+    speech = line_seconds(line.tts_text(), line_voice(script, line.speaker))
+    return cold_open_hold(script, speech) + COLD_OPEN_REWIND
+
+
+def cold_open_stamp(script: Script) -> str:
+    """The stamp shown on the cold-open frame: its own, else the twist scene's."""
+    k = twist_scene_index(script)
+    return script.cold_open.get("stamp") or (script.scenes[k].twist if k is not None else "")
+
+
+def _hangul_syllables(text: str) -> int:
+    return sum(1 for ch in text if "가" <= ch <= "힣")
 
 
 def caption_chunks(text: str, max_chars: int = 10) -> list[str]:
@@ -649,6 +797,132 @@ def _drama_errors(script: Script) -> tuple[list[str], list[str]]:
     return errors, warnings
 
 
+def _episode_errors(script: Script) -> tuple[list[str], list[str]]:
+    """Series chip, scoreboard, cold open, set and poster props (errors, warnings). Dramas only: on an explainer the
+    fields are ignored with a warning."""
+    errors, warnings = [], []
+    used = [name for name, on in (("series", script.series or script.ep is not None), ("score", script.score),
+                                  ("cold_open", script.cold_open)) if on]
+    if not is_drama(script):
+        if used:
+            warnings.append(f"{', '.join(used)} only shown on dramas (dialogue played by rigged characters); ignored")
+        return errors, warnings
+    # series + ep -> the chip above the title box
+    if script.series or script.ep is not None:
+        ep = script.ep
+        if not script.series:
+            errors.append("drama: ep needs series (\"역관광\", \"영업비밀\" or a name of <= "
+                          f"{SERIES_MAX_CHARS} characters)")
+        elif script.series not in SERIES and len(script.series) > SERIES_MAX_CHARS:
+            errors.append(f"drama: series '{script.series}' is longer than {SERIES_MAX_CHARS} characters "
+                          f"(or use {', '.join(SERIES)})")
+        if ep is None:
+            errors.append("drama: series needs ep, the episode number in the series (1, 2, ...)")
+        elif not isinstance(ep, int) or isinstance(ep, bool) or not 1 <= ep <= EP_MAX:
+            errors.append(f"drama: ep must be a whole number 1-{EP_MAX} (not \"{ep}\")")
+        errors += [f"drama: series {p}" for p in mockup_text_problems(script.series)]
+        chip = series_chip(script)
+        if chip:
+            lines = hook_title_lines(script.hook_title)
+            name = SERIES.get(script.series, (script.series, ""))[0]
+            if any(name in t or re.search(r"(?:EP|#)\s*\d", t) for t in lines):
+                warnings.append(f"drama: the series chip already says '{chip}'; keep the hook_title to the situation")
+            if any(len(t) > HOOK_TITLE_LINE_TARGET for t in lines):
+                warnings.append(f"drama: with a series chip keep the hook_title lines <= {HOOK_TITLE_LINE_TARGET} "
+                                f"characters (now {' / '.join(lines)})")
+    # scoreboard
+    if script.score:
+        sc = script.score
+        unknown = sorted(set(sc) - set(SCORE_SIDES) - {"winner"})
+        if unknown:
+            errors.append(f"drama: score has unknown keys {', '.join(unknown)} (use home, fox, winner)")
+        for side in SCORE_SIDES:
+            v = sc.get(side)
+            if not isinstance(v, int) or isinstance(v, bool) or not 0 <= v <= SCORE_MAX:
+                errors.append(f"drama: score.{side} must be a whole number 0-{SCORE_MAX} (the standing after this "
+                              "episode)")
+        winner = sc.get("winner", "home")
+        if winner not in SCORE_SIDES:
+            errors.append("drama: score.winner must be home or fox")
+        elif isinstance(sc.get(winner), int) and sc[winner] < 1:
+            errors.append(f"drama: score.{winner} must be >= 1: it is the standing after this episode, the "
+                          "winner's number ticks up to it")
+    # cold open
+    co = script.cold_open
+    if co:
+        k = twist_scene_index(script)
+        if k is None:
+            errors.append("drama: cold_open needs a twist scene played by characters (the frame it opens on)")
+        line = co.get("line", "")
+        if not line:
+            errors.append("drama: cold_open needs line, the loser's exclamation (<= 6 syllables)")
+        else:
+            if len(line) > COLD_OPEN_LINE_MAX_CHARS:
+                errors.append(f"drama: cold_open line '{line}' is longer than {COLD_OPEN_LINE_MAX_CHARS} characters")
+            if _hangul_syllables(line) > COLD_OPEN_SYLLABLES:
+                warnings.append(f"drama: cold_open line '{line}' has more than {COLD_OPEN_SYLLABLES} syllables; keep "
+                                "it a short cry")
+            spoken = co.get("tts") or normalize_for_tts(line)
+            bad = tts_problems(spoken)
+            if bad:
+                errors.append(f"drama: cold_open line: TTS would misread {bad}; spell them in Hangul or add tts")
+            if MASK in spoken or _URL_RE.search(line):
+                errors.append("drama: cold_open line must be speakable (no masked text, no URLs)")
+            if _hangul_ratio(line) < 0.6:
+                errors.append("drama: cold_open line is not mostly Korean")
+            errors += [f"drama: cold_open line {p}" for p in mockup_text_problems(line)]
+        speaker = co.get("speaker", "")
+        cast = cast_of(script)
+        if not speaker:
+            errors.append("drama: cold_open needs speaker, the cast id whose voice says the line")
+        elif speaker not in script.cast:
+            errors.append(f"drama: cold_open speaker '{speaker}' is not in the cast")
+        elif k is not None:
+            tw = script.scenes[k]
+            on = tw.twist_on if tw.twist_on in cast else victim_character(cast)
+            face = cast.get(on or "", {}).get("character")
+            if face and cast[speaker].get("character") != face:
+                warnings.append(f"drama: cold_open speaker '{speaker}' is not the face in the twist close-up "
+                                f"('{on}'); the cry should come from the one who loses")
+        if _cold_seconds_field(script) is None:
+            lo, hi = COLD_OPEN_SECONDS_RANGE
+            errors.append(f"drama: cold_open seconds must be a number {lo}-{hi}")
+        stamp = cold_open_stamp(script)
+        if co.get("stamp"):
+            if len(co["stamp"]) > TWIST_MAX_CHARS:
+                errors.append(f"drama: cold_open stamp needs 1-{TWIST_MAX_CHARS} characters")
+            errors += [f"drama: cold_open stamp {p}" for p in mockup_text_problems(co["stamp"])]
+        label = co.get("label", "")
+        if label:
+            if len(label) > COLD_OPEN_LABEL_MAX_CHARS:
+                errors.append(f"drama: cold_open label is longer than {COLD_OPEN_LABEL_MAX_CHARS} characters")
+            if re.search(r"\d", label):
+                warnings.append(f"drama: cold_open label '{label}' names an exact time; use '{COLD_OPEN_LABEL}'")
+        for what, text in (("stamp", stamp), ("line", line)):
+            hit = [w for w in COLD_OPEN_REVEALS if w in text]
+            if hit:
+                warnings.append(f"drama: cold_open {what} '{text}' gives the winning move away ({', '.join(hit)}); "
+                                "show that the fox lost, not how (e.g. stamp \"작전 실패\")")
+        seconds = estimate_seconds(script)
+        if seconds > COLD_OPEN_MAX_SECONDS:
+            warnings.append(f"drama: with the cold open the video runs ~{seconds:.1f}s; keep a flash-forward episode "
+                            f"<= {COLD_OPEN_MAX_SECONDS:.0f}s")
+    # set dressing
+    if script.home_set and script.home_set not in HOME_SETS:
+        errors.append(f"drama: unknown set '{script.home_set}' (use {', '.join(HOME_SETS)})")
+    cast = cast_of(script)
+    for i, sc in enumerate(script.scenes, start=1):
+        if sc.home_set and sc.home_set not in HOME_SETS:
+            errors.append(f"drama: scene {i}: unknown set '{sc.home_set}' (use {', '.join(HOME_SETS)})")
+        if sc.poster_prop:
+            if sc.poster_prop not in POSTER_PROPS:
+                errors.append(f"drama: scene {i}: unknown poster_prop '{sc.poster_prop}' (use {', '.join(POSTER_PROPS)})")
+            elif default_staging(sc, cast) != "solo":
+                errors.append(f"drama: scene {i}: poster_prop '{sc.poster_prop}' hangs beside the character of a solo "
+                              "shot; stage the scene solo (staging \"solo\")")
+    return errors, warnings
+
+
 def _character_errors(script: Script) -> list[str]:
     """Characters, stagings and acting notes."""
     errors = []
@@ -875,6 +1149,9 @@ def validate(script: Script, db=None, allow_unverified: bool = False) -> tuple[l
         errors += more_errors
         warnings += more_warnings
     more_errors, more_warnings = _drama_errors(script)
+    errors += more_errors
+    warnings += more_warnings
+    more_errors, more_warnings = _episode_errors(script)
     errors += more_errors
     warnings += more_warnings
     seconds = estimate_seconds(script)

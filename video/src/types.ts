@@ -101,7 +101,26 @@ export type SceneProps = {
   lines?: SpokenLine[]; // dialogue: who speaks when (the mockup and 도치 react to the active speaker)
   twist?: Twist; // the reveal stamp over a freeze-frame at the scene's end
   staging?: Staging; // dialogue with characters: the staging template (Python picks the default from the layout)
+  set?: HomeSetName; // drama: the family's room in this scene (Sets.tsx HomeSet), default living
+  posterProp?: PosterProp; // drama: an evidence prop beside the character of a solo shot (Props.tsx)
 };
+
+/** The family's room of a drama scene (script "set"): the living room or the side-dish shop (반찬가게). */
+export type HomeSetName = "living" | "shop";
+
+/** Evidence props for the hook frame (script scene "poster_prop"), generic and invented: no agency, logo or number. */
+export type PosterProp = "mail_notice";
+
+/** The closing scoreboard (script "score"): the standing after this episode; the winner's number ticks up to it. */
+export type Score = {home: number; fox: number; winner?: "home" | "fox"};
+
+/**
+ * The flash-forward (script "cold_open", ColdOpen.tsx): the video opens on the twist scene `scene` frozen a moment
+ * after its stamp (with `stamp`), the exclamation (`audio`, `pages`) plays from 0.0 s; holdMs later an 8-frame rewind
+ * wipes to the story, which starts at durationMs; a `label` chip ("몇 분 전") follows. Poster tail = this frame.
+ */
+export type ColdOpen = {audio: string; speechMs: number; holdMs: number; durationMs: number; pages: CaptionPage[];
+  lines?: SpokenLine[]; scene: number; speaker?: string; stamp?: string; label?: string};
 
 export type Music = {
   src: string; // path under public/
@@ -134,6 +153,9 @@ export type ShortProps = {
   packaging?: Packaging;
   hookTitle?: string | string[]; // drama: the fixed top situation title, 1-2 lines (a string breaks at "\n")
   disclosure?: string; // drama: the disclosure chip, default "재연 · AI 음성"
+  seriesChip?: string; // drama: the small chip above the title box, e.g. "여우의 영업비밀 #3" (script series + ep)
+  score?: Score; // drama: the scoreboard that the series chip turns into in the last 1.2 s (before the tail)
+  coldOpen?: ColdOpen; // drama: the flash-forward before the story (it shifts every scene by its durationMs)
   scenes: SceneProps[];
 };
 

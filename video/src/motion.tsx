@@ -42,8 +42,9 @@ export const IN_DUR = 9;
 // active speaker in a dialogue) subtract it, see useSpeechMs in dialogue.tsx
 // noMorphIn / noMorphOut: no shared-element traveller at this scene's start / end (a drama staging is on the other
 // side, or this scene is one): the anchor stays visible and the layout plays its own entrance
+// cold: this is the cold open's frozen copy of the twist scene (ColdOpen.tsx): the twist close-up keeps its colour
 export type SceneCtx = {mode: Transition; index: number; frames: number; first: boolean; last: boolean; mascot?: boolean;
-  share?: string; shift?: number; noMorphIn?: boolean; noMorphOut?: boolean};
+  share?: string; shift?: number; noMorphIn?: boolean; noMorphOut?: boolean; cold?: boolean};
 
 // Standalone renders (Studio sample, stills) behave like the classic single scene.
 export const SceneContext = createContext<SceneCtx>({mode: "classic", index: 0, frames: 1e9, first: true, last: true});

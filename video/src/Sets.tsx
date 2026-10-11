@@ -5,6 +5,7 @@
 // the two places contrast in colour temperature.
 import React from "react";
 import {INK} from "./Character";
+import {SignText} from "./Handwriting";
 
 export type SetMode = "light" | "dark";
 
@@ -20,14 +21,110 @@ const Sk: React.FC<{d: string; fill?: string; fillOpacity?: number}> = ({d, fill
   </g>
 );
 
-export type HomeVariant = "living" | "sofa" | "work";
+export type HomeVariant = "living" | "sofa" | "work" | "shop";
+
+/** Side-dish colours of the shop's tubs (kimchi, greens, braised, pickled radish, black beans, egg rolls). */
+const BANCHAN = ["#D9534F", "#7FA36B", "#8A5A3C", "#F2C14E", "#4A4038", "#E9B949", "#B5452F"];
+const BANCHAN_DIM = ["#6E3330", "#3F5236", "#4A3424", "#7A6230", "#2A2420", "#6E5A2C", "#5C2A20"];
 
 /**
- * The victim's home (living: window + floor lamp; sofa: the TV corner's sofa back is drawn by the staging) or the
- * other family member's workplace (work: blinds + a desk). `w`/`h` = the area (full frame or a panel).
+ * The family's side-dish shop (반찬가게, script set "shop"): two wall shelves of lidded tubs, a handwritten
+ * "오늘의 반찬" sign, a glass-door fridge at the right. No brand, no prices. Light: the pencil sketch with ~20% fills
+ * (only the tubs carry colour); dark: warm silhouettes and the fridge's cool glow.
+ */
+const ShopSet: React.FC<{mode: SetMode; w: number; h: number; floor: number}> = ({mode, w, h, floor}) => {
+  const shelves = [570, 810];
+  const tubs = (y: number, row: number) => Array.from({length: 6}, (_, i) => {
+    const x = 24 + i * 124 + (row ? 46 : 0);
+    const tall = (i + row) % 3 === 1;
+    return {x, y, w: tall ? 84 : 104, h: tall ? 96 : 64, c: (i * 3 + row * 2) % BANCHAN.length, tall};
+  }).filter((t) => t.x + t.w < 800);
+  const all = shelves.flatMap((y, row) => tubs(y, row));
+  const fridge = {x: 820, y: 420, w: 300, h: floor - 420};
+  if (mode === "light") {
+    return (
+      <svg width={w} height={h} style={{position: "absolute", left: 0, top: 0}}>
+        <rect x={0} y={floor} width={w} height={h - floor} fill="#B89B74" opacity={0.12} />
+        <Sk d={`M 0 ${floor} L ${w} ${floor}`} />
+        <Sk d={`M 0 ${floor - 150} L ${fridge.x} ${floor - 150}`} />
+        {/* the handwritten sign, taped to the wall */}
+        <g transform="rotate(-4 165 440)">
+          <Sk d="M 36 402 h 260 v 78 h -260 Z" fill="#FFF6D8" fillOpacity={0.55} />
+          <SignText text="오늘의 반찬" x={166} y={456} size={46} fill={INK} opacity={0.62} />
+        </g>
+        {shelves.map((y) => (
+          <g key={y}>
+            <Sk d={`M 30 ${y} h 760 v 16 h -760 Z`} fill="#C9A98A" fillOpacity={0.18} />
+            <Sk d={`M 80 ${y + 16} l 24 34 M 720 ${y + 16} l -24 34`} />
+          </g>
+        ))}
+        {all.map((t, i) => (
+          <g key={i}>
+            <Sk d={`M ${t.x} ${t.y - t.h + 12} h ${t.w} v ${t.h - 14} q 0 2 -6 2 h ${-t.w + 12} q -6 0 -6 -2 Z`}
+              fill={BANCHAN[t.c]} fillOpacity={0.5} />
+            <Sk d={`M ${t.x - 6} ${t.y - t.h + 2} h ${t.w + 12} v 12 h ${-t.w - 12} Z`} fill="#FFFFFF" fillOpacity={0.4} />
+          </g>
+        ))}
+        {/* the glass-door fridge */}
+        <Sk d={`M ${fridge.x} ${fridge.y} h ${fridge.w} v ${fridge.h} h ${-fridge.w} Z`} fill="#CFE3EE" fillOpacity={0.4} />
+        {[0.28, 0.5, 0.72].map((k) => <Sk key={k} d={`M ${fridge.x + 18} ${fridge.y + fridge.h * k} h ${fridge.w}`} />)}
+        {[0.28, 0.5, 0.72].flatMap((k, row) => [0, 1].map((j) => (
+          <Sk key={`${row}${j}`} d={`M ${fridge.x + 34 + j * 104} ${fridge.y + fridge.h * k - 52} h 80 v 50 h -80 Z`}
+            fill={BANCHAN[(row * 2 + j + 1) % BANCHAN.length]} fillOpacity={0.45} />
+        )))}
+        <Sk d={`M ${fridge.x + 40} ${fridge.y + 40} l 90 140 M ${fridge.x + 70} ${fridge.y + 30} l 50 78`} />
+      </svg>
+    );
+  }
+  return (
+    <svg width={w} height={h} style={{position: "absolute", left: 0, top: 0}}>
+      <defs>
+        <linearGradient id="shopWall" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#3A2E24" />
+          <stop offset="100%" stopColor="#2A221D" />
+        </linearGradient>
+        <radialGradient id="shopFridge" cx="0.5" cy="0.5" r="0.6">
+          <stop offset="0%" stopColor="#CFE8FF" stopOpacity={0.32} />
+          <stop offset="100%" stopColor="#CFE8FF" stopOpacity={0} />
+        </radialGradient>
+      </defs>
+      <rect x={0} y={0} width={w} height={h} fill="url(#shopWall)" opacity={0.94} />
+      <rect x={0} y={floor} width={w} height={h - floor} fill="#17120F" opacity={0.9} />
+      <g transform="rotate(-4 165 440)">
+        <rect x={36} y={402} width={260} height={78} rx={6} fill="#5A4A38" />
+        <SignText text="오늘의 반찬" x={166} y={456} size={46} fill="#F3E9C9" opacity={0.7} />
+      </g>
+      {shelves.map((y) => <rect key={y} x={30} y={y} width={760} height={16} fill="#1A1512" />)}
+      {all.map((t, i) => (
+        <g key={i}>
+          <rect x={t.x} y={t.y - t.h + 12} width={t.w} height={t.h - 12} rx={8} fill={BANCHAN_DIM[t.c]} />
+          <rect x={t.x - 6} y={t.y - t.h + 2} width={t.w + 12} height={12} rx={4} fill="#4A3B30" />
+        </g>
+      ))}
+      <circle cx={fridge.x + fridge.w / 2} cy={fridge.y + fridge.h / 2} r={420} fill="url(#shopFridge)" />
+      <rect x={fridge.x} y={fridge.y} width={fridge.w} height={fridge.h} rx={10} fill="#22303A" stroke="#3E5260"
+        strokeWidth={6} />
+      {[0.28, 0.5, 0.72].flatMap((k, row) => [0, 1].map((j) => (
+        <rect key={`${row}${j}`} x={fridge.x + 34 + j * 104} y={fridge.y + fridge.h * k - 52} width={80} height={50} rx={6}
+          fill={BANCHAN_DIM[(row * 2 + j + 1) % BANCHAN_DIM.length]} />
+      )))}
+      {[0.28, 0.5, 0.72].map((k) => <rect key={k} x={fridge.x + 10} y={fridge.y + fridge.h * k} width={fridge.w} height={5}
+        fill="#5E7584" opacity={0.6} />)}
+    </svg>
+  );
+};
+
+/**
+ * The victim's home (living: window + floor lamp; sofa: the TV corner's sofa back is drawn by the staging), the
+ * family's side-dish shop (shop) or the other family member's workplace (work: blinds + a desk). `w`/`h` = the area
+ * (full frame or a panel).
  */
 export const HomeSet: React.FC<{mode: SetMode; variant?: HomeVariant; w?: number; h?: number; floor?: number;
   dim?: number}> = ({mode, variant = "living", w = 1080, h = 1920, floor = 1330, dim = 1}) => {
+  if (variant === "shop") {
+    return <div style={{position: "absolute", left: 0, top: 0, width: w, height: h, opacity: dim}}>
+      <ShopSet mode={mode} w={w} h={h} floor={floor} /></div>;
+  }
   const work = variant === "work";
   if (mode === "light") {
     return (
@@ -168,7 +265,7 @@ export const FocusLines: React.FC<{cx: number; cy: number; color: string; opacit
   </svg>
 );
 
-export type PropKind = "table" | "desk" | "ccDesk";
+export type PropKind = "table" | "desk" | "ccDesk" | "counter";
 
 /**
  * A foreground prop in front of the characters (composition.json "props"): its top edge at `top` (screen px), opaque
@@ -181,6 +278,9 @@ export const ForegroundProp: React.FC<{kind: PropKind; top: number; mode: SetMod
   top, mode, w = 1080, h = 1920}) => {
   const dark = mode === "dark" || kind === "ccDesk";
   const pal = kind === "ccDesk" ? {top: "#1E2531", front: "#141A24", rim: "#5FD3C8", line: "#05070A"}
+    // the shop counter: a steel top over a plain light front (no goods in the caption band)
+    : kind === "counter" ? (dark ? {top: "#3A4048", front: "#2A2F36", rim: "#9AA6B2", line: "#101317"}
+      : {top: "#E6EBEE", front: "#CBD5DA", rim: "#FFFFFF", line: INK})
     : kind === "desk" ? (dark ? {top: "#2A3242", front: "#1E2532", rim: "#8C9BB4", line: "#0E1118"}
       : {top: "#D9E0E8", front: "#B9C4D0", rim: "#FFFFFF", line: INK})
       : dark ? {top: "#4A3A2E", front: "#33281F", rim: "#7A6250", line: "#17120F"}
@@ -195,6 +295,11 @@ export const ForegroundProp: React.FC<{kind: PropKind; top: number; mode: SetMod
       <path d={`M -20 ${top + 9} H ${w + 20}`} stroke={pal.rim} strokeWidth={4} opacity={kind === "ccDesk" ? 0.7 : 0.55} />
       {/* a soft shadow the top casts down the front */}
       <rect x={-20} y={top + depth + 3} width={w + 40} height={26} fill="#000" opacity={0.08} />
+      {kind === "counter" ? [180, 540, 900].map((x) => (
+        // the counter's panel seams, low on the front (under the caption band)
+        <path key={x} d={`M ${x} ${Math.max(top + depth + 70, 1540)} V ${h}`} stroke={pal.line} strokeWidth={3}
+          opacity={0.18} />
+      )) : null}
       {kind === "table" ? [0, 1].map((i) => (
         // two faint wood-grain strokes low on the front, under the caption band
         <path key={i} d={`M ${120 + i * 380} ${Math.max(top + depth + 60, 1560) + i * 46} q 160 -10 320 0`}

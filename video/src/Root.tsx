@@ -30,7 +30,9 @@ const sample: ShortProps = {
 };
 
 const calculateMetadata: CalculateMetadataFunction<ShortProps> = ({props}) => ({
-  durationInFrames: Math.max(FPS, Math.round((props.scenes.reduce((a, s) => a + s.durationMs, 0) / 1000) * FPS)
+  // the cold open (flash-forward) runs before the first scene
+  durationInFrames: Math.max(FPS, Math.round(((props.scenes.reduce((a, s) => a + s.durationMs, 0)
+    + (props.coldOpen?.durationMs ?? 0)) / 1000) * FPS)
     + Math.round(((props.posterTailMs ?? 0) / 1000) * FPS)),
 });
 
