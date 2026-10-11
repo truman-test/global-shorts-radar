@@ -32,6 +32,24 @@
    "script": "2026-10-12-fox-isolation",
    "status": "ready",
    "source_video_id": "7H7-ORelZdQ"
+  },
+  {
+   "date": "2026-10-15",
+   "script": "2026-10-15-ep2-compensation-sms",
+   "status": "ready",
+   "source_video_id": "CAvtAcfHDvk"
+  },
+  {
+   "date": "2026-10-16",
+   "script": "2026-10-16-fox3-loan-block",
+   "status": "ready",
+   "source_video_id": "tRI9-0drNcw"
+  },
+  {
+   "date": "2026-10-17",
+   "script": "2026-10-17-ep3-invest-ad",
+   "status": "ready",
+   "source_video_id": "iU2Gp3kkUAo"
   }
  ],
  "deferred": [
