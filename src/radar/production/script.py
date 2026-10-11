@@ -183,6 +183,8 @@ class Scene:
     mascot: object = None       # 도치 the hedgehog mascot: True / False, None = by stage (on for paper, off for dark)
     lines: list[Line] = field(default_factory=list)      # dialogue: spoken in order, each in its speaker's voice
     twist: str = ""             # the reveal stamp at the scene's end, e.g. "사기였습니다" (freeze-frame ~0.45 s)
+    twist_on: str = ""          # cast id in the twist close-up (default: the victim); e.g. the fox when he loses
+    twist_face: str = ""        # that character's expression there (EXPRESSIONS; default "shocked")
     staging: str = ""           # character staging (STAGINGS); "" = default from the layout (see default_staging)
 
     def tts_text(self) -> str:
@@ -341,6 +343,7 @@ def load_script(path: str | Path) -> Script:
                                 for t in s.get("stages", [])],
                         unit=str(s.get("unit", "명")).strip() or "명", mascot=s.get("mascot"),
                         lines=_lines(s.get("lines")), twist=str(s.get("twist", "")).strip(),
+                        twist_on=str(s.get("twist_on", "")).strip(), twist_face=str(s.get("twist_face", "")).strip(),
                         staging=str(s.get("staging", "")).strip())
                   for s in data["scenes"]]
         return Script(id=str(data["id"]), source_video_id=str(data["source_video_id"]), title=str(data["title"]).strip(),
@@ -740,6 +743,12 @@ def _dialogue_errors(script: Script) -> tuple[list[str], list[str]]:
             if not 1 <= len(sc.twist) <= TWIST_MAX_CHARS:
                 errors.append(f"scene {i}: twist stamp needs 1-{TWIST_MAX_CHARS} characters (e.g. 사기였습니다)")
             errors += [f"scene {i}: twist {p}" for p in mockup_text_problems(sc.twist)]
+        if (sc.twist_on or sc.twist_face) and not sc.twist:
+            errors.append(f"scene {i}: twist_on/twist_face need a twist stamp")
+        if sc.twist_on and sc.twist_on not in (script.cast or {}):
+            errors.append(f"scene {i}: twist_on '{sc.twist_on}' is not in the cast")
+        if sc.twist_face and sc.twist_face not in EXPRESSIONS:
+            errors.append(f"scene {i}: unknown twist_face '{sc.twist_face}' (use {', '.join(EXPRESSIONS)})")
     if sum(1 for sc in script.scenes if sc.twist) > 1:
         warnings.append("more than one twist stamp; keep one reveal per video")
     errors += _character_errors(script)

@@ -110,7 +110,9 @@
      "face": "suspicious"
     }
    ],
-   "twist": "뚝!"
+   "twist": "뚝!",
+   "twist_on": "fox",
+   "twist_face": "shocked"
   },
   {
    "layout": "card",

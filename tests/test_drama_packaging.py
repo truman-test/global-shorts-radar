@@ -326,3 +326,26 @@ def test_spike_sfx_is_generated(tmp_path):
     from radar.production.remotion_render import ensure_sfx
     seconds, _ = media_info(ensure_sfx(tmp_path) / "spike.wav")
     assert 0.15 < seconds < 0.4                                  # "삐빅": two short beeps, no voice
+
+
+def test_twist_close_up_target_and_face_are_validated_and_passed_to_props():
+    import json
+    from pathlib import Path
+    from radar.production.script import load_script, validate
+    from radar.production.remotion_render import scene_props
+    script = load_script("content/scripts/2026-10-12-fox-bank-income.json")
+    sc = next(s for s in script.scenes if s.twist)
+    props = scene_props(sc, "a.wav", 0.0, 1.0, 1.5, [])
+    assert props["twist"]["on"] == "fox" and props["twist"]["face"] == "shocked"
+    data = json.loads(Path("content/scripts/2026-10-12-fox-bank-income.json").read_text(encoding="utf-8"))
+    twist = next(s for s in data["scenes"] if s.get("twist"))
+    assert twist["twist_on"] == "fox" and twist["twist_face"] == "shocked"
+    for bad, msg in (({"twist_on": "nobody"}, "not in the cast"), ({"twist_face": "angry"}, "unknown twist_face")):
+        broken = json.loads(json.dumps(data))
+        next(s for s in broken["scenes"] if s.get("twist")).update(bad)
+        tmp = Path("tests/_tmp_twist.json")
+        tmp.write_text(json.dumps(broken, ensure_ascii=False), encoding="utf-8")
+        try:
+            assert any(msg in e for e in validate(load_script(tmp))[0])
+        finally:
+            tmp.unlink()

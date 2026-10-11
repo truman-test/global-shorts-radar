@@ -215,14 +215,22 @@ const TwistShot: React.FC<{c: Ctx; variant: HomeVariant}> = ({c, variant}) => {
   const flash = hit < 0 ? 0 : hit < 2 ? 0.85 : Math.max(0, 0.85 * (1 - (hit - 2) / 5));
   const shake = hit >= 0 && hit < 8 ? Math.sin(hit * 2.7) * 6 * (1 - hit / 8) : 0;
   const zoom = 0.965 + 0.035 * Math.min(1, spr(cut, 0, 8, 0.02));
-  const pose = poseOf(c, spot, c.victim, "victim", {force: "shocked", gesture: "handsOnCheeks", look: [0, 0],
-    fx: hit >= 0 ? ["shockLines", "sweat", "sweat2", "gloom"] : ["sweat", "shockLines"], noIdle: hit >= 0});
+  // the close-up goes to whoever the twist is about: the victim by default, the fox when the scam fails
+  const id = c.scene.twist?.on && c.cast[c.scene.twist.on] ? c.scene.twist.on : c.victim;
+  const isCallerId = isCaller(c.cast[id ?? ""]?.character);
+  const face = (c.scene.twist?.face ?? "shocked") as Expression;
+  const shocked = face === "shocked" || face === "panicked";
+  const pose = poseOf(c, spot, id, isCallerId ? "caller" : "victim", {force: face,
+    gesture: shocked ? "handsOnCheeks" : face === "relieved" ? "clutchChest" : "rest", look: [0, 0],
+    ...(isCallerId ? {rim: "#5FD3C8"} : {}),
+    fx: shocked ? (hit >= 0 ? ["shockLines", "sweat", "sweat2", "gloom"] : ["sweat", "shockLines"]) : [],
+    noIdle: hit >= 0});
   const focus = c.mode === "dark" ? "#EEE8DE" : "#2B2620";
   return (
     <>
       <Camera zoom={zoom} fx={spot.x} fy={spot.eyeY} shake={shake}>
         <div style={{position: "absolute", inset: 0, filter: `grayscale(${k}) brightness(${1 - 0.15 * k})`}}>
-          <HomeSet mode={c.mode} variant={variant} />
+          {isCallerId ? <CallCentreSet w={1080} h={1920} frame={c.frameA} /> : <HomeSet mode={c.mode} variant={variant} />}
         </div>
         <FocusLines cx={spot.x} cy={spot.eyeY} color={focus} opacity={0.32 * k} />
         <Character pose={pose} uid={`tw${c.index}`} frame={c.frameA} />

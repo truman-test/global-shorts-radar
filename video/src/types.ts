@@ -44,7 +44,8 @@ export type SpokenLine = {speaker: string; text: string; startMs: number; endMs:
   face?: Expression; gesture?: Gesture; bubble?: string; spike?: boolean | string};
 
 /** The reveal: at atMs the scene's frame freezes and a hand-drawn stamp lands on it. */
-export type Twist = {text: string; atMs: number};
+/** on: cast id in the twist close-up (default the victim); face: its expression (default "shocked"). */
+export type Twist = {text: string; atMs: number; on?: string; face?: string};
 
 export type Layout = "card" | "call" | "chat" | "sms" | "alert" | "stat" | "timeline" | "checklist" | "compare"
   | "toggle" | "flow" | "dots";

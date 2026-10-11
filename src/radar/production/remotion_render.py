@@ -411,7 +411,9 @@ def scene_props(scene, audio: str, lead: float, speech: float, length: float, pa
             **({"mascot": scene.mascot} if isinstance(scene.mascot, bool) else {}),
             **({"lines": lines} if lines else {}),
             **({"staging": staging} if staging else {}),
-            **({"twist": {"text": scene.twist, "atMs": round((lead + speech + TWIST_DELAY) * 1000)}}
+            **({"twist": {"text": scene.twist, "atMs": round((lead + speech + TWIST_DELAY) * 1000),
+                          **({"on": scene.twist_on} if scene.twist_on else {}),
+                          **({"face": scene.twist_face} if scene.twist_face else {})}}
                if scene.twist else {}),
             **layout_props(scene)}
 

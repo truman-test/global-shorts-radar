@@ -122,7 +122,9 @@
      "face": "excited"
     }
    ],
-   "twist": "역관광!"
+   "twist": "역관광!",
+   "twist_on": "mom",
+   "twist_face": "smug"
   }
  ],
  "sources": [

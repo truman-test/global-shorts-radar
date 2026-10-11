@@ -122,7 +122,9 @@
      "gesture": "palmOut"
     }
    ],
-   "twist": "영업 실패"
+   "twist": "영업 실패",
+   "twist_on": "fox",
+   "twist_face": "shocked"
   },
   {
    "layout": "card",
