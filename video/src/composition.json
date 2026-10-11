@@ -70,15 +70,15 @@
     "hook": {"size": "ecu", "chars": [{"who": "victim", "x": 425, "eyeY": 760, "k": 2.3, "turn": 0.2, "gestures": ["phoneEar"]}],
      "prop": {"kind": "table", "top": 1480}},
     "wide": {"size": "full", "chars": [{"who": "victim", "x": 380, "eyeY": 605, "k": 1.05, "turn": 0.3, "gestures": ["phoneEar", "clutchChest"]}],
-     "window": {"x": 612, "y": 246, "w": 420, "h": 450, "scale": 1.0}},
+     "window": {"x": 612, "y": 392, "w": 420, "h": 450, "scale": 1.0}},
     "close": {"size": "cu", "chars": [{"who": "victim", "x": 360, "eyeY": 770, "k": 1.85, "turn": 0.3, "gestures": ["phoneEar"]}],
-     "window": {"x": 612, "y": 246, "w": 420, "h": 450, "scale": 0.86}, "prop": {"kind": "table", "top": 1430}},
+     "window": {"x": 612, "y": 392, "w": 420, "h": 450, "scale": 0.86}, "prop": {"kind": "table", "top": 1430}},
     "caller": {"size": "bust", "chars": [{"who": "caller", "x": 520, "eyeY": 740, "k": 1.65, "turn": -0.2, "gestures": ["rest"]}],
      "prop": {"kind": "ccDesk", "top": 1300}}
    },
    "_hook": "the opening shot (the poster and thumbnail): the victim's extreme close-up with the phone at the ear; the caller's window springs in on the first cut",
    "windowChar": {"x": 210, "eyeY": 220, "k": 0.62},
-   "bubble": {"caller": [770, 770], "victim": [250, 345]}
+   "bubble": {"caller": [690, 905], "victim": [250, 440]}
   },
   "split_call": {
    "shots": {
@@ -103,7 +103,7 @@
   "over_shoulder_chat": {
    "shots": {
     "over": {"size": "medium", "chars": [{"who": "victim", "x": 280, "eyeY": 1050, "k": 1.2, "view": "back", "gestures": ["back"]}],
-     "panel": {"x": 196, "y": 236, "scale": 0.86}, "prop": {"kind": "table", "top": 1480}},
+     "panel": {"x": 214, "y": 392, "scale": 0.8}, "prop": {"kind": "table", "top": 1480}},
     "face": {"size": "bust", "chars": [{"who": "victim", "x": 520, "eyeY": 690, "k": 1.55, "turn": 0.1, "gestures": ["phoneRead", "phoneType"]}],
      "prop": {"kind": "table", "top": 1300}},
     "other": {"size": "bust", "chars": [{"who": "other", "x": 540, "eyeY": 690, "k": 1.55, "turn": -0.15, "gestures": ["phoneRead", "phoneType", "palmOut"]}],
@@ -130,7 +130,10 @@
     "twist": {"size": "ecu", "chars": [{"who": "victim", "x": 482, "eyeY": 720, "k": 2.3, "turn": 0, "gestures": ["handsOnCheeks"]}],
      "prop": {"kind": "table", "top": 1480}}
    },
-   "stamp": {"x": 540, "y": 1150, "h": 196}
+   "stamp": {"x": 540, "y": 1150, "h": 196, "bottom": 1246,
+    "variants": {"round": {"maxChars": 2, "size": 90, "rotate": -12}, "short": {"maxChars": 5, "size": 110, "rotate": -8},
+     "long": {"maxChars": 8, "size": 100, "rotate": -5}}},
+   "_stamp": "drama packaging: the stamp's look follows the length of the twist text (visible characters, ! and ? count half): a round seal for 1-2 (뚝!), a box for 3-5 (작전 실패, 들켰다), a slimmer box for 6-8 (사기였습니다); centred at x, lifted so its bottom stays above `bottom` (the caption band)"
   },
   "dochi_explains": {
    "shots": {
@@ -140,6 +143,12 @@
    "dochi": {"x": 660, "y": 1236, "size": 220}
   }
  },
- "motion": {"punchIn": 1.12, "punchFrames": 4, "releaseFrames": 8, "shakePx": 10, "shakeFrames": 8, "squash": [0.92, 1.05, 1.015, 1]},
+ "_aside": "the inner-voice aside (role inner, 속마음): the speaking character alone, facing the camera in a close-up, the room dimmed around it; who = caller for the callers' rigs (call centre, ccDesk), the family rigs stand in the home behind the table (familyProp)",
+ "aside": {"size": "cu", "chars": [{"who": "caller", "x": 540, "eyeY": 790, "k": 1.9, "turn": 0, "gestures": ["rest"]}],
+  "prop": {"kind": "ccDesk", "top": 1236}, "familyProp": {"kind": "table", "top": 1236}, "tag": {"x": 44, "y": 404}},
+ "_packaging": "drama packaging over every staging: the disclosure chip (top-left) and the fixed situation title (centred, 1-2 lines of <= 12 characters); content that must stay readable (caller window, floating thread, keyword bubbles) starts below safeTop. spike = where 도치 the 가시 감지기 pops in (feet line, from the left edge; outside the caption band, the bottom 20% and the right column)",
+ "packaging": {"chip": {"x": 40, "y": 112, "h": 46, "font": 27}, "title": {"top": 168, "font": 72, "lineH": 84, "padX": 34, "padY": 12, "border": 5,
+   "maxLines": 2, "maxChars": 12}, "safeTop": 392, "bubbleY": 448, "spike": {"x": 160, "feetY": 1186, "size": 226, "frames": 34}},
+ "motion": {"punchIn": 1.12, "punchFrames": 4, "openPunch": 1.08, "openFrames": 7, "releaseFrames": 8, "shakePx": 10, "shakeFrames": 8, "squash": [0.92, 1.05, 1.015, 1]},
  "_motion": "cheap motion, all pure functions of the frame: a punch-in on the scene's keyword (the line's bubble, else the scene's mark when a line says it), a camera shake as a shocked/panicked line starts, a 4-frame squash when a face changes"
 }

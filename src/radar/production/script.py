@@ -54,6 +54,17 @@ The script-level "cast_style" picks the characters' skin over the same rig and s
 people) or "animal" (our own animal cast, video/src/Animal.tsx: a 진돗개 family and 여우 callers); role ids stay the same.
 Dialogue is an invented re-enactment: the disclaimer must say 재연, and every line passes the same checks as the
 narration (speakable, no URLs, masked numbers, no brand names).
+
+Drama packaging (a script whose dialogue is played by rigged characters, see is_drama): it renders like an
+entertainment Short, not a notice. No brand line, category / series chip, CTA or on-screen source subs; one small
+"재연 · AI 음성" chip and a fixed situation title at the top, the voice from 0.0 s (no lead-in).
+  "hook_title": "비웃던 아버지\n두 번째 전화엔"   # required: 1-2 lines (break with \n, or a space is picked),
+                                                # <= 12 characters per line (spaces count); no brands or numbers
+A cast entry with "role": "inner" and the same "character" as another member is that character's inner voice
+(속마음, its own TTS voice): its lines play as an aside to the camera with a 속마음 tag. A line may set "spike": true
+(or a word of the line) to have 도치 the 가시 감지기 pop in with its spikes up as it is said (no voice). The gate
+warns when lesson-like time (explainer layouts, dochi_explains, 도치's lines) passes 10% of the runtime and
+rejects a checklist scene.
 """
 from __future__ import annotations
 
@@ -78,7 +89,7 @@ LINE_GAP = 0.3               # silence between two dialogue lines (remotion_rend
 LINE_PAD, SENTENCE_PAD, COMMA_PAD = 0.18, 0.5, 0.13
 TWIST_DELAY = 0.08           # after the last word the frame freezes and the reveal stamp lands...
 TWIST_HOLD = 0.45            # ...and holds; a twist scene ends on its freeze-frame (no tail gap)
-SPEAKER_ROLES = ("scammer", "victim", "narrator", "dochi", "neutral")
+SPEAKER_ROLES = ("scammer", "victim", "narrator", "dochi", "neutral", "inner")
 # Character system (video/src/composition.json; tests/test_characters.py keeps the two in sync)
 CHARACTERS = ("father", "mother", "daughter", "son", "scammer", "fake_banker", "ad")
 FAMILY = ("father", "mother", "daughter", "son")
@@ -94,10 +105,16 @@ EXPLAINER_LAYOUTS = ("card", "stat", "timeline", "checklist", "compare", "toggle
 STAGING_LAYOUTS = {"pip_call": ("call",), "split_call": ("call",), "solo": ("call", "chat", "sms", "card"),
                    "over_shoulder_chat": ("chat", "sms"), "watch_ad": ("card",),
                    "twist_closeup": ("call", "chat", "sms", "card"), "dochi_explains": EXPLAINER_LAYOUTS}
+INNER_LABEL = "속마음"         # default chip of an inner-voice cast member (role inner)
+# Drama packaging (see the module doc): the fixed situation title and the lesson budget
+HOOK_TITLE_MAX_LINES = 2
+HOOK_TITLE_LINE_CHARS = 12     # one line of the title at 72 px fits the frame with margins (composition.json packaging)
+LESSON_SHARE_MAX = 0.10        # lesson-like time (explainer layouts, dochi_explains, 도치's lines) over the runtime
 DEFAULT_CAST = {"narrator": {"voice": "F1", "label": "", "role": "narrator"},
                 "dochi": {"voice": "F1", "label": "도치", "role": "dochi"}}
 SCENE_GAP = 0.25             # seconds of silence after each scene (remotion_render.TAIL_GAP)
 LAYOUT_LEAD_IN = {"call": 0.9, "alert": 0.5}   # time before the narration starts (first scene capped at 0.4 s)
+FIRST_SCENE_MAX_LEAD_IN = 0.4   # the voice must start almost at once in the opening scene (swipe decision)
 POSTER_TAIL = 0.5            # the loop-back poster at the end
 MIN_SECONDS, MAX_SECONDS = 12.0, 50.0
 TARGET_SECONDS = (20.0, 36.0)   # final video length; Shorts research 2026-10-09: 30-35 s for this channel
@@ -125,6 +142,7 @@ class Line:
     face: str = ""        # acting note: the speaker's expression (EXPRESSIONS), default from the line
     gesture: str = ""     # acting note: the speaker's arm pose (GESTURES), default from the staging
     bubble: str = ""      # a keyword speech bubble (<= BUBBLE_MAX_CHARS, a part of the text), optional
+    spike: object = False  # 도치 the 가시 감지기 pops in on this line: True, or a word of the line (as it is said)
 
     def tts_text(self) -> str:
         return self.tts.strip() or normalize_for_tts(self.text)
@@ -191,6 +209,7 @@ class Script:
     extra: dict = field(default_factory=dict)
     cast: dict = field(default_factory=dict)   # dialogue speakers: {"id": {"voice", "label", "role"}} (see cast_of)
     cast_style: str = ""        # the characters' skin (CAST_STYLES); "" = human
+    hook_title: str = ""        # drama packaging: the fixed top situation title, 1-2 lines ("\n" breaks)
 
 
 def speaker_role(speaker: str) -> str:
@@ -204,6 +223,8 @@ def cast_of(script: Script) -> dict[str, dict]:
     for key, entry in script.cast.items():
         base = out.get(key, {"voice": "F1", "label": "", "role": speaker_role(key)})
         out[key] = {**base, **{k: v for k, v in entry.items() if v}}
+        if out[key]["role"] == "inner" and not out[key].get("label"):
+            out[key]["label"] = INNER_LABEL   # the thought chip over the captions
     return out
 
 
@@ -246,7 +267,15 @@ def _lines(raw) -> list[Line]:
         raise TypeError("'lines' must be a list")
     return [Line(speaker=str(x.get("speaker", "narrator")).strip(), text=str(x.get("text", "")).strip(),
                  tts=str(x.get("tts", "")), face=str(x.get("face", "")).strip(),
-                 gesture=str(x.get("gesture", "")).strip(), bubble=str(x.get("bubble", "")).strip()) for x in raw]
+                 gesture=str(x.get("gesture", "")).strip(), bubble=str(x.get("bubble", "")).strip(),
+                 spike=_spike(x.get("spike", False))) for x in raw]
+
+
+def _spike(v) -> object:
+    """A line's spike flag: True / False, or a word of the line (kept as a stripped string)."""
+    if isinstance(v, str):
+        return v.strip() or False
+    return v
 
 
 def _narration(s: dict) -> str:
@@ -267,6 +296,13 @@ def _cast(raw) -> dict:
         out[str(key).strip()] = {k: str(entry[k]).strip() for k in ("voice", "label", "role", "character")
                                  if k in entry}
     return out
+
+
+def _hook_title(v) -> str:
+    """hook_title as one string ("\n" between lines); a JSON list of lines is accepted too."""
+    if isinstance(v, list):
+        return "\n".join(str(x).strip() for x in v)
+    return str(v or "").strip()
 
 
 def load_script(path: str | Path) -> Script:
@@ -314,6 +350,7 @@ def load_script(path: str | Path) -> Script:
                       music=str(data.get("music", "")).strip(), theme=str(data.get("theme", "")).strip(),
                       category=str(data.get("category", "")).strip(), path=str(path), cast=_cast(data.get("cast")),
                       cast_style=str(data.get("cast_style", "")).strip(),
+                      hook_title=_hook_title(data.get("hook_title", "")),
                       extra={"pilot": str(data["pilot"]).strip()} if data.get("pilot") else {})
     except (KeyError, TypeError, AttributeError) as exc:
         raise ScriptError(f"{path}: missing or malformed field {exc}") from exc
@@ -327,13 +364,23 @@ def scene_speech_seconds(script: Script, scene: Scene) -> float:
             + LINE_GAP * (len(scene.lines) - 1))
 
 
+def scene_lead_in(script: Script, index: int, scene: Scene) -> float:
+    """Seconds before a scene's voice starts: the call rings / the banner lands first (LAYOUT_LEAD_IN, the opening
+    scene capped at FIRST_SCENE_MAX_LEAD_IN); a drama's dialogue scenes start talking at once (0.0 s)."""
+    if scene.lines and is_drama(script):
+        return 0.0
+    lead = LAYOUT_LEAD_IN.get(scene.layout, 0.0)
+    return min(lead, FIRST_SCENE_MAX_LEAD_IN) if index == 0 else lead
+
+
+def scene_seconds(script: Script, index: int, scene: Scene) -> float:
+    """Estimated length of one scene: lead-in + speech + the tail gap (or the twist's freeze-frame)."""
+    return (scene_lead_in(script, index, scene) + scene_speech_seconds(script, scene)
+            + (TWIST_DELAY + TWIST_HOLD if scene.twist else SCENE_GAP))
+
+
 def estimate_seconds(script: Script) -> float:
-    total = POSTER_TAIL
-    for i, s in enumerate(script.scenes):
-        lead = LAYOUT_LEAD_IN.get(s.layout, 0.0)
-        total += (scene_speech_seconds(script, s) + (TWIST_DELAY + TWIST_HOLD if s.twist else SCENE_GAP)
-                  + (min(lead, 0.4) if i == 0 else lead))
-    return total
+    return POSTER_TAIL + sum(scene_seconds(script, i, s) for i, s in enumerate(script.scenes))
 
 
 def caption_chunks(text: str, max_chars: int = 10) -> list[str]:
@@ -485,7 +532,7 @@ def victim_character(cast: dict) -> str | None:
     for key, entry in cast.items():
         if entry.get("role") == "victim" and entry.get("character") in FAMILY:
             return key
-    return next((k for k, e in cast.items() if e.get("character") in FAMILY), None)
+    return next((k for k, e in cast.items() if e.get("character") in FAMILY and e.get("role") != "inner"), None)
 
 
 def default_staging(scene: Scene, cast: dict) -> str | None:
@@ -497,6 +544,8 @@ def default_staging(scene: Scene, cast: dict) -> str | None:
     chars = [cast.get(line.speaker, {}).get("character") for line in scene.lines]
     if not any(chars):
         return None
+    if all(cast.get(line.speaker, {}).get("role") == "inner" for line in scene.lines):
+        return "solo"   # inner-voice asides only: the character alone, facing the camera
     if scene.layout == "call":
         return "pip_call"
     if scene.layout in ("chat", "sms"):
@@ -504,6 +553,75 @@ def default_staging(scene: Scene, cast: dict) -> str | None:
     if scene.layout == "card" and "ad" in chars:
         return "watch_ad"
     return None
+
+
+DRAMA_STAGINGS = tuple(s for s in STAGINGS if s != "dochi_explains")   # characters replace the layout's picture
+
+
+def is_drama(script: Script) -> bool:
+    """A drama (드라마 packaging): some scene's dialogue is played by rigged characters (a drama staging). Mirrors
+    video/src/Packaging.tsx packagingOf."""
+    cast = cast_of(script)
+    return any(default_staging(sc, cast) in DRAMA_STAGINGS for sc in script.scenes if sc.lines)
+
+
+def hook_title_lines(title: str) -> list[str]:
+    """The situation title as shown: its own lines ("\\n"), else one line, else split at the space that balances the
+    two lines best. The result may break the limits; validation reports it."""
+    title = title.strip()
+    if not title:
+        return []
+    if "\n" in title:
+        return [t.strip() for t in title.split("\n") if t.strip()]
+    if len(title) <= HOOK_TITLE_LINE_CHARS:
+        return [title]
+    cuts = [i for i, ch in enumerate(title) if ch == " "]
+    if not cuts:
+        return [title]
+    i = min(cuts, key=lambda k: max(len(title[:k].strip()), len(title[k:].strip())))
+    return [title[:i].strip(), title[i:].strip()]
+
+
+def lesson_seconds(script: Script) -> float:
+    """Estimated lesson-like time of a drama: whole scenes that explain (an explainer layout without a drama staging,
+    or dochi_explains) plus 도치's lines inside the story's scenes."""
+    cast = cast_of(script)
+    total = 0.0
+    for i, sc in enumerate(script.scenes):
+        staging = default_staging(sc, cast)
+        if staging not in DRAMA_STAGINGS and (sc.layout in EXPLAINER_LAYOUTS or staging == "dochi_explains"):
+            total += scene_seconds(script, i, sc)
+            continue
+        total += sum(line_seconds(line.tts_text(), line_voice(script, line.speaker)) for line in sc.lines
+                     if cast.get(line.speaker, {}).get("role") == "dochi")
+    return total
+
+
+def _drama_errors(script: Script) -> tuple[list[str], list[str]]:
+    """Drama packaging: the situation title, no checklist, the lesson budget (errors, warnings)."""
+    errors, warnings = [], []
+    if not is_drama(script):
+        if script.hook_title:
+            warnings.append("hook_title is only shown on dramas (dialogue played by rigged characters)")
+        return errors, warnings
+    lines = hook_title_lines(script.hook_title)
+    if not lines:
+        errors.append("drama: needs hook_title, the fixed situation title at the top (1-2 lines of <= "
+                      f"{HOOK_TITLE_LINE_CHARS} characters, e.g. \"비웃던 아버지\\n두 번째 전화엔\")")
+    elif len(lines) > HOOK_TITLE_MAX_LINES or any(len(t) > HOOK_TITLE_LINE_CHARS for t in lines):
+        errors.append(f"drama: hook_title must be 1-{HOOK_TITLE_MAX_LINES} lines of <= {HOOK_TITLE_LINE_CHARS} "
+                      f"characters (spaces count; break it with \\n): {' / '.join(lines)}")
+    errors += [f"drama: hook_title {p}" for p in mockup_text_problems(script.hook_title.replace("\n", " "))]
+    for i, sc in enumerate(script.scenes, start=1):
+        if sc.layout == "checklist":
+            errors.append(f"drama: scene {i} is a checklist; a drama never lectures (the winning move in the story is "
+                          "the lesson; put the list in the description or the pinned comment)")
+    seconds = estimate_seconds(script)
+    lesson = lesson_seconds(script)
+    if seconds > 0 and lesson / seconds > LESSON_SHARE_MAX:
+        warnings.append(f"drama: lesson-like scenes and 도치's lines take {lesson:.1f}s of ~{seconds:.1f}s "
+                        f"({lesson / seconds:.0%}); keep it under {LESSON_SHARE_MAX:.0%} (the story is the lesson)")
+    return errors, warnings
 
 
 def _character_errors(script: Script) -> list[str]:
@@ -516,11 +634,28 @@ def _character_errors(script: Script) -> list[str]:
             errors.append(f"cast '{key}': unknown character '{ch}' (use {', '.join(CHARACTERS)})")
     if script.cast_style and script.cast_style not in CAST_STYLES:
         errors.append(f"unknown cast_style '{script.cast_style}' (use {', '.join(CAST_STYLES)})")
+    for key, entry in cast.items():
+        if entry.get("role") != "inner":
+            continue
+        ch = entry.get("character", "")
+        if not ch:
+            errors.append(f"cast '{key}': an inner voice (role inner) needs the character whose 속마음 it is")
+        elif not any(e.get("character") == ch and e.get("role") != "inner" for k, e in cast.items() if k != key):
+            errors.append(f"cast '{key}': inner voice of '{ch}', but no other cast member plays '{ch}' (add the "
+                          "character's own entry, e.g. its phone voice)")
     victim = victim_character(cast)
     callers = [k for k, e in cast.items() if e.get("character") in CALLERS]
     for i, sc in enumerate(script.scenes, start=1):
         for k, line in enumerate(sc.lines, start=1):
             where = f"scene {i} line {k}"
+            if line.spike is not False and line.spike is not None:
+                if isinstance(line.spike, str):
+                    if line.spike not in line.text:
+                        errors.append(f"{where}: spike '{line.spike}' must be a word of the line (or true)")
+                elif not isinstance(line.spike, bool):
+                    errors.append(f"{where}: spike must be true or a word of the line")
+                if cast.get(line.speaker, {}).get("role") == "dochi":
+                    errors.append(f"{where}: 도치 does not spike at its own line (it reacts to what others say)")
             if line.face and line.face not in EXPRESSIONS:
                 errors.append(f"{where}: unknown face '{line.face}' (use {', '.join(EXPRESSIONS)})")
             if line.gesture and line.gesture not in GESTURES:
@@ -703,6 +838,9 @@ def validate(script: Script, db=None, allow_unverified: bool = False) -> tuple[l
         more_errors, more_warnings = _dialogue_errors(script)
         errors += more_errors
         warnings += more_warnings
+    more_errors, more_warnings = _drama_errors(script)
+    errors += more_errors
+    warnings += more_warnings
     seconds = estimate_seconds(script)
     if not MIN_SECONDS <= seconds <= MAX_SECONDS:
         errors.append(f"estimated length {seconds:.1f}s outside {MIN_SECONDS:.0f}-{MAX_SECONDS:.0f}s")

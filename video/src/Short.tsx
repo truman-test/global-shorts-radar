@@ -17,7 +17,8 @@ import {BADGE, CardScene} from "./CardScene";
 import {CastContext, useCast} from "./dialogue";
 import {CastScene} from "./CastScene";
 import {CastStyleContext} from "./Actor";
-import {isDrama, SPEC, stagingOf} from "./rig";
+import {isDrama, spikeAtMs, stagingOf, stampLook} from "./rig";
+import {DISCLOSURE, DisclosureChip, HookTitle, packagingOf, SPIKE_FRAMES, SpikeAlert, titleLines} from "./Packaging";
 import {Stamp} from "./Handwriting";
 import {CHIP} from "./kit";
 import {AnchorSpec, fadeOut, MORPH, RealFrameContext, SceneContext, spr, Transition, useScene} from "./motion";
@@ -61,18 +62,25 @@ export const SERIES = "생존노트";
  * dark-luminance stages, dark ink on light ones). It never depends on the frame (except the progress bar), so the
  * poster tail shows exactly the brand line of frame 0.
  */
-const TopBar: React.FC<{channel: string; voiceLabel?: string; episodeNo?: number}> = ({channel, voiceLabel,
-  episodeNo}) => {
+const ProgressBar: React.FC = () => {
   const frame = useCurrentFrame();
   const {durationInFrames} = useVideoConfig();
   const t = useTheme();
-  const cat = CATEGORIES[useCategory()];
   const paper = isLight(t);
+  return (
+    <div style={{position: "absolute", top: 0, left: 0, height: 12, width: `${(frame / durationInFrames) * 100}%`,
+      background: paper ? t.progress : ACCENTS.yellow, boxShadow: paper ? "none" : `0 0 18px ${ACCENTS.yellow}`}} />
+  );
+};
+
+const TopBar: React.FC<{channel: string; voiceLabel?: string; episodeNo?: number}> = ({channel, voiceLabel,
+  episodeNo}) => {
+  const t = useTheme();
+  const cat = CATEGORIES[useCategory()];
   const ink = `${t.stageInk}${Math.round(BRAND.inkAlpha * 255).toString(16)}`;
   return (
     <>
-      <div style={{position: "absolute", top: 0, left: 0, height: 12, width: `${(frame / durationInFrames) * 100}%`,
-        background: paper ? t.progress : ACCENTS.yellow, boxShadow: paper ? "none" : `0 0 18px ${ACCENTS.yellow}`}} />
+      <ProgressBar />
       <div style={{position: "absolute", top: 96, width: "100%", display: "flex", justifyContent: "center",
         alignItems: "center", fontSize: 36, fontWeight: 700, color: ink, letterSpacing: 1}}>
         <span style={{marginRight: 18, padding: "5px 16px", borderRadius: 999, fontSize: 26, fontWeight: 800,
@@ -196,15 +204,23 @@ const TwistStamp: React.FC<{scene: SceneProps}> = ({scene}) => {
   const s = useScene();
   const cast = useCast();
   if (!scene.twist) return null;
-  // drama: on the victim's chest in the shocked close-up, under the chin (never over the eyes or the mouth)
+  // drama: on the victim's chest in the shocked close-up, under the chin (never over the eyes or the mouth), its look
+  // following the text's length (a round seal for "뚝!", a box for "작전 실패", a slimmer one for "사기였습니다")
   const drama = isDrama(stagingOf(scene, cast));
-  const spot = drama ? SPEC.twist_closeup.stamp : {x: s.mascot ? 589 : 540, y: STAMP_Y};
   const at = Math.round((scene.twist.atMs / 1000) * fps);
   const exit = s.mode === "continuity" && !s.last ? fadeOut(frame, s.frames)
     : interpolate(frame, [s.frames - 7, s.frames], [1, 0], {extrapolateLeft: "clamp", extrapolateRight: "clamp"});
+  if (drama) {
+    const look = stampLook(scene.twist.text);
+    return (
+      <div style={{position: "absolute", inset: 0, opacity: exit}}>
+        <Stamp text={scene.twist.text} at={at} x={look.x} y={look.y} size={look.size} rotate={look.rotate} look={look} />
+      </div>
+    );
+  }
   return (
     <div style={{position: "absolute", inset: 0, opacity: exit}}>
-      <Stamp text={scene.twist.text} at={at} x={spot.x} y={spot.y} />
+      <Stamp text={scene.twist.text} at={at} x={s.mascot ? 589 : 540} y={STAMP_Y} />
     </div>
   );
 };
@@ -251,6 +267,11 @@ const SceneSfx: React.FC<SfxProps> = (props) => {
       <LayoutSfx {...props} />
       {scene.twist ? <Sfx name="stamp" at={at} volume={0.7} /> : null}
       {scene.twist ? <Sfx name="pop" at={at + 1} volume={0.32} /> : null}
+      {/* 도치's 가시 감지기: a short synthesized "삐빅" as its spikes go up (no voice) */}
+      {(scene.lines ?? []).map((_, i) => {
+        const ms = spikeAtMs(scene, i);
+        return ms === undefined ? null : <Sfx key={`sp${i}`} name="spike" at={Math.round((ms / 1000) * fps) + 6} volume={0.3} />;
+      })}
     </>
   );
 };
@@ -349,8 +370,12 @@ const anchorSpec = (scene: SceneProps): AnchorSpec => {
   return scene.layout === "card" ? {look, size: BADGE, glow: 60} : {look, size: CHIP};
 };
 
-export const Short: React.FC<ShortProps> = (props) => {
+export const Short: React.FC<ShortProps> = (input) => {
   const {fps, durationInFrames} = useVideoConfig();
+  // drama packaging: no brand line, chips, CTA or share line, no on-screen source subs (Packaging.tsx)
+  const dramaPack = packagingOf(input) === "drama";
+  const props: ShortProps = dramaPack ? {...input, shareLine: undefined, cta: undefined, episodeNo: undefined,
+    scenes: input.scenes.map((s) => ({...s, sub: ""}))} : input;
   const spans = sceneFrames(props, fps);
   const mode: Transition = props.transition === "classic" ? "classic" : "continuity";
   const cont = mode === "continuity";
@@ -416,6 +441,16 @@ export const Short: React.FC<ShortProps> = (props) => {
           </Sequence>
         ) : null)}
       </div>
+      {/* 도치 the 가시 감지기: pops in on the lines flagged `spike` (scene speech time = the scene's audio clock) */}
+      {props.scenes.flatMap((scene, i) => (scene.lines ?? []).map((_, k) => {
+        const ms = spikeAtMs(scene, k);
+        if (ms === undefined) return null;
+        return (
+          <Sequence key={`sp${i}_${k}`} from={spans[i].from + Math.round((ms / 1000) * fps)} durationInFrames={SPIKE_FRAMES}>
+            <SpikeAlert />
+          </Sequence>
+        );
+      }))}
       {/* 도치 the mascot: one continuous track over the whole video (in the margin, never on text or captions) */}
       <MascotTrack props={props} spans={spans} poster={POSTER} />
       {/* narration, captions and SFX keep the exact scene spans in both modes */}
@@ -453,7 +488,7 @@ export const Short: React.FC<ShortProps> = (props) => {
           </Sequence>
           <Freeze frame={0}>
             <Captions pages={props.scenes[0].pages} instantFirst />
-            <DisclaimerBadge text={props.disclaimer} />
+            {dramaPack ? null : <DisclaimerBadge text={props.disclaimer} />}
           </Freeze>
         </Sequence>
       ) : null}
@@ -466,15 +501,23 @@ export const Short: React.FC<ShortProps> = (props) => {
           </Sequence>
         );
       })() : null}
-      <TopBar channel={props.channel} voiceLabel={props.voiceLabel} episodeNo={props.episodeNo} />
-      {/* the 재연 badge stays up through the last dramatized scene (dialogue lines or the twist stamp), so no
-          re-enacted moment is ever shown without it; explainers keep it on the first scene only */}
+      {dramaPack ? <ProgressBar /> : <TopBar channel={props.channel} voiceLabel={props.voiceLabel} episodeNo={props.episodeNo} />}
+      {/* the 재연 badge (drama: the one "재연 · AI 음성" chip) stays up through the last dramatized scene (dialogue lines
+          or the twist stamp), so no re-enacted moment is ever shown without it, and again in the poster tail;
+          explainers keep it on the first scene only */}
       <Sequence durationInFrames={(() => {
         const k = props.scenes.reduce((last, s, i) => (s.lines?.length || s.twist ? i : last), 0);
         return spans[k] ? spans[k].from + spans[k].frames : fps * 3;
       })()}>
-        <DisclaimerBadge text={props.disclaimer} />
+        {dramaPack ? <DisclosureChip text={props.disclosure || DISCLOSURE} /> : <DisclaimerBadge text={props.disclaimer} />}
       </Sequence>
+      {dramaPack && tail > 0 && n ? (
+        <Sequence from={end}>
+          <DisclosureChip text={props.disclosure || DISCLOSURE} />
+        </Sequence>
+      ) : null}
+      {/* the fixed situation title: frame 0 (the poster) to the last frame */}
+      {dramaPack ? <HookTitle lines={titleLines(props.hookTitle)} /> : null}
     </AbsoluteFill>
     </CategoryContext.Provider>
     </CastStyleContext.Provider>

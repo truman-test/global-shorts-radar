@@ -64,7 +64,10 @@ def test_the_drama_scripts_carry_characters_and_stagings():
     assert ad.scenes[0].staging == "watch_ad"
     for script in (bank, sms, ad):
         errors, _ = validate(script, allow_unverified=True)
-        assert errors == [], (script.id, errors)
+        # the three samples predate the drama packaging (2026-10-11 decision): only its own rules reject them (no
+        # situation title, a closing checklist); the character fields themselves are all valid
+        assert all(e.startswith("drama: ") for e in errors), (script.id, errors)
+        assert any("needs hook_title" in e for e in errors)
         assert victim_character(cast_of(script)) in ("victim", "mom", "father")
 
 
@@ -323,8 +326,15 @@ def test_cast_styles_are_the_same_in_python_json_and_typescript():
     assert re.search(r"castStyle\?: CastStyle;", TYPES)
 
 
+def _packaged() -> Script:
+    """The bank-caller sample brought to the drama packaging: a situation title, no closing checklist."""
+    s = _script(hook_title="연소득 아는\n은행 전화")
+    s.scenes = [sc for sc in s.scenes if sc.layout != "checklist"]
+    return s
+
+
 def test_cast_style_is_validated_and_defaults_to_human():
-    s = _script()
+    s = _packaged()
     assert s.cast_style == "" and _errors(s) == []
     s.cast_style = "animal"
     assert _errors(s) == []

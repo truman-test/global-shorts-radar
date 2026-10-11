@@ -12,6 +12,9 @@ export const STAGINGS = COMP.stagings as Staging[];
 export const EXPRESSIONS = COMP.expressions as Expression[];
 export const GESTURES = COMP.gestures as Gesture[];
 export const SPEC = COMP.stagings_spec;
+/** The inner-voice aside shot (composition.json "aside") and the drama packaging geometry ("packaging"). */
+export const ASIDE = COMP.aside;
+export const PACK = COMP.packaging;
 
 export type Who = "victim" | "caller" | "other" | "presenter";
 export type CharSpot = {who: Who; x: number; eyeY: number; k: number; turn?: number; view?: string; gestures: string[];
@@ -108,21 +111,25 @@ export const isCaller = (c?: CharacterId) => Boolean(c && CALLERS.has(c));
 
 /** The victim: the cast member with role victim and a family character (else the first family character). */
 export const victimOf = (cast: Record<string, CastMember>): string | undefined => {
-  const ids = Object.keys(cast);
+  const ids = Object.keys(cast).filter((k) => cast[k].role !== "inner");
   return ids.find((k) => cast[k].role === "victim" && isFamily(cast[k].character))
     ?? ids.find((k) => isFamily(cast[k].character));
 };
 
 /** The caller (scammer / fake banker) of a scene: a speaker of its lines with a caller character, else any. */
 export const callerOf = (scene: SceneProps, cast: Record<string, CastMember>): string | undefined => {
-  const speakers = (scene.lines ?? []).map((l) => l.speaker);
+  const speakers = (scene.lines ?? []).map((l) => l.speaker).filter((s) => !isInner(cast, s));
   return speakers.find((s) => isCaller(cast[s]?.character))
-    ?? Object.keys(cast).find((k) => isCaller(cast[k].character));
+    ?? Object.keys(cast).find((k) => isCaller(cast[k].character) && !isInner(cast, k));
 };
 
-/** Another family member who speaks in this scene (the daughter of "엄마, 누르지 마!"). */
+/** A cast member who is a character's inner voice (role inner, 속마음): played as an aside to the camera. */
+export const isInner = (cast: Record<string, CastMember>, id?: string) => Boolean(id && cast[id]?.role === "inner");
+
+/** Another family member who speaks in this scene (the daughter of "엄마, 누르지 마!"); never an inner voice. */
 export const otherOf = (scene: SceneProps, cast: Record<string, CastMember>, victim?: string): string | undefined =>
-  (scene.lines ?? []).map((l) => l.speaker).find((s) => s !== victim && isFamily(cast[s]?.character));
+  (scene.lines ?? []).map((l) => l.speaker).find((s) => s !== victim && isFamily(cast[s]?.character)
+    && !isInner(cast, s));
 
 /** The ad's voice (watch_ad): a speaker drawn as the presenter on the TV. */
 export const adOf = (scene: SceneProps, cast: Record<string, CastMember>): string | undefined =>
@@ -138,6 +145,8 @@ export const stagingOf = (scene: SceneProps, cast: Record<string, CastMember>): 
   if (scene.staging) return scene.staging;
   const lines = scene.lines ?? [];
   if (!lines.some((l) => cast[l.speaker]?.character)) return undefined;
+  // a scene of inner-voice asides only (the fox bragging to the camera): the character alone
+  if (lines.every((l) => isInner(cast, l.speaker))) return "solo";
   if (scene.layout === "call") return "pip_call";
   if (scene.layout === "chat" || scene.layout === "sms") return "over_shoulder_chat";
   if (scene.layout === "card" && lines.some((l) => cast[l.speaker]?.character === "ad")) return "watch_ad";
@@ -290,6 +299,30 @@ export const planShots = (scene: SceneProps, cast: Record<string, CastMember>, s
   if (!shots.length) push(Object.keys(SPEC[staging].shots)[0], -1e9, 1e9);
   shots[shots.length - 1].endMs = 1e9;
   let out = tidy(shots);
+  // inner-voice lines cut to the aside (the character facing the camera) for the whole line, whatever the staging;
+  // an opening inner line is the poster itself
+  if (staging !== "dochi_explains") {
+    lines.forEach((l, i) => {
+      if (isInner(cast, l.speaker)) {
+        out = splice(out, {name: "aside", startMs: i === 0 ? -1e9 : l.startMs, endMs: i + 1 < lines.length ? starts[i + 1] : 1e9});
+      }
+    });
+    // a sliver of a shot left between an aside and the next cut goes to the neighbour that is not the aside
+    out = out.reduce<Shot[]>((acc, s, k) => {
+      const next = out[k + 1];
+      if (s.name !== "aside" && s.endMs - s.startMs < MIN_SHOT && next && next.name !== "aside") {
+        next.startMs = s.startMs;
+        return acc;
+      }
+      const last = acc[acc.length - 1];
+      if (s.name !== "aside" && s.endMs - s.startMs < MIN_SHOT && last && last.name !== "aside") {
+        last.endMs = s.endMs;
+        return acc;
+      }
+      acc.push(s);
+      return acc;
+    }, []);
+  }
   const cut = twistCutMs(scene);
   if (Number.isFinite(cut) && staging !== "dochi_explains") {
     out = out.filter((s) => s.startMs < cut).map((s) => ({...s, endMs: Math.min(s.endMs, cut)}));
@@ -299,12 +332,31 @@ export const planShots = (scene: SceneProps, cast: Record<string, CastMember>, s
   return out;
 };
 
+/** `shot` laid over a shot list: the shots it covers are cut back (or dropped), same-name neighbours merge. */
+export const splice = (shots: Shot[], shot: Shot): Shot[] => {
+  const out: Shot[] = [];
+  for (const s of shots) {
+    if (s.startMs < shot.startMs) out.push({...s, endMs: Math.min(s.endMs, shot.startMs)});
+  }
+  out.push({...shot});
+  for (const s of shots) {
+    if (s.endMs > shot.endMs) out.push({...s, startMs: Math.max(s.startMs, shot.endMs)});
+  }
+  return out.filter((s) => s.endMs > s.startMs).reduce<Shot[]>((acc, s) => {
+    const last = acc[acc.length - 1];
+    if (last && last.name === s.name) last.endMs = s.endMs;
+    else acc.push({...s});
+    return acc;
+  }, []);
+};
+
 export const shotAt = (shots: Shot[], ms: number): Shot =>
   shots.find((s) => ms >= s.startMs && ms < s.endMs) ?? shots[shots.length - 1];
 
 /** The spec of a shot (the twist shot of any staging is twist_closeup's). */
 export const shotSpec = (staging: Staging, name: string) => {
   if (name === "twist") return SPEC.twist_closeup.shots.twist as {chars: CharSpot[]};
+  if (name === "aside") return COMP.aside as unknown as {chars: CharSpot[]; prop?: {kind: string; top: number}};
   const shots = SPEC[staging].shots as Record<string, {chars: CharSpot[]}>;
   return shots[name] ?? Object.values(shots)[0];
 };
@@ -415,6 +467,53 @@ export const punchZoom = (scene: SceneProps, ms: number, fps: number) => {
   const out = r <= 0 ? 1 : Math.max(0, 1 - r / MOTION.releaseFrames);
   const o = out * out * (3 - 2 * out);
   return 1 + (MOTION.punchIn - 1) * inn * o;
+};
+
+/**
+ * When 도치 the 가시 감지기 pops in on line `i` (scene ms), or undefined: a line's `spike` word = as that word is
+ * spoken (the caption pages carry the word times), `true` = a third into the line.
+ */
+export const spikeAtMs = (scene: SceneProps, i: number): number | undefined => {
+  const l = (scene.lines ?? [])[i];
+  if (!l || !l.spike) return undefined;
+  if (typeof l.spike === "string") {
+    const head = l.spike.trim().split(/\s+/)[0];
+    const w = scene.pages.filter((p) => p.line === i).flatMap((p) => p.words).find((x) => head && x.text.includes(head));
+    if (w) return w.startMs;
+  }
+  return l.startMs + (l.endMs - l.startMs) / 3;
+};
+
+/** Width of a stamp text in units of its font size (the stamp lettering: ! ? . , ~ are narrow, a space is a third). */
+export const stampUnits = (text: string) =>
+  [...text].reduce((a, ch) => a + (ch === " " ? 0.3 : /[!?.,~]/.test(ch) ? 0.45 : 0.95), 0);
+
+export type StampLook = {shape: "box" | "round"; size: number; font: number; rotate: number; w: number; h: number;
+  x: number; y: number};
+
+/**
+ * The drama twist stamp's look from the length of its text (composition.json twist_closeup.stamp.variants): a round
+ * seal for 1-2 visible characters ("뚝!"), a box for 3-5 ("작전 실패", "들켰다"), a slimmer box for 6-8
+ * ("사기였습니다"); ! and ? count half. Centred on the chest under the chin, lifted so it ends above the captions.
+ */
+export const stampLook = (text: string): StampLook => {
+  const st = SPEC.twist_closeup.stamp;
+  const n = [...text].reduce((a, ch) => a + (ch === " " ? 0 : /[!?]/.test(ch) ? 0.5 : 1), 0);
+  const v = n <= st.variants.round.maxChars ? st.variants.round
+    : n <= st.variants.short.maxChars ? st.variants.short : st.variants.long;
+  const round = v === st.variants.round;
+  const font = round ? v.size * 1.05 : v.size;
+  const w = round ? Math.max(2.1 * v.size, stampUnits(text) * font + 0.5 * v.size) : stampUnits(text) * v.size + 0.9 * v.size;
+  const h = round ? w : 1.75 * v.size;
+  return {shape: round ? "round" : "box", size: v.size, font, rotate: v.rotate, w, h, x: st.x,
+    y: Math.min(st.y, st.bottom - h / 2)};
+};
+
+/** The opening punch-in of the first scene (the hook moves within 0.3 s): 1 at frame 0 (the poster and the loop's
+ * tail frame) to motion.openPunch over openFrames, ease-out, held for the rest of the opening shot. `ms` = speech time. */
+export const openPunch = (ms: number, fps: number) => {
+  const f = Math.max(0, (ms / 1000) * fps);
+  return 1 + (MOTION.openPunch - 1) * (1 - (1 - Math.min(1, f / MOTION.openFrames)) ** 3);
 };
 
 /** Camera shake (screen px) as a shocked / panicked line starts: a damped sine over shakeFrames. */

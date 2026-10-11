@@ -220,7 +220,12 @@ const parseChip = (k: SpeakerRole): SpeakerChip => {
   return {bg: str(raw, "bg", w), text: str(raw, "text", w), ring: str(raw, "ring", w)};
 };
 export const SPEAKER_CHIPS: Record<SpeakerRole, SpeakerChip> = {scammer: parseChip("scammer"),
-  victim: parseChip("victim"), neutral: parseChip("neutral"), narrator: parseChip("narrator"), dochi: parseChip("dochi")};
+  victim: parseChip("victim"), neutral: parseChip("neutral"), narrator: parseChip("narrator"), dochi: parseChip("dochi"),
+  inner: parseChip("inner")};
+
+/** Drama packaging colours (tokens.json "drama"): the situation title, the disclosure chip, the inner-voice aside and
+ * 도치's spike burst. */
+export const DRAMA = TOKENS.drama;
 
 /** The palette 도치 wears in a scene of this tone on this stage. */
 export const mascotPaletteFor = (t: Theme, accent: Accent, last: boolean): "paper" | "night" =>

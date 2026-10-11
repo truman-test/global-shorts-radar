@@ -365,3 +365,29 @@ def test_speaker_chips_read_on_every_stage(role):
         for bg in stage_backgrounds(stage, "caption"):
             assert max(contrast(chip["bg"], bg), contrast(chip["ring"], bg)) >= GRAPHIC_MIN, (role, stage, bg)
     assert SPEAKERS["scammer"]["bg"] == TOKENS["tones"]["danger"]["solid"]
+
+
+DRAMA = TOKENS["drama"]
+
+
+@pytest.mark.parametrize("stage", sorted(STAGES))
+def test_drama_disclosure_chip_reads_on_every_stage(stage):
+    """The one disclosure chip ("재연 · AI 음성") is small but must stay legible: white on its translucent dark pill
+    >= 4.5:1 over every stage's top zone and over the brightest picture behind it (a white set)."""
+    d = DRAMA["disclosure"]
+    for bg in stage_backgrounds(stage, "top") + [rgba("#FFFFFF"), rgba("#F6F0E4")]:
+        assert contrast(d["text"], over(d["bg"], bg)) >= TEXT_MIN, (stage, bg)
+
+
+def test_drama_title_tag_and_spike_burst():
+    """The situation title is the first thing read: dark ink on the note paper and on its yellow band >= 7:1, its
+    border separates from paper; the 속마음 tag and the 삐빅 burst text >= 4.5:1."""
+    t = DRAMA["title"]
+    assert contrast(t["ink"], t["bg"]) >= WARNING_MIN and contrast(t["ink"], t["band"]) >= WARNING_MIN
+    assert contrast(t["border"], t["bg"]) >= GRAPHIC_MIN
+    inner = DRAMA["inner"]
+    assert contrast(inner["tagText"], inner["tagBg"]) >= TEXT_MIN
+    assert inner["tagBg"] == SPEAKERS["inner"]["bg"]          # the tag and the thought chip are the same voice
+    s = DRAMA["spike"]
+    assert contrast(s["ink"], s["burst"]) >= TEXT_MIN and contrast(s["ring"], s["burst"]) >= GRAPHIC_MIN
+    assert 0 < inner["dim"] < 1 and 0 < inner["desaturate"] <= 1 and rgba(inner["vignette"])[3] < 1

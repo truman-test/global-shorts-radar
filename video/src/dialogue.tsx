@@ -65,14 +65,20 @@ export const SpeakerChip: React.FC<{member: CastMember; fromMs: number; instant?
   if (!member.label) return null;
   const chip = SPEAKER_CHIPS[member.role] ?? SPEAKER_CHIPS.neutral;
   const s = instant ? 1 : spr(frame, (fromMs / 1000) * fps, 10, 0.04);
+  // the inner voice (속마음) reads as a thought: the violet pill trails two small thought dots toward the left
+  const thought = member.role === "inner";
   return (
     <div style={{position: "absolute", top: SPEAKER_CHIP_TOP, left: 70, right: 150, display: "flex",
       justifyContent: "center", pointerEvents: "none"}}>
-      <div style={{padding: "7px 26px 8px", borderRadius: 999, background: chip.bg, color: chip.text,
-        border: `4px solid ${chip.ring}`, fontSize: 36, fontWeight: 800, lineHeight: 1.1, whiteSpace: "nowrap",
-        boxShadow: "0 6px 16px rgba(0,0,0,0.32)", opacity: Math.min(1, s * 1.4),
+      <div style={{position: "relative", padding: "7px 26px 8px", borderRadius: 999, background: chip.bg,
+        color: chip.text, border: `4px solid ${chip.ring}`, fontSize: 36, fontWeight: 800, lineHeight: 1.1,
+        whiteSpace: "nowrap", boxShadow: "0 6px 16px rgba(0,0,0,0.32)", opacity: Math.min(1, s * 1.4),
         transform: `translateY(${(1 - s) * 14}px) scale(${0.8 + 0.2 * s})`}}>
         {member.label}
+        {thought ? [[-26, 30, 11], [-48, 44, 7]].map(([x, y, r], k) => (
+          <div key={k} style={{position: "absolute", left: x - r, top: y - r, width: 2 * r, height: 2 * r,
+            borderRadius: r, background: chip.bg, border: `3px solid ${chip.ring}`}} />
+        )) : null}
       </div>
     </div>
   );
