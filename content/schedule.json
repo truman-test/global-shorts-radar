@@ -16,57 +16,22 @@
    "uploaded_at": "2026-10-10T07:42:03Z"
   },
   {
-   "date": "2026-10-11",
-   "script": "2026-10-08-zero-click",
-   "status": "ready"
-  },
-  {
    "date": "2026-10-12",
-   "script": "2026-10-10-bank-caller-knows-income",
-   "status": "ready",
-   "source_video_id": "R6MMIC7RBAc"
-  },
-  {
-   "date": "2026-10-13",
-   "script": "2026-10-10-parents-loan-block",
-   "status": "ready",
-   "source_video_id": "tRI9-0drNcw"
-  },
-  {
-   "date": "2026-10-14",
-   "script": "2026-10-10-leak-compensation-sms",
-   "status": "ready",
-   "source_video_id": "CAvtAcfHDvk"
-  },
-  {
-   "date": "2026-10-15",
-   "script": "2026-10-09-deepfake-invest-ad",
-   "status": "ready",
-   "source_video_id": "iU2Gp3kkUAo"
-  },
-  {
-   "date": "2026-10-16",
-   "script": "2026-10-09-voice-clone-3-seconds",
+   "script": "2026-10-12-mom-wins",
    "status": "ready",
    "source_video_id": "Jf1239_V0mw"
   },
   {
-   "date": "2026-10-17",
-   "script": "2026-10-09-fake-map-number",
+   "date": "2026-10-13",
+   "script": "2026-10-12-fox-bank-income",
    "status": "ready",
-   "source_video_id": "Xz7rLQ62WOs"
+   "source_video_id": "R6MMIC7RBAc"
   },
   {
-   "date": "2026-10-18",
-   "script": "2026-10-09-kid-tap-payment",
+   "date": "2026-10-14",
+   "script": "2026-10-12-fox-isolation",
    "status": "ready",
-   "source_video_id": "hpMCY56yDWA"
-  },
-  {
-   "date": "2026-10-19",
-   "script": "2026-10-09-kid-password",
-   "status": "ready",
-   "source_video_id": "D1Z-xslsgyg"
+   "source_video_id": "7H7-ORelZdQ"
   }
  ],
  "deferred": [
@@ -81,6 +46,42 @@
   {
    "script": "2026-10-09-airbnb-fake-damage-photo",
    "reason": "low Korean-viewer relevance (korean_demand_20261010.md); keep rendered file, reconsider later"
+  },
+  {
+   "script": "2026-10-08-zero-click",
+   "reason": "2026-10-11 fundamental review: explainer/PSA format on hold (reports/근본검토_결정.md); rendered file kept"
+  },
+  {
+   "script": "2026-10-10-bank-caller-knows-income",
+   "reason": "2026-10-11 fundamental review: explainer/PSA format on hold (reports/근본검토_결정.md); rendered file kept"
+  },
+  {
+   "script": "2026-10-10-parents-loan-block",
+   "reason": "2026-10-11 fundamental review: explainer/PSA format on hold (reports/근본검토_결정.md); rendered file kept"
+  },
+  {
+   "script": "2026-10-10-leak-compensation-sms",
+   "reason": "2026-10-11 fundamental review: explainer/PSA format on hold (reports/근본검토_결정.md); rendered file kept"
+  },
+  {
+   "script": "2026-10-09-deepfake-invest-ad",
+   "reason": "2026-10-11 fundamental review: explainer/PSA format on hold (reports/근본검토_결정.md); rendered file kept"
+  },
+  {
+   "script": "2026-10-09-voice-clone-3-seconds",
+   "reason": "2026-10-11 fundamental review: explainer/PSA format on hold (reports/근본검토_결정.md); rendered file kept"
+  },
+  {
+   "script": "2026-10-09-fake-map-number",
+   "reason": "2026-10-11 fundamental review: explainer/PSA format on hold (reports/근본검토_결정.md); rendered file kept"
+  },
+  {
+   "script": "2026-10-09-kid-tap-payment",
+   "reason": "2026-10-11 fundamental review: explainer/PSA format on hold (reports/근본검토_결정.md); rendered file kept"
+  },
+  {
+   "script": "2026-10-09-kid-password",
+   "reason": "2026-10-11 fundamental review: explainer/PSA format on hold (reports/근본검토_결정.md); rendered file kept"
   }
  ]
 }
