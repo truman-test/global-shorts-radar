@@ -1,7 +1,7 @@
 {
  "id": "2026-10-16-fox3-loan-block",
  "pilot": "시리즈 제작분: 검수 전 업로드 금지",
- "series": "여우의 영업비밀",
+ "series": "영업비밀",
  "ep": 3,
  "source_video_id": "tRI9-0drNcw",
  "title": "명의도용 대출, 엄마가 미리 켜 둔 안심차단",
@@ -149,5 +149,14 @@
    "url": "https://www.fsc.go.kr/no010101/84607"
   }
  ],
- "author": "llm:claude-opus-5-5 (story-writer, 시리즈 바이블 S2 = 여우의 영업비밀 #3). Facts only from content/week2/parents-loan-block.md (+ parents-loan-block.review.md); 87882 re-read 2026-10-11: '사기범이 악성앱 등을 통해 확보한 정보로 피해자 명의의 대출을 무단 실행하는 피해도 우려된다', 여신거래 안심차단 = 개인 명의 여신거래 차단 ('24.8.23 시행), 신청 = 영업점·내계좌한눈에·은행앱, 해제 = 영업점. Method re-enactment of a feared method (no reported 명의도용 case, no amount, no bank name). Mom applies herself (본인 신청, 83151); the daughter only asks. No time/cost promise. 파인 re-opened (checked 2026-10-11). 여 과장 = fox phone voice M2, fox inner voice M5. 도치 has no lines (silent spike on '대출 신청')."
+ "author": "llm:claude-opus-5-5 (story-writer, 시리즈 바이블 S2 = 여우의 영업비밀 #3). Facts only from content/week2/parents-loan-block.md (+ parents-loan-block.review.md); 87882 re-read 2026-10-11: '사기범이 악성앱 등을 통해 확보한 정보로 피해자 명의의 대출을 무단 실행하는 피해도 우려된다', 여신거래 안심차단 = 개인 명의 여신거래 차단 ('24.8.23 시행), 신청 = 영업점·내계좌한눈에·은행앱, 해제 = 영업점. Method re-enactment of a feared method (no reported 명의도용 case, no amount, no bank name). Mom applies herself (본인 신청, 83151); the daughter only asks. No time/cost promise. 파인 re-opened (checked 2026-10-11). 여 과장 = fox phone voice M2, fox inner voice M5. 도치 has no lines (silent spike on '대출 신청').",
+ "score": {
+  "home": 5,
+  "fox": 0
+ },
+ "cold_open": {
+  "line": "어, 어어…?",
+  "speaker": "fox",
+  "stamp": "작전 실패"
+ }
 }
