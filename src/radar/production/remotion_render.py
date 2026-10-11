@@ -16,17 +16,19 @@ from pathlib import Path
 from radar.config import PROJECT_ROOT
 from radar.production.assemble import (TRIM, ProductionError, ProductionResult, ffmpeg_exe, media_info, run_ffmpeg,
                                        write_meta)
-from radar.production.script import (CAST_STYLES, LINE_GAP, TWIST_DELAY, TWIST_HOLD, Script, cast_of,
-                                     caption_chunks, default_staging, line_voice, mockup_side)
+from radar.production.script import (CAST_STYLES, LAYOUT_LEAD_IN, LINE_GAP, TWIST_DELAY, TWIST_HOLD, Script, cast_of,
+                                     caption_chunks, default_staging, hook_title_lines, is_drama, line_voice,
+                                     mockup_side, scene_lead_in)
 from radar.production.textnorm import speakable_length, split_sentences
 from radar.production.themes import episode_number, record_style, resolve_style_report
 from radar.production.tts import TTSError
 
 VIDEO_DIR = PROJECT_ROOT / "video"
 TAIL_GAP = 0.25          # seconds after each scene's speech (a twist scene ends on its freeze-frame instead)
-CALL_LEAD_IN = 0.9       # the phone rings before the first line
-LEAD_IN = {"call": CALL_LEAD_IN, "alert": 0.5}   # alert: the banner lands (ding) before the narration
-FIRST_SCENE_MAX_LEAD_IN = 0.4   # the voice must start almost at once in the opening scene (swipe decision)
+CALL_LEAD_IN = LAYOUT_LEAD_IN["call"]   # the phone rings before the first line (explainers)
+LEAD_IN = LAYOUT_LEAD_IN   # call rings, alert: the banner lands (ding) before the narration (script.scene_lead_in)
+# FIRST_SCENE_MAX_LEAD_IN (script.py): the voice must start almost at once in the opening scene (swipe decision);
+# a drama's dialogue starts at 0.0 s (script.scene_lead_in)
 POSTER_TAIL_MS = 500     # the last 0.5 s returns to the opening poster: seamless loop + the frame to pick as thumbnail
 CAPTION_MAX_CHARS = 11
 PAGE_HOLD = 0.35         # keep the last page on screen a moment after the last word
@@ -42,6 +44,8 @@ SFX = {
     "stamp": "aevalsrc=exprs='0.85*sin(2*PI*(70+90*exp(-t*28))*t)*exp(-t*16)+0.35*(random(0)*2-1)*exp(-t*90)'"
              ":s=44100:d=0.35",
     "ding": "aevalsrc=exprs='0.4*(sin(2*PI*1318.5*t)+0.5*sin(2*PI*1975.5*t))*exp(-t*4.5)':s=44100:d=1.1",
+    # 도치's 가시 감지기 ("삐빅"): two short high beeps, the second a step higher
+    "spike": "aevalsrc=exprs='0.32*(sin(2*PI*2093*t)*lt(t,0.07)+sin(2*PI*2637*t)*gte(t,0.1)*lt(t,0.19))':s=44100:d=0.24",
 }
 SFX_FILTERS = {
     "ring": "afade=t=out:st=2.1:d=0.3",
@@ -50,6 +54,7 @@ SFX_FILTERS = {
     "pop": "afade=t=out:st=0.12:d=0.08",
     "stamp": "lowpass=f=3200,afade=t=out:st=0.24:d=0.1",
     "ding": "afade=t=out:st=0.8:d=0.3",
+    "spike": "afade=t=out:st=0.19:d=0.05",
 }
 
 
@@ -251,7 +256,7 @@ def lines_props(scene, spans: list[tuple[float, float]], cast: dict) -> list[dic
     out = []
     for line, (a, b) in zip(scene.lines, spans):
         side = mockup_side(cast.get(line.speaker, {}).get("role", "neutral"))
-        notes = {k: getattr(line, k) for k in ("face", "gesture", "bubble") if getattr(line, k, "")}
+        notes = {k: getattr(line, k) for k in ("face", "gesture", "bubble", "spike") if getattr(line, k, "")}
         out.append({"speaker": line.speaker, "text": line.text, "startMs": round(a * 1000), "endMs": round(b * 1000),
                     **({"side": side} if side else {}), **notes})
     return out
@@ -305,6 +310,7 @@ VOICE_LABEL = "AI 음성"   # every narration is synthetic; OpenRAIL-M (Superton
 # Growth lines, visual only (no narration, no extra time; see reports/구독자 1천명 외부 성장 전략.md (a) 3 and 6):
 SHARE_LINE = "부모님께도 보내 주세요"   # handwritten under the closing checklist (family-chat sharing)
 VALUE_CTA = "매일 1장, 생존노트"        # a small chip with a bell in the last ~1.2 s, gone before the poster tail
+DRAMA_DISCLOSURE = "재연 · AI 음성"     # drama packaging: the one small disclosure chip (re-enactment + synthetic voice)
 
 
 def episode_seed(script_id: str) -> int:
@@ -336,6 +342,14 @@ def build_props(script: Script, scenes: list[dict], channel_name: str, sfx: bool
         props["cast"] = cast
         if any(c.get("character") for c in cast.values()):
             props["castStyle"] = cast_style_of(script)   # the skin of the rigged characters (Actor.tsx)
+    if is_drama(script):
+        # drama packaging (video/src/Packaging.tsx): an entertainment Short, not a notice. No series chip, share line,
+        # CTA or on-screen source subs; the situation title and one "재연 · AI 음성" chip. The description keeps the
+        # full disclaimer and the synthetic-voice line (build_description), the upload keeps "altered content: yes".
+        for key in ("episodeNo", "shareLine", "cta"):
+            props.pop(key, None)
+        props.update(packaging="drama", hookTitle=hook_title_lines(script.hook_title), disclosure=DRAMA_DISCLOSURE,
+                     scenes=[{**sc, "sub": ""} for sc in scenes])
     return props
 
 
@@ -426,9 +440,7 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
     scenes, total = [], 0.0
     pre = presynth_lines(script, tts, work)   # dialogue: one Supertonic call per voice of the cast
     for i, scene in enumerate(script.scenes):
-        lead = LEAD_IN.get(scene.layout, 0.0)
-        if not scenes:
-            lead = min(lead, FIRST_SCENE_MAX_LEAD_IN)
+        lead = scene_lead_in(script, i, scene)   # LEAD_IN by layout; 0.0 for a drama's dialogue
         if scene.lines:
             wav, speech, per_line, spans = _dialogue_speech(scene, i, tts, work, pre)
             length = scene_length(scene, lead, speech)
@@ -491,7 +503,8 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
     subprocess.run([ffmpeg_exe(), "-hide_banner", "-loglevel", "error", "-y",
                     "-i", str(video), "-frames:v", "1", str(out_dir / "thumb.png")], capture_output=True)
     record_style(script, style)   # content/style_log.json: stage, theme, layouts (next episodes' constraints)
-    extra = meta_extra(style, transition, render_seconds, episode_no, music_item)
+    extra = meta_extra(style, transition, render_seconds, None if is_drama(script) else episode_no, music_item)
+    extra["packaging"] = props.get("packaging", "explainer")
     if any(scene.lines for scene in script.scenes):
         extra["cast"] = {s: {"voice": line_voice(script, s), **c} for s, c in cast_props(script).items()}
         if "castStyle" in props:

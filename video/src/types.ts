@@ -8,8 +8,10 @@ export type Word = {text: string; startMs: number; endMs: number};
 /** A page of words on screen; in a dialogue scene it carries its speaker (cast id) and the line it belongs to. */
 export type CaptionPage = {startMs: number; endMs: number; words: Word[]; speaker?: string; line?: number};
 
-/** Dialogue roles: the caption chip colour and the side of the phone mockup (victim = the phone's owner). */
-export type SpeakerRole = "scammer" | "victim" | "narrator" | "dochi" | "neutral";
+/** Dialogue roles: the caption chip colour and the side of the phone mockup (victim = the phone's owner). "inner" is
+ * a character's inner voice (속마음): a second cast entry with the same `character` as another member; its lines are
+ * played as an aside to the camera (CastScene AsideShot), never on the phone. */
+export type SpeakerRole = "scammer" | "victim" | "narrator" | "dochi" | "neutral" | "inner";
 
 /** On-screen characters (Character.tsx rigs; composition.json "characters"). "ad" is the voice of an on-screen ad,
  * drawn as an invented presenter inside the TV frame of watch_ad. */
@@ -36,9 +38,10 @@ export type Staging = "pip_call" | "split_call" | "solo" | "over_shoulder_chat" 
 export type CastMember = {label: string; role: SpeakerRole; side?: "me" | "them"; character?: CharacterId};
 
 /** One spoken line of a dialogue scene (scene time, lead-in included). Optional acting notes: the speaker's face and
- * gesture, and a keyword speech bubble (<= 8 characters, a part of the line's text). */
+ * gesture, and a keyword speech bubble (<= 8 characters, a part of the line's text). `spike`: 도치 the 가시 감지기 pops
+ * in with its spikes up on this line (true = a third into the line; a word of the line = as that word is spoken). */
 export type SpokenLine = {speaker: string; text: string; startMs: number; endMs: number; side?: "me" | "them";
-  face?: Expression; gesture?: Gesture; bubble?: string};
+  face?: Expression; gesture?: Gesture; bubble?: string; spike?: boolean | string};
 
 /** The reveal: at atMs the scene's frame freezes and a hand-drawn stamp lands on it. */
 export type Twist = {text: string; atMs: number};
@@ -105,6 +108,8 @@ export type Music = {
   duckVolume: number; // level under narration
 };
 
+export type Packaging = "drama" | "explainer";
+
 export type ShortProps = {
   channel: string;
   voiceLabel?: string; // e.g. "AI 음성": the narration is machine generated (shown on screen the whole time)
@@ -122,6 +127,12 @@ export type ShortProps = {
   cta?: string; // value chip with a bell in the last ~1.2 s before the poster tail, e.g. "매일 1장, 생존노트"
   cast?: Record<string, CastMember>; // dialogue speakers (only when a scene has lines)
   castStyle?: CastStyle; // skin of the rigged characters (script cast_style); default human
+  // Packaging: "drama" (a skit played by rigged characters) drops the brand line, category / series chips, CTA, share
+  // line and the 재연 pill for one small disclosure chip and a fixed situation title; "explainer" is the notebook look.
+  // Default: drama when a scene is staged by characters (rig.ts isDrama), else explainer.
+  packaging?: Packaging;
+  hookTitle?: string | string[]; // drama: the fixed top situation title, 1-2 lines (a string breaks at "\n")
+  disclosure?: string; // drama: the disclosure chip, default "재연 · AI 음성"
   scenes: SceneProps[];
 };
 

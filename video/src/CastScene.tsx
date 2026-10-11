@@ -13,11 +13,12 @@ import {CharPose, Fx, INK} from "./Character";
 import {lineLevel, useCast, useSpeechMs, Waveform} from "./dialogue";
 import {clamp, useShell} from "./kit";
 import {fadeOut, SceneContext, spr, useRealFrame, useScene} from "./motion";
-import {actingAt, adOf, blinkAt, bubbleOf, callerOf, CharSpot, MOTION, neckY, RIG, otherOf, planShots, punchZoom,
-  shockShake, shotAt, shotSpec, SPEC, speakerAt, strSeed, talkWeight, twistCutMs, victimOf, Who} from "./rig";
+import {actingAt, adOf, ASIDE, blinkAt, bubbleOf, callerOf, CharSpot, isCaller, isInner, MOTION, neckY, openPunch, PACK,
+  RIG, otherOf, planShots, punchZoom, shockShake, shotAt, shotSpec, SPEC, speakerAt, strSeed, talkWeight, twistCutMs,
+  victimOf, Who} from "./rig";
 import {CallCentreSet, FocusLines, ForegroundProp, HomeSet, HomeVariant, PropKind, SetMode} from "./Sets";
 import {FONT} from "./fonts";
-import {isLight, NOTE, TONES, useTheme} from "./themes";
+import {DRAMA, isLight, NOTE, TONES, useTheme} from "./themes";
 import {CastMember, CharacterId, Expression, Gesture, SceneProps, Staging} from "./types";
 
 const RIM = "#EEE8DE";
@@ -234,6 +235,64 @@ const TwistShot: React.FC<{c: Ctx; variant: HomeVariant}> = ({c, variant}) => {
   );
 };
 
+/* ------------------------------------------------------------------ the inner-voice aside (all stagings) */
+
+/** The thought tag of the aside: "속마음" on the inner chip's violet with two small thought dots trailing off. */
+const ThoughtTag: React.FC<{frame: number; from: number}> = ({frame, from}) => {
+  const s = spr(frame, from, 9, 0.06);
+  if (s <= 0) return null;
+  const t = DRAMA.inner;
+  return (
+    <div style={{position: "absolute", left: ASIDE.tag.x, top: ASIDE.tag.y, opacity: Math.min(1, s * 1.5),
+      transform: `translateY(${(1 - s) * -10}px) scale(${0.85 + 0.15 * s})`, transformOrigin: "0 50%"}}>
+      <div style={{padding: "6px 22px 8px", borderRadius: 999, background: t.tagBg, color: t.tagText,
+        border: `3px solid ${t.tagRing}`, fontFamily: FONT, fontSize: 34, fontWeight: 800, lineHeight: 1.1,
+        whiteSpace: "nowrap", boxShadow: "0 8px 18px rgba(0,0,0,0.3)"}}>속마음</div>
+      {[[118, 60, 14], [142, 82, 9]].map(([x, y, r], k) => (
+        <div key={k} style={{position: "absolute", left: x - r, top: y - r, width: 2 * r, height: 2 * r, borderRadius: r,
+          background: t.tagBg, border: `3px solid ${t.tagRing}`}} />
+      ))}
+    </div>
+  );
+};
+
+/**
+ * A character's inner voice (role inner): the same character facing the camera in a close-up, the room behind it
+ * dimmed and desaturated under a violet vignette (only the character keeps its colour), and a 속마음 tag. The phone
+ * voice and the inner voice can be two TTS voices; the picture tells them apart.
+ */
+const AsideShot: React.FC<{c: Ctx; zoom: number; startMs: number}> = ({c, zoom, startMs}) => {
+  const inner = (c.scene.lines ?? []).filter((l) => isInner(c.cast, l.speaker));
+  const line = [...inner].reverse().find((l) => l.startMs <= c.msA + 1) ?? inner[0];
+  const id = line?.speaker;
+  const caller = isCaller(id ? c.cast[id]?.character : undefined);
+  const who: Who = caller ? "caller" : "victim";
+  const spot = {...(ASIDE.chars[0] as CharSpot), who};
+  const pose = poseOf(c, spot, id, who, {look: [0, 0], gesture: "rest", rim: caller ? "#5FD3C8" : undefined,
+    monitor: caller ? 0.5 : undefined});
+  const t = DRAMA.inner;
+  const dim = `grayscale(${t.desaturate}) brightness(${t.dim})`;
+  const prop = caller ? ASIDE.prop : ASIDE.familyProp;
+  // an opening aside is the poster: its tag is already on at frame 0
+  const from = startMs <= -1e8 ? -100 : (startMs / 1000) * c.fps + shiftOf(c);
+  return (
+    <>
+      <Camera zoom={zoom} shake={c.shake} fx={spot.x} fy={spot.eyeY}>
+        <div style={{position: "absolute", inset: 0, filter: dim}}>
+          {caller ? <CallCentreSet w={1080} h={1920} frame={c.frameA} /> : <HomeSet mode={c.mode} variant="living" />}
+        </div>
+        <div style={{position: "absolute", inset: 0,
+          background: `radial-gradient(ellipse 62% 48% at ${spot.x}px ${spot.eyeY - 40}px, rgba(0,0,0,0) 45%, ${t.vignette} 100%)`}} />
+        <Character pose={pose} uid={`as${c.index}`} frame={c.frameA} />
+        <div style={{position: "absolute", inset: 0, filter: dim}}>
+          <ForegroundProp kind={prop.kind as PropKind} top={prop.top} mode={c.mode} />
+        </div>
+      </Camera>
+      <ThoughtTag frame={c.frame} from={from} />
+    </>
+  );
+};
+
 /* ------------------------------------------------------------------ stagings */
 
 const PipCall: React.FC<{c: Ctx; shot: string; zoom: number}> = ({c, shot, zoom}) => {
@@ -253,7 +312,7 @@ const PipCall: React.FC<{c: Ctx; shot: string; zoom: number}> = ({c, shot, zoom}
           <Character pose={pose} uid={`pc${c.index}`} frame={c.frameA} />
           <Prop c={c} spec={spec} />
         </Camera>
-        <Bubbles c={c} place={(s) => (s === c.caller ? {x: 300, y: 330, tail: "down"} : null)} />
+        <Bubbles c={c} place={(s) => (s === c.caller ? {x: 270, y: PACK.bubbleY, tail: "down"} : null)} />
       </>
     );
   }
@@ -406,7 +465,7 @@ const OverShoulder: React.FC<{c: Ctx; shot: string; zoom: number; body: React.Re
           <Character pose={pose} uid={`oc${c.index}`} frame={c.frameA} />
           <Prop c={c} spec={osSpec} />
         </Camera>
-        <Bubbles c={c} place={(s) => (s === c.caller ? {x: 300, y: 330, tail: "down"} : null)} />
+        <Bubbles c={c} place={(s) => (s === c.caller ? {x: 270, y: PACK.bubbleY, tail: "down"} : null)} />
       </>
     );
   }
@@ -422,7 +481,7 @@ const OverShoulder: React.FC<{c: Ctx; shot: string; zoom: number; body: React.Re
         <Character pose={pose} uid={`of${c.index}`} frame={c.frameA} />
         <Prop c={c} spec={osSpec} />
       </Camera>
-      <Bubbles c={c} place={(s) => (s === id ? {x: other ? 790 : 290, y: 330, tail: "down"} : null)} />
+      <Bubbles c={c} place={(s) => (s === id ? {x: other ? 790 : 290, y: PACK.bubbleY, tail: "down"} : null)} />
     </>
   );
 };
@@ -592,12 +651,16 @@ export const CastScene: React.FC<{scene: SceneProps; staging: Staging; body: Rea
     index: s.index, shake: shockShake(scene, cast, msA, fps), victim, caller: callerOf(scene, cast), other: otherOf(scene, cast, victim), ad: adOf(scene, cast)};
   if (staging === "dochi_explains") return <DochiExplains c={c} body={body} />;
   const shot = shotAt(shots, msA);
-  // the slow push-in of the shot times the keyword punch-in (1 -> 1.12 in 4 frames)
-  const zoom = pushIn(c, shot.startMs, shot.endMs) * punchZoom(scene, msA, fps);
+  // the slow push-in of the shot times the keyword punch-in (1 -> 1.12 in 4 frames); the video's opening shot also
+  // punches in within its first 0.3 s (frame 0 itself, the poster, stays unzoomed)
+  const open = s.first && shot.startMs <= -1e8 ? openPunch(msA, fps) : 1;
+  const zoom = pushIn(c, shot.startMs, shot.endMs) * punchZoom(scene, msA, fps) * open;
   const variant: HomeVariant = staging === "watch_ad" ? "sofa" : "living";
   let picture: React.ReactNode;
   if (shot.name === "twist" || staging === "twist_closeup") {
     picture = <TwistShot c={c} variant={variant} />;
+  } else if (shot.name === "aside") {
+    picture = <AsideShot c={c} zoom={zoom} startMs={shot.startMs} />;
   } else {
     switch (staging) {
       case "pip_call": picture = <PipCall c={c} shot={shot.name} zoom={zoom} />; break;
