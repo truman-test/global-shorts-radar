@@ -56,7 +56,7 @@ def test_episode_number_without_a_schedule_is_none(tmp_path):
 def test_shipped_schedule_numbers_the_first_episodes():
     assert episode_number("2026-10-08-family-password") == 1
     assert episode_number("2026-10-08-deepfake-cfo") == 2
-    assert episode_number("2026-10-08-zero-click") == 3
+    assert episode_number("2026-10-12-mom-wins") == 3
 
 
 def test_props_carry_the_episode_share_line_and_cta():

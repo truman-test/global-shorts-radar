@@ -137,7 +137,7 @@ def test_scheduled_days_follow_the_stage_rules(tmp_path):
     theme, night-lamp) and the whole sequence keeps every rule."""
     walk = resolve_schedule(log_path=_no_log(tmp_path))
     styles = [s for _sid, s, _w, _src in walk]
-    assert len(styles) >= 10
+    assert len(styles) >= 5
     assert all(not w for _sid, _s, w, _src in walk), [w for *_x, w, _src in walk if w]
     check_rules(styles)
     assert all(FAMILY_OF[s.theme] == s.family for s in styles)

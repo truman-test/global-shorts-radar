@@ -264,13 +264,16 @@ const SceneSfx: React.FC<SfxProps> = (props) => {
   const at = scene.twist ? Math.round((scene.twist.atMs / 1000) * fps) : 0;
   return (
     <>
-      <LayoutSfx {...props} />
+      {/* a dialogue scene keeps the voice clear: no whoosh/pop over the lines (only the call ring, chat/sms arrivals) */}
+      {scene.lines?.length && !["call", "chat", "sms"].includes(scene.layout) ? null : <LayoutSfx {...props} />}
       {scene.twist ? <Sfx name="stamp" at={at} volume={0.7} /> : null}
       {scene.twist ? <Sfx name="pop" at={at + 1} volume={0.32} /> : null}
       {/* 도치's 가시 감지기: a short synthesized "삐빅" as its spikes go up (no voice) */}
-      {(scene.lines ?? []).map((_, i) => {
+      {/* the beep waits for the gap after the flagged line, so it never masks a word (the spikes pop on the word) */}
+      {(scene.lines ?? []).map((l, i) => {
         const ms = spikeAtMs(scene, i);
-        return ms === undefined ? null : <Sfx key={`sp${i}`} name="spike" at={Math.round((ms / 1000) * fps) + 6} volume={0.3} />;
+        return ms === undefined ? null
+          : <Sfx key={`sp${i}`} name="spike" at={Math.round((Math.max(ms, l.endMs) / 1000) * fps) + 1} volume={0.3} />;
       })}
     </>
   );

@@ -42,133 +42,7 @@
    ],
    "produced_at": "2026-10-08T17:02:07+00:00"
   },
-  "2026-10-08-zero-click": {
-   "stage": "notebook",
-   "theme": "paper",
-   "category": "security",
-   "luminance": "light",
-   "mascot": true,
-   "visual_group": "ruled",
-   "layouts": [
-    "card",
-    "card",
-    "card",
-    "card",
-    "card"
-   ],
-   "middle": [
-    "card",
-    "card",
-    "card"
-   ],
-   "produced_at": "2026-10-10T09:32:24+00:00"
-  },
-  "2026-10-09-kid-tap-payment": {
-   "stage": "notebook",
-   "theme": "graph",
-   "category": "security",
-   "luminance": "light",
-   "mascot": true,
-   "visual_group": "ruled",
-   "layouts": [
-    "card",
-    "alert",
-    "card",
-    "card",
-    "checklist"
-   ],
-   "middle": [
-    "alert",
-    "card",
-    "card"
-   ],
-   "produced_at": "2026-10-10T10:06:56+00:00"
-  },
-  "2026-10-09-deepfake-invest-ad": {
-   "stage": "notebook",
-   "theme": "mood-sky",
-   "category": "ai",
-   "luminance": "light",
-   "mascot": true,
-   "visual_group": "sky",
-   "layouts": [
-    "card",
-    "card",
-    "timeline",
-    "stat",
-    "card"
-   ],
-   "middle": [
-    "card",
-    "timeline",
-    "stat"
-   ],
-   "produced_at": "2026-10-10T09:50:38+00:00"
-  },
-  "2026-10-09-voice-clone-3-seconds": {
-   "stage": "alert",
-   "theme": "pulse",
-   "category": "voice",
-   "luminance": "dark",
-   "mascot": false,
-   "visual_group": "cards",
-   "layouts": [
-    "card",
-    "call",
-    "stat",
-    "card",
-    "checklist"
-   ],
-   "middle": [
-    "call",
-    "stat",
-    "card"
-   ],
-   "produced_at": "2026-10-10T09:54:51+00:00"
-  },
-  "2026-10-09-fake-map-number": {
-   "stage": "alert",
-   "theme": "dots",
-   "category": "voice",
-   "luminance": "dark",
-   "mascot": false,
-   "visual_group": "cards",
-   "layouts": [
-    "call",
-    "card",
-    "card",
-    "stat",
-    "checklist"
-   ],
-   "middle": [
-    "card",
-    "card",
-    "stat"
-   ],
-   "produced_at": "2026-10-10T10:00:02+00:00"
-  },
-  "2026-10-09-kid-password": {
-   "stage": "notebook",
-   "theme": "paper",
-   "category": "security",
-   "luminance": "light",
-   "mascot": true,
-   "visual_group": "ruled",
-   "layouts": [
-    "card",
-    "chat",
-    "card",
-    "card",
-    "checklist"
-   ],
-   "middle": [
-    "chat",
-    "card",
-    "card"
-   ],
-   "produced_at": "2026-10-10T10:03:42+00:00"
-  },
-  "2026-10-10-bank-caller-knows-income": {
+  "2026-10-12-mom-wins": {
    "stage": "notebook",
    "theme": "mood-sky",
    "category": "voice",
@@ -177,59 +51,51 @@
    "visual_group": "sky",
    "layouts": [
     "call",
-    "card",
-    "compare",
-    "flow",
-    "checklist"
+    "call",
+    "call"
    ],
    "middle": [
-    "card",
-    "compare",
-    "flow"
+    "call"
    ],
-   "produced_at": "2026-10-10T09:41:30+00:00"
+   "produced_at": "2026-10-11T02:33:29+00:00"
   },
-  "2026-10-10-parents-loan-block": {
-   "stage": "alert",
-   "theme": "pulse",
-   "category": "security",
-   "luminance": "dark",
-   "mascot": false,
-   "visual_group": "cards",
-   "layouts": [
-    "alert",
-    "stat",
-    "timeline",
-    "toggle",
-    "checklist"
-   ],
-   "middle": [
-    "stat",
-    "timeline",
-    "toggle"
-   ],
-   "produced_at": "2026-10-10T10:11:25+00:00"
-  },
-  "2026-10-10-leak-compensation-sms": {
+  "2026-10-12-fox-bank-income": {
    "stage": "notebook",
    "theme": "kraft-board",
-   "category": "smishing",
+   "category": "voice",
    "luminance": "light",
    "mascot": true,
    "visual_group": "evidence",
    "layouts": [
-    "sms",
-    "compare",
     "card",
-    "flow",
-    "checklist"
+    "call",
+    "call",
+    "card"
    ],
    "middle": [
-    "compare",
-    "card",
-    "flow"
+    "call",
+    "call"
    ],
-   "produced_at": "2026-10-10T09:48:46+00:00"
+   "produced_at": "2026-10-11T02:35:20+00:00"
+  },
+  "2026-10-12-fox-isolation": {
+   "stage": "alert",
+   "theme": "pulse",
+   "category": "voice",
+   "luminance": "dark",
+   "mascot": false,
+   "visual_group": "cards",
+   "layouts": [
+    "card",
+    "call",
+    "call",
+    "card"
+   ],
+   "middle": [
+    "call",
+    "call"
+   ],
+   "produced_at": "2026-10-11T02:41:28+00:00"
   }
  },
  "_doc": "Visual style of every produced episode, written by `radar produce` (Remotion engine). stage = family (alert | notebook), luminance (light | dark), mascot (도치 on), visual_group (ruled | cards | desk | evidence | blueprint | sky). themes.resolve_style keeps logged stages in the schedule walk (a script's own theme replaces its entry); `radar script-check` warns when the middle scenes repeat the previous episode's layout sequence."
