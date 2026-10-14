@@ -3,8 +3,10 @@ compositions are registered with YouTube's sizes, the banner's key content is la
 area, the copy tells a stranger the topic (digital scams, surviving them) and stays honest (a dramatized series, no
 agency claim), there is no score anywhere (2026-10-14), and nothing names a real brand or number. v3 (2026-10-14):
 characters are cast per story, so the banner shows everyday neighbours of different species and ages from the
-registry (not one family) and the fox in a disguise; the profile picture is 도치 from the front, no text."""
+registry (not one family) and the fox in a disguise; the profile picture is 도치 from the front, no text. v4
+(2026-10-14): every key element lies wholly inside the 1546x423 band with a 16 px margin (whole, smaller figures)."""
 import json
+import math
 import re
 from pathlib import Path
 
@@ -20,19 +22,80 @@ def test_compositions_are_registered_with_youtube_sizes():
     assert "BANNER = {w: 2560, h: 1440, safe: {w: 1546, h: 423}}" in ART
 
 
-def test_banner_key_content_sits_in_the_safe_area():
-    # every key element is placed in safe-area coordinates (X()/Y()), and those stay inside 0..1546 / 0..423
+def _obj(name):
+    """A flat TS object literal of numbers (`name: {a: 1, b: 2}` inside ChannelArt.tsx) as a dict."""
+    m = re.search(rf"\b{name}: \{{([^{{}}]*)\}}", ART)
+    assert m, name
+    return {k: float(v) for k, v in re.findall(r"(\w+): (-?[\d.]+)", m.group(1))}
+
+
+def _rot(cx, cy, w, h, deg):
+    a = math.radians(abs(deg))
+    hw = w / 2 * math.cos(a) + h / 2 * math.sin(a)
+    hh = h / 2 * math.cos(a) + w / 2 * math.sin(a)
+    return cx - hw, cy - hh, cx + hw, cy + hh
+
+
+def _figure(cid, x, eye_y, k):
+    f = _obj(cid)
+    return x - f["left"] * k, eye_y - f["up"] * k, x + f["right"] * k, eye_y + f["down"] * k
+
+
+def _key_boxes():
+    """Mirror of keyBoxes() in ChannelArt.tsx: every key element's extent in safe-area coordinates."""
+    card, phone, fox, tag, stamp, dochi = (_obj(n) for n in ("card", "phone", "fox", "tag", "stamp", "dochi"))
+    ext = {k: float(v) for k, v in re.findall(r"(\w+): ([\d.]+)",
+                                              re.search(r"DOCHI_EXTENT = \{([^}]*)\}", ART).group(1))}
+    dx, dy, ds = card["l"] + card["w"] - dochi["inset"], card["t"] + dochi["sink"], dochi["size"]
+    boxes = {cid: _figure(cid, float(x), float(eye), float(k)) for cid, x, eye, k, _ in _neighbours()}
+    boxes.update({
+        "card": (card["l"], card["t"], card["l"] + card["w"], card["t"] + card["h"]),
+        "phone": _rot(phone["cx"], phone["cy"], phone["w"] + 10, phone["h"] + 10, phone["rotate"]),
+        "fox": _figure("scammer", fox["x"], fox["eyeY"], fox["k"]),
+        "tag": _rot(tag["cx"], tag["cy"], 184 * tag["s"], 100 * tag["s"], tag["rotate"]),
+        "stamp": _rot(stamp["x"], stamp["y"], stamp["w"] + 20, stamp["h"] + 20, stamp["rotate"] + 2),
+        "dochi": (dx - ext["left"] * ds, dy - ext["up"] * ds, dx + ext["right"] * ds, dy + ext["down"] * ds),
+    })
+    return boxes
+
+
+def test_banner_key_content_lies_wholly_in_the_band_with_a_margin():
+    # v4: YouTube's crop tool cut v3's cast at the chest and 도치 at the top: now every key element (each figure ears
+    # to shadow, the card, the call phone, the fox's tag and stamp, 도치) lies inside 1546x423 with MARGIN to spare
+    margin = int(re.search(r"export const MARGIN = (\d+);", ART).group(1))
+    assert margin >= 16
+    boxes = _key_boxes()
+    assert {"rabbit_teller", "raccoon_neighbor", "cat_guard", "card", "phone", "fox", "tag", "stamp", "dochi"} <= set(boxes)
+    for name, (l, t, r, b) in boxes.items():
+        assert l >= margin and t >= margin and r <= 1546 - margin and b <= 423 - margin, (name, (l, t, r, b))
+    # the code places these through LAYOUT / keyBoxes (no stray safe-area literals elsewhere)
+    assert "keyBoxes().map" in ART and "export const LAYOUT" in ART
     for fn, limit in (("X", 1546), ("Y", 423)):
         for v in re.findall(rf"\b{fn}\((\d+)\)", ART):
             assert 0 <= int(v) <= limit, (fn, v)
-    card = re.search(r"const card = \{l: X\((\d+)\), t: Y\((\d+)\), w: (\d+), h: (\d+)\}", ART)
-    assert card, "the note card is placed in safe-area coordinates"
-    l, t, w, h = map(int, card.groups())
-    assert l + w <= 1546 and t + h <= 423
-    phone = re.search(r"const phone = \{cx: X\((\d+)\), cy: Y\((\d+)\), w: (\d+), h: (\d+)", ART)
-    assert phone, "the phone is placed in safe-area coordinates"
-    cx, cy, pw, ph = map(int, phone.groups())
-    assert cx - pw / 2 >= 0 and cx + pw / 2 <= l and cy - ph / 2 >= 0 and cy + ph / 2 <= 423   # left of the card
+
+
+def test_banner_card_is_the_biggest_and_readable_on_a_phone():
+    boxes = _key_boxes()
+    area = {n: (r - l) * (b - t) for n, (l, t, r, b) in boxes.items()}
+    assert max(area, key=area.get) == "card"
+    card_block = ART[ART.index("{/* the note card"):ART.index("{/* 도치, the silent alarm")]
+    title = int(re.search(r"fontSize: (\d+), fontWeight: 900", card_block).group(1))
+    assert title * 390 / 1546 >= 20                                   # the name stays >= 20 px on a 390 px phone
+    assert "wordBreak: \"keep-all\"" in card_block
+    # the phone is left of the card, the fox's things right of it, nothing overlaps the card
+    for name in ("phone", "rabbit_teller", "raccoon_neighbor", "cat_guard"):
+        assert boxes[name][2] <= boxes["card"][0], name
+    for name in ("fox", "tag", "stamp"):
+        assert boxes[name][0] >= boxes["card"][2], name
+
+
+def test_desktop_only_extra_is_wholly_outside_the_band():
+    # 엄마 is decoration for the desktop strip: never half inside the phone view
+    m = re.search(r'EXTRA: Neighbour = \{id: "([a-z_]+)", x: (-?\d+), eyeY: (\d+), k: ([\d.]+)', ART)
+    l, t, r, b = _figure(m.group(1), *map(float, m.group(2, 3, 4)))
+    assert r <= 0 or l >= 1546
+    assert t >= 16 and b <= 423 - 16                                  # and whole in the desktop strip
 
 
 def test_banner_tells_the_topic_without_a_score():
