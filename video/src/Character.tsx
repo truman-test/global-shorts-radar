@@ -13,7 +13,7 @@ import {BodySpec, bodyOf, FloorShadow, INK, InkContext, inkFor, LEG_LOOKS, Legs,
   useInk} from "./Body";
 import {FONT} from "./fonts";
 import {RIG} from "./rig";
-import {CharacterId, Expression, Gesture} from "./types";
+import {CharacterId, CostumeId, Expression, Gesture} from "./types";
 
 export {INK};
 export const MOUTH_IN = "#5A2C2E";
@@ -55,6 +55,8 @@ export type CharPose = {
   silhouette?: boolean; // the scammer's faceless hood
   monitor?: number; // 0..1 teal monitor light on the scammer's jaw and chest
   tail?: boolean; // animal skin: draw the fox's tail (full figures only)
+  costume?: CostumeId; // animal skin: the caller's disguise (Disguise.tsx); none = the character's usual look
+  light?: string; // the key light's colour on the caller's jaw and chest (villain set; default the monitor teal)
 };
 
 export type Look = {skin: string; hair: string; brow: string; top: string; inner: string; accent: string;
@@ -841,7 +843,7 @@ export const Character: React.FC<{pose: CharPose; uid: string; box?: {w: number;
         ) : null}
         {silhouette && (p.monitor ?? 0) > 0 ? (
           // the monitor's teal light along the jaw (the screen is to the viewer's right)
-          <path d={faceD} fill="none" stroke={L.accent} strokeWidth={34} opacity={0.55 * (p.monitor ?? 0)}
+          <path d={faceD} fill="none" stroke={p.light ?? L.accent} strokeWidth={34} opacity={0.55 * (p.monitor ?? 0)}
             transform="translate(-16 -6)" />
         ) : null}
       </g>
@@ -938,7 +940,7 @@ export const Character: React.FC<{pose: CharPose; uid: string; box?: {w: number;
             <Costume id={p.id} L={L} B={B} back={back} uid={uid} />
             <path d={sideShade(B)} fill="#000" opacity={0.12} />
             {silhouette && (p.monitor ?? 0) > 0 ? (
-              <ellipse cx={240} cy={160} rx={160} ry={260} fill={L.accent} opacity={0.16 * (p.monitor ?? 0)} />
+              <ellipse cx={240} cy={160} rx={160} ry={260} fill={p.light ?? L.accent} opacity={0.16 * (p.monitor ?? 0)} />
             ) : null}
           </g>
           {!high(arms.L) ? armEl("L") : null}

@@ -13,14 +13,14 @@ import {CharPose, Fx, INK} from "./Character";
 import {lineLevel, useCast, useSpeechMs, Waveform} from "./dialogue";
 import {clamp, useShell} from "./kit";
 import {fadeOut, SceneContext, spr, useRealFrame, useScene} from "./motion";
-import {actingAt, adOf, ASIDE, blinkAt, bubbleOf, callerOf, CharSpot, isCaller, isInner, MOTION, neckY, openPunch, PACK,
+import {actingAt, adOf, ASIDE, blinkAt, bubbleOf, callerOf, CharSpot, costumeOf, isCaller, isInner, MOTION, neckY, openPunch, PACK,
   RIG, otherOf, planShots, punchZoom, shockShake, shotAt, shotSpec, SPEC, speakerAt, strSeed, talkWeight, twistCutMs,
   victimOf, Who} from "./rig";
-import {CallCentreSet, FocusLines, ForegroundProp, HomeSet, HomeVariant, PropKind, SetMode} from "./Sets";
+import {FocusLines, ForegroundProp, HomeSet, HomeVariant, PropKind, SetMode, VILLAIN, villainOf, VillainSetView} from "./Sets";
 import {POSTER_PROPS, PosterPropView} from "./Props";
 import {FONT} from "./fonts";
 import {DRAMA, isLight, NOTE, TONES, useTheme} from "./themes";
-import {CastMember, CharacterId, Expression, Gesture, SceneProps, Staging} from "./types";
+import {CastMember, CharacterId, Expression, Gesture, SceneProps, Staging, VillainSet} from "./types";
 
 const RIM = "#EEE8DE";
 /** The opening scene keeps its first shot (the victim's face, the poster) this long; watch_ad cuts to the TV sooner
@@ -39,13 +39,16 @@ type Ctx = {
   victim?: string; caller?: string; other?: string; ad?: string;
   home: HomeVariant; // the family's room of this scene (scene.set): living, or the side-dish shop for every family shot
   cold: boolean; // the cold open's frozen copy (the twist keeps its colour)
+  villain: VillainSet; // the caller's room of this scene (scene.villainSet): the call centre by default
 };
 
 /** A family shot's room: the scene's set when it is the shop (every family shot is in the shop), else `fallback`. */
 const roomOf = (c: Ctx, fallback: HomeVariant): HomeVariant => (c.home === "shop" ? "shop" : fallback);
 
 /** The home's table is the shop's counter in a shop scene. */
-const propKind = (c: Ctx, kind: string): PropKind => (kind === "table" && c.home === "shop" ? "counter" : kind as PropKind);
+const propKind = (c: Ctx, kind: string): PropKind => (kind === "table" && c.home === "shop" ? "counter"
+  // the caller's desk is the villain set's own prop (an office desk, an anchor desk, a dashboard, a lectern)
+  : kind === "ccDesk" ? VILLAIN[c.villain].prop : kind as PropKind);
 
 const exprFx = (e: Expression, since: number, who: Who): Fx[] => {
   switch (e) {
@@ -99,6 +102,7 @@ const poseOf = (c: Ctx, spot: CharSpot, id: string | undefined, who: Who, o: Pos
     typing: c.frameA, fx: o.fx ?? exprFx(expr, since, who), squash, shake,
     rim: o.rim === null ? undefined : o.rim ?? (c.mode === "dark" ? RIM : undefined), rimWidth: 7,
     glow: o.glow, screen: o.screen, shadowHalf: o.shadowHalf, monitor: o.monitor,
+    costume: costumeOf(c.cast, id), light: VILLAIN[c.villain].light,
   };
 };
 
@@ -178,7 +182,7 @@ const CallerWindow: React.FC<{c: Ctx; box: {x: number; y: number; w: number; h: 
   const s = box.scale * (0.94 + 0.06 * w) * (0.7 + 0.3 * enter);
   const spot = {...SPEC.pip_call.windowChar, who: "caller" as Who, gestures: ["rest"], turn: -0.25};
   const fake = id ? c.cast[id]?.character === "fake_banker" : false;
-  const pose = poseOf(c, spot, id, "caller", {look: [-0.6, 0.1], rim: "#5FD3C8", monitor: 1,
+  const pose = poseOf(c, spot, id, "caller", {look: [-0.6, 0.1], rim: VILLAIN[c.villain].rim, monitor: 1,
     shadowHalf: fake ? 1 : 0, px: spot.k * s});
   const level = id ? (c.scene.lines ?? []).reduce((m, l) => (l.speaker === id ? Math.max(m, lineLevel(l, c.ms)) : m), 0) : 0;
   const seconds = 3 + Math.max(0, c.ms - c.scene.leadInMs) / 1000;
@@ -188,7 +192,7 @@ const CallerWindow: React.FC<{c: Ctx; box: {x: number; y: number; w: number; h: 
       filter: `brightness(${0.8 + 0.2 * w})`}}>
       <div style={{position: "absolute", inset: 0, borderRadius: 34, overflow: "hidden", background: "#0C1017",
         border: `5px solid ${TONES.danger.fill}`, boxShadow: "0 18px 44px rgba(0,0,0,0.45)"}}>
-        <CallCentreSet w={box.w} h={box.h} frame={c.frameA} />
+        <VillainSetView set={c.villain} w={box.w} h={box.h} frame={c.frameA} />
         <Character pose={pose} uid={`cw${c.index}`} box={{w: box.w, h: box.h}} frame={c.frameA} />
         <div style={{position: "absolute", left: 0, right: 0, bottom: 0, height: 84, background: "rgba(8,10,14,0.82)",
           display: "flex", alignItems: "center", gap: 14, padding: "0 20px", fontFamily: FONT}}>
@@ -233,7 +237,7 @@ const TwistShot: React.FC<{c: Ctx; variant: HomeVariant}> = ({c, variant}) => {
   const shocked = face === "shocked" || face === "panicked";
   const pose = poseOf(c, spot, id, isCallerId ? "caller" : "victim", {force: face,
     gesture: shocked ? "handsOnCheeks" : face === "relieved" ? "clutchChest" : "rest", look: [0, 0],
-    ...(isCallerId ? {rim: "#5FD3C8"} : {}),
+    ...(isCallerId ? {rim: VILLAIN[c.villain].rim} : {}),
     fx: shocked ? (hit >= 0 ? ["shockLines", "sweat", "sweat2", "gloom"] : ["sweat", "shockLines"]) : [],
     noIdle: hit >= 0});
   const focus = c.mode === "dark" ? "#EEE8DE" : "#2B2620";
@@ -241,12 +245,14 @@ const TwistShot: React.FC<{c: Ctx; variant: HomeVariant}> = ({c, variant}) => {
     <>
       <Camera zoom={zoom} fx={spot.x} fy={spot.eyeY} shake={shake}>
         <div style={{position: "absolute", inset: 0, filter: `grayscale(${k}) brightness(${1 - 0.15 * k})`}}>
-          {isCallerId ? <CallCentreSet w={1080} h={1920} frame={c.frameA} /> : <HomeSet mode={c.mode} variant={variant} />}
+          {isCallerId ? <VillainSetView set={c.villain} w={1080} h={1920} frame={c.frameA} /> : <HomeSet mode={c.mode} variant={variant} />}
         </div>
         <FocusLines cx={spot.x} cy={spot.eyeY} color={focus} opacity={0.32 * landed} />
         <Character pose={pose} uid={`tw${c.index}`} frame={c.frameA} />
         <div style={{position: "absolute", inset: 0, filter: `grayscale(${k}) brightness(${1 - 0.15 * k})`}}>
-          <Prop c={c} spec={SPEC.twist_closeup.shots.twist} />
+          {/* the fox's close-up keeps his own room's prop (the call centre's desk, the car's dashboard...) */}
+          <Prop c={c} spec={isCallerId ? {prop: {kind: "ccDesk", top: SPEC.twist_closeup.shots.twist.prop.top}}
+            : SPEC.twist_closeup.shots.twist} />
         </div>
       </Camera>
       <div style={{position: "absolute", inset: 0, background: "#fff", opacity: flash}} />
@@ -287,7 +293,7 @@ const AsideShot: React.FC<{c: Ctx; zoom: number; startMs: number}> = ({c, zoom, 
   const caller = isCaller(id ? c.cast[id]?.character : undefined);
   const who: Who = caller ? "caller" : "victim";
   const spot = {...(ASIDE.chars[0] as CharSpot), who};
-  const pose = poseOf(c, spot, id, who, {look: [0, 0], gesture: "rest", rim: caller ? "#5FD3C8" : undefined,
+  const pose = poseOf(c, spot, id, who, {look: [0, 0], gesture: "rest", rim: caller ? VILLAIN[c.villain].rim : undefined,
     monitor: caller ? 0.5 : undefined});
   const t = DRAMA.inner;
   const dim = `grayscale(${t.desaturate}) brightness(${t.dim})`;
@@ -298,7 +304,7 @@ const AsideShot: React.FC<{c: Ctx; zoom: number; startMs: number}> = ({c, zoom, 
     <>
       <Camera zoom={zoom} shake={c.shake} fx={spot.x} fy={spot.eyeY}>
         <div style={{position: "absolute", inset: 0, filter: dim}}>
-          {caller ? <CallCentreSet w={1080} h={1920} frame={c.frameA} /> : <HomeSet mode={c.mode} variant={roomOf(c, "living")} />}
+          {caller ? <VillainSetView set={c.villain} w={1080} h={1920} frame={c.frameA} /> : <HomeSet mode={c.mode} variant={roomOf(c, "living")} />}
         </div>
         <div style={{position: "absolute", inset: 0,
           background: `radial-gradient(ellipse 62% 48% at ${spot.x}px ${spot.eyeY - 40}px, rgba(0,0,0,0) 45%, ${t.vignette} 100%)`}} />
@@ -322,12 +328,12 @@ const PipCall: React.FC<{c: Ctx; shot: string; zoom: number}> = ({c, shot, zoom}
   if (shot === "caller") {
     const spot = spec.chars[0];
     const fake = c.caller ? c.cast[c.caller]?.character === "fake_banker" : false;
-    const pose = poseOf(c, spot, c.caller, "caller", {look: [-0.3, 0.2], rim: "#5FD3C8", monitor: 1,
+    const pose = poseOf(c, spot, c.caller, "caller", {look: [-0.3, 0.2], rim: VILLAIN[c.villain].rim, monitor: 1,
       shadowHalf: fake ? 1 : 0});
     return (
       <>
         <Camera zoom={zoom} shake={c.shake} fx={spot.x} fy={spot.eyeY}>
-          <CallCentreSet w={1080} h={1920} frame={c.frameA} />
+          <VillainSetView set={c.villain} w={1080} h={1920} frame={c.frameA} />
           <Character pose={pose} uid={`pc${c.index}`} frame={c.frameA} />
           <Prop c={c} spec={spec} />
         </Camera>
@@ -364,7 +370,7 @@ const SplitCall: React.FC<{c: Ctx; zoom: number}> = ({c, zoom}) => {
   const border = SPEC.split_call.border;
   const dy = Math.tan((border.tilt * Math.PI) / 180) * 540;
   const fake = c.caller ? c.cast[c.caller]?.character === "fake_banker" : false;
-  const callerPose = poseOf(c, top, c.caller, "caller", {look: [0, 0.2], rim: "#5FD3C8", monitor: 1,
+  const callerPose = poseOf(c, top, c.caller, "caller", {look: [0, 0.2], rim: VILLAIN[c.villain].rim, monitor: 1,
     shadowHalf: fake ? 1 : 0});
   const victimPose = poseOf(c, bottom, c.victim, "victim", {gesture: "phoneEar", look: [0.4, -0.6]});
   const speaker = speakerAt(c.scene, c.msA);
@@ -373,7 +379,7 @@ const SplitCall: React.FC<{c: Ctx; zoom: number}> = ({c, zoom}) => {
     <>
       <div style={{position: "absolute", inset: 0, clipPath: `polygon(0 236px, 100% 236px, 100% ${border.y - dy}px, 0 ${border.y + dy}px)`}}>
         <Camera zoom={zoom} shake={c.shake} fx={top.x} fy={top.eyeY}>
-          <CallCentreSet w={1080} h={1100} frame={c.frameA} />
+          <VillainSetView set={c.villain} w={1080} h={1100} frame={c.frameA} />
           <Character pose={callerPose} uid={`sc${c.index}`} frame={c.frameA}
             style={{filter: speaker === c.caller ? undefined : "brightness(0.82)"}} />
         </Camera>
@@ -403,11 +409,11 @@ const Solo: React.FC<{c: Ctx; shot: string; zoom: number; variant?: HomeVariant}
   const spot = soloSpec.chars[0];
   if (shot === "caller") {
     const fake = c.caller ? c.cast[c.caller]?.character === "fake_banker" : false;
-    const pose = poseOf(c, spot, c.caller, "caller", {rim: "#5FD3C8", monitor: 1, shadowHalf: fake ? 1 : 0,
+    const pose = poseOf(c, spot, c.caller, "caller", {rim: VILLAIN[c.villain].rim, monitor: 1, shadowHalf: fake ? 1 : 0,
       look: [-0.2, 0.1]});
     return (
       <Camera zoom={zoom} shake={c.shake} fx={spot.x} fy={spot.eyeY}>
-        <CallCentreSet w={1080} h={1920} frame={c.frameA} />
+        <VillainSetView set={c.villain} w={1080} h={1920} frame={c.frameA} />
         <Character pose={pose} uid={`oc${c.index}`} frame={c.frameA} />
         <Prop c={c} spec={soloSpec} />
       </Camera>
@@ -479,12 +485,12 @@ const OverShoulder: React.FC<{c: Ctx; shot: string; zoom: number; body: React.Re
     );
   }
   if (shot === "caller") {
-    const pose = poseOf(c, spot, c.caller, "caller", {gesture: "phoneType", rim: "#5FD3C8", monitor: 1,
+    const pose = poseOf(c, spot, c.caller, "caller", {gesture: "phoneType", rim: VILLAIN[c.villain].rim, monitor: 1,
       look: [0, 0.5], tilt: 6});
     return (
       <>
         <Camera zoom={zoom} shake={c.shake} fx={spot.x} fy={spot.eyeY}>
-          <CallCentreSet w={1080} h={1920} frame={c.frameA} />
+          <VillainSetView set={c.villain} w={1080} h={1920} frame={c.frameA} />
           <Character pose={pose} uid={`oc${c.index}`} frame={c.frameA} />
           <Prop c={c} spec={osSpec} />
         </Camera>
@@ -525,6 +531,8 @@ const AdScreen: React.FC<{c: Ctx; w: number; h: number}> = ({c, w, h}) => {
   const ticker = bubbleOf(line);
   return (
     <div style={{position: "absolute", inset: 0, overflow: "hidden", background: "linear-gradient(160deg, #20385A 0%, #2B6876 100%)"}}>
+      {/* the ad's own studio (villain_set studio, ...); else the plain ad backdrop */}
+      {c.villain !== "callcentre" ? <VillainSetView set={c.villain} w={w} h={h} frame={c.frameA} /> : null}
       <svg width={w} height={h} style={{position: "absolute", left: 0, top: 0}}>
         {[0.3, 0.45, 0.6, 0.75].map((y) => <path key={y} d={`M ${0.5 * w} ${y * h} H ${0.97 * w}`} stroke="#fff"
           strokeOpacity={0.1} strokeWidth={2} />)}
@@ -672,7 +680,7 @@ export const CastScene: React.FC<{scene: SceneProps; staging: Staging; body: Rea
   const victim = victimOf(cast);
   const c: Ctx = {scene, cast, staging, mode: isLight(theme) ? "light" : "dark", ms, msA, frame, frameA, fps,
     index: s.index, shake: shockShake(scene, cast, msA, fps), victim, caller: callerOf(scene, cast), other: otherOf(scene, cast, victim), ad: adOf(scene, cast),
-    home: scene.set === "shop" ? "shop" : "living", cold: Boolean(s.cold)};
+    home: scene.set === "shop" ? "shop" : "living", cold: Boolean(s.cold), villain: villainOf(scene.villainSet)};
   if (staging === "dochi_explains") return <DochiExplains c={c} body={body} />;
   const shot = shotAt(shots, msA);
   // the slow push-in of the shot times the keyword punch-in (1 -> 1.12 in 4 frames); the video's opening shot also

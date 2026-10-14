@@ -20,7 +20,8 @@
    "voice": "M3",
    "label": "아들?",
    "role": "scammer",
-   "character": "scammer"
+   "character": "scammer",
+   "costume": "family_mask"
   },
   "mom": {
    "voice": "F3",

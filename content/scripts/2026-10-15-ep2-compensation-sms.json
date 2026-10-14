@@ -28,7 +28,8 @@
    "voice": "M2",
    "label": "여 과장",
    "role": "scammer",
-   "character": "scammer"
+   "character": "scammer",
+   "costume": "bank_suit"
   },
   "fox_inner": {
    "voice": "M5",
@@ -151,5 +152,6 @@
  "score": {
   "home": 4,
   "fox": 0
- }
+ },
+ "villain_set": "fake_office"
 }

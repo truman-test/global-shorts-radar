@@ -3,7 +3,7 @@
 // of state between frames, so any frame renders on its own (stills, the poster tail, parallel render workers).
 import COMP from "./composition.json";
 import {activeLine} from "./dialogue";
-import {CastMember, CaptionPage, CharacterId, Expression, Gesture, SceneProps, SpokenLine, Staging} from "./types";
+import {CastMember, CaptionPage, CharacterId, CostumeId, Expression, Gesture, SceneProps, SpokenLine, Staging} from "./types";
 
 export const RIG = COMP.rig;
 export const FRAME = COMP.frame;
@@ -125,6 +125,15 @@ export const callerOf = (scene: SceneProps, cast: Record<string, CastMember>): s
 
 /** A cast member who is a character's inner voice (role inner, 속마음): played as an aside to the camera. */
 export const isInner = (cast: Record<string, CastMember>, id?: string) => Boolean(id && cast[id]?.role === "inner");
+
+/** A caller's disguise (cast costume): its own, else (an inner voice) the costume of the cast member it is the 속마음
+ * of, so the aside shows the same disguise as the phone voice. Undefined = the character's usual look. */
+export const costumeOf = (cast: Record<string, CastMember>, id?: string): CostumeId | undefined => {
+  const m = id ? cast[id] : undefined;
+  if (!m) return undefined;
+  if (m.costume || !isInner(cast, id)) return m.costume;
+  return Object.values(cast).find((o) => o.role !== "inner" && o.character === m.character && o.costume)?.costume;
+};
 
 /** Another family member who speaks in this scene (the daughter of "엄마, 누르지 마!"); never an inner voice. */
 export const otherOf = (scene: SceneProps, cast: Record<string, CastMember>, victim?: string): string | undefined =>

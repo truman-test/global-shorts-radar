@@ -35,7 +35,17 @@ export type Staging = "pip_call" | "split_call" | "solo" | "over_shoulder_chat" 
 
 /** A cast member as the renderer needs it: the chip label ("" = no chip), its role and mockup side, and the
  * character rig that plays it (none = voice only). */
-export type CastMember = {label: string; role: SpeakerRole; side?: "me" | "them"; character?: CharacterId};
+export type CastMember = {label: string; role: SpeakerRole; side?: "me" | "them"; character?: CharacterId;
+  costume?: CostumeId};
+
+/** The fox's disguise per scam (script cast "costume", callers only; composition.json "costumes"): the same fox under
+ * a different outfit, and the disguise never quite hides him (an ear through the hat, a crooked moustache, the tail).
+ * Animal skin only; the human skin keeps the caller's usual look. No cast costume = the character's usual look. */
+export type CostumeId = "hoodie" | "bank_suit" | "investigator" | "courier" | "guru" | "lecturer" | "family_mask";
+
+/** Where the caller is (script / scene "villain_set"; composition.json "villainSets"): the room behind every caller
+ * shot (call window, caller and aside shots, the twist close-up on the fox, the cold open) and its foreground prop. */
+export type VillainSet = "callcentre" | "fake_office" | "studio" | "car" | "lecture_room";
 
 /** One spoken line of a dialogue scene (scene time, lead-in included). Optional acting notes: the speaker's face and
  * gesture, and a keyword speech bubble (<= 8 characters, a part of the line's text). `spike`: 도치 the 가시 감지기 pops
@@ -103,6 +113,7 @@ export type SceneProps = {
   staging?: Staging; // dialogue with characters: the staging template (Python picks the default from the layout)
   set?: HomeSetName; // drama: the family's room in this scene (Sets.tsx HomeSet), default living
   posterProp?: PosterProp; // drama: an evidence prop beside the character of a solo shot (Props.tsx)
+  villainSet?: VillainSet; // drama: the caller's room in this scene (Sets.tsx VillainSetView), default callcentre
 };
 
 /** The family's room of a drama scene (script "set"): the living room or the side-dish shop (반찬가게). */

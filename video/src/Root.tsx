@@ -4,6 +4,7 @@ import {Short} from "./Short";
 import type {ShortProps} from "./types";
 import {CELL, FULL, Lineup, LineupProps} from "./Lineup";
 import {BANNER, ChannelBanner, ChannelBannerProps, ChannelProfile, ChannelProfileProps} from "./ChannelArt";
+import {VillainLineup, VillainLineupProps, villainLineupSize} from "./Villains";
 
 export const FPS = 30;
 
@@ -72,5 +73,16 @@ export const RemotionRoot: React.FC = () => (
       defaultProps={{subject: "mother", bg: "yellow"} as ChannelProfileProps} />
     <Composition id="ChannelBanner" component={ChannelBanner} width={BANNER.w} height={BANNER.h} fps={FPS}
       durationInFrames={1} defaultProps={{home: 3, promise: "main"} as ChannelBannerProps} />
+    {/* review sheet of the fox's disguises / the caller's rooms, never rendered by the pipeline */}
+    <Composition
+      id="VillainLineup"
+      component={VillainLineup}
+      width={villainLineupSize({mode: "costumes"}).width}
+      height={villainLineupSize({mode: "costumes"}).height}
+      fps={FPS}
+      durationInFrames={1}
+      defaultProps={{mode: "costumes"} as VillainLineupProps}
+      calculateMetadata={({props}) => villainLineupSize(props)}
+    />
   </>
 );

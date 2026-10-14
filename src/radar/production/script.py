@@ -84,6 +84,16 @@ Series, scoreboard, cold open and set dressing (dramas only; explainers ignore t
                                        # a scene may set its own "set"
   scene "poster_prop": "mail_notice"   # an evidence prop on the wall beside the character (solo staging): a generic
                                        # "우편물 도착 안내서" (no agency name, logo or real number)
+
+The fox's disguise and room (dramas; video/src/Disguise.tsx, Sets.tsx VillainSetView; reports 2026-10-14 owner note:
+the villain looked the same in every episode):
+  cast entry "costume": hoodie | bank_suit | investigator | courier | guru | lecturer | family_mask
+       # caller characters only (scammer, fake_banker, ad), animal skin; an inner voice (role inner) wears its
+       # character's costume. hoodie = the usual call-centre look; every disguise leaks (ears, tail, whiskers).
+  "villain_set": callcentre | fake_office | studio | car | lecture_room     # script default, a scene may set its own
+       # the room behind every caller shot (call window, caller / aside shots, the twist close-up on the fox, the cold
+       # open) and its foreground prop. script-check warns when two consecutive scheduled episodes open on the fox in
+       # the same (character, costume, villain_set).
 """
 from __future__ import annotations
 
@@ -159,6 +169,11 @@ COLD_OPEN_REVEALS = ("끊", "112", "대표번호", "직접", "스피커")   # wo
 COLD_OPEN_MAX_SECONDS = 27.0   # a flash-forward episode stays <= 27 s (reports/직원회의_패키징.md 2-3)
 HOME_SETS = ("living", "shop")  # the family's room (video/src/Sets.tsx HomeSet): living room or the side-dish shop
 POSTER_PROPS = ("mail_notice",)  # evidence props beside the character in a solo shot (video/src/Props.tsx)
+# the fox's disguise per scam (composition.json "costumes") and the caller's room (composition.json "villainSets")
+COSTUMES = ("hoodie", "bank_suit", "investigator", "courier", "guru", "lecturer", "family_mask")
+COSTUME_CHARACTERS = ("scammer", "fake_banker", "ad")
+VILLAIN_SETS = ("callcentre", "fake_office", "studio", "car", "lecture_room")
+DEFAULT_VILLAIN_SET = "callcentre"
 DEFAULT_CAST = {"narrator": {"voice": "F1", "label": "", "role": "narrator"},
                 "dochi": {"voice": "F1", "label": "도치", "role": "dochi"}}
 SCENE_GAP = 0.25             # seconds of silence after each scene (remotion_render.TAIL_GAP)
@@ -239,6 +254,7 @@ class Scene:
     staging: str = ""           # character staging (STAGINGS); "" = default from the layout (see default_staging)
     home_set: str = ""          # JSON "set": the family's room in this scene (HOME_SETS); "" = the script's set
     poster_prop: str = ""       # an evidence prop beside the character in a solo shot (POSTER_PROPS)
+    villain_set: str = ""       # the caller's room in this scene (VILLAIN_SETS); "" = the script's
 
     def tts_text(self) -> str:
         if self.lines:
@@ -270,6 +286,7 @@ class Script:
     score: dict = field(default_factory=dict)       # drama: {"home": n, "fox": m, "winner"?} after this episode
     cold_open: dict = field(default_factory=dict)   # drama: the flash-forward {"line", "speaker", "seconds", ...}
     home_set: str = ""          # JSON "set": the family's room in every staged scene (HOME_SETS); "" = living
+    villain_set: str = ""       # the caller's room in every scene (VILLAIN_SETS); "" = callcentre
 
 
 def speaker_role(speaker: str) -> str:
@@ -362,7 +379,7 @@ def _cast(raw) -> dict:
     out = {}
     for key, entry in raw.items():
         entry = entry if isinstance(entry, dict) else {"voice": entry}
-        out[str(key).strip()] = {k: str(entry[k]).strip() for k in ("voice", "label", "role", "character")
+        out[str(key).strip()] = {k: str(entry[k]).strip() for k in ("voice", "label", "role", "character", "costume")
                                  if k in entry}
     return out
 
@@ -432,7 +449,8 @@ def load_script(path: str | Path) -> Script:
                         lines=_lines(s.get("lines")), twist=str(s.get("twist", "")).strip(),
                         twist_on=str(s.get("twist_on", "")).strip(), twist_face=str(s.get("twist_face", "")).strip(),
                         staging=str(s.get("staging", "")).strip(), home_set=str(s.get("set", "")).strip(),
-                        poster_prop=str(s.get("poster_prop", "")).strip())
+                        poster_prop=str(s.get("poster_prop", "")).strip(),
+                        villain_set=str(s.get("villain_set", "")).strip())
                   for s in data["scenes"]]
         return Script(id=str(data["id"]), source_video_id=str(data["source_video_id"]), title=str(data["title"]).strip(),
                       description=str(data.get("description", "")).strip(), tags=[str(t) for t in data.get("tags", [])],
@@ -445,6 +463,7 @@ def load_script(path: str | Path) -> Script:
                       series=str(data.get("series", "") or "").strip(), ep=data.get("ep"),
                       score=_score(data.get("score")), cold_open=_cold_open(data.get("cold_open")),
                       home_set=str(data.get("set", "")).strip(),
+                      villain_set=str(data.get("villain_set", "")).strip(),
                       extra={"pilot": str(data["pilot"]).strip()} if data.get("pilot") else {})
     except (KeyError, TypeError, AttributeError) as exc:
         raise ScriptError(f"{path}: missing or malformed field {exc}") from exc
@@ -923,6 +942,91 @@ def _episode_errors(script: Script) -> tuple[list[str], list[str]]:
     return errors, warnings
 
 
+def costume_of(cast: dict, key: str) -> str:
+    """A cast member's disguise: its own "costume", else (an inner voice) the costume of the member it is the 속마음 of;
+    "" = the character's usual look. Mirrors video/src/rig.ts costumeOf."""
+    entry = cast.get(key, {})
+    if entry.get("costume") or entry.get("role") != "inner":
+        return entry.get("costume", "")
+    return next((e["costume"] for e in cast.values() if e.get("role") != "inner"
+                 and e.get("character") == entry.get("character") and e.get("costume")), "")
+
+
+def villain_set_of(script: Script, scene: Scene) -> str:
+    """The caller's room in a scene: its own villain_set, else the script's, else the call centre."""
+    return scene.villain_set or script.villain_set or DEFAULT_VILLAIN_SET
+
+
+def first_frame_villain(script: Script) -> tuple[str, str, str] | None:
+    """(character, costume, villain_set) of the caller on the video's first frame (the poster / thumbnail), or None when
+    the first frame shows the family. The fox opens the video when: a cold open flashes forward to a twist close-up on
+    a caller; the opening scene's first line is a caller's inner voice (the aside is the poster); the opening scene is
+    a split call (his panel is on top) or a twist close-up on him. Mirrors rig.ts planShots / Short.tsx cold open."""
+    cast = cast_of(script)
+
+    def look(key: str, scene: Scene) -> tuple[str, str, str] | None:
+        ch = cast.get(key, {}).get("character", "")
+        if ch not in COSTUME_CHARACTERS:
+            return None
+        return ch, costume_of(cast, key) or ("hoodie" if ch == "scammer" else ""), villain_set_of(script, scene)
+
+    if not is_drama(script) or not script.scenes:
+        return None
+    if script.cold_open:
+        k = twist_scene_index(script)
+        if k is not None:
+            tw = script.scenes[k]
+            on = tw.twist_on if tw.twist_on in cast else victim_character(cast)
+            return look(on or "", tw)
+    first = script.scenes[0]
+    staging = default_staging(first, cast)
+    if staging not in DRAMA_STAGINGS or not first.lines:
+        return None
+    if cast.get(first.lines[0].speaker, {}).get("role") == "inner":
+        return look(first.lines[0].speaker, first)
+    if staging == "split_call":
+        caller = next((x.speaker for x in first.lines if cast.get(x.speaker, {}).get("character") in CALLERS), None)
+        return look(caller, first) if caller else None
+    if staging == "twist_closeup" and first.twist_on in cast:
+        return look(first.twist_on, first)
+    return None
+
+
+def _villain_errors(script: Script) -> tuple[list[str], list[str]]:
+    """The fox's disguise (cast costume) and room (villain_set): errors, warnings."""
+    errors, warnings = [], []
+    cast = cast_of(script)
+    used = [k for k, e in script.cast.items() if e.get("costume")]
+    sets = [script.villain_set] + [sc.villain_set for sc in script.scenes]
+    for key in used:
+        entry = cast[key]
+        cos, ch = entry["costume"], entry.get("character", "")
+        if cos not in COSTUMES:
+            errors.append(f"cast '{key}': unknown costume '{cos}' (use {', '.join(COSTUMES)})")
+        if ch not in COSTUME_CHARACTERS:
+            errors.append(f"cast '{key}': a costume is the fox's disguise; only caller characters "
+                          f"({', '.join(COSTUME_CHARACTERS)}) wear one, not '{ch or 'no character'}'")
+        if entry.get("role") == "inner":
+            own = next((e.get("costume", "") for k, e in cast.items() if k != key and e.get("role") != "inner"
+                        and e.get("character") == ch), "")
+            if own and own != cos:
+                errors.append(f"cast '{key}': the inner voice wears '{cos}' but its character wears '{own}'; leave "
+                              "the inner voice's costume out (it follows the character)")
+    if used and (script.cast_style or "human") != "animal":
+        warnings.append("costume is drawn on the animal skin only (cast_style \"animal\"); the human skin keeps the "
+                        "caller's usual look")
+    where = ["script"] + [f"scene {i}" for i in range(1, len(script.scenes) + 1)]
+    for w, v in zip(where, sets):
+        if v and v not in VILLAIN_SETS:
+            errors.append(f"{w}: unknown villain_set '{v}' (use {', '.join(VILLAIN_SETS)})")
+    if (used or any(sets)) and not is_drama(script):
+        warnings.append("costume / villain_set only shown on dramas (dialogue played by rigged characters); ignored")
+    elif any(sets) and not any(e.get("character") in COSTUME_CHARACTERS for e in cast.values()):
+        warnings.append("villain_set is the caller's room, but no cast member plays a caller (scammer, fake_banker, "
+                        "ad); ignored")
+    return errors, warnings
+
+
 def _character_errors(script: Script) -> list[str]:
     """Characters, stagings and acting notes."""
     errors = []
@@ -1152,6 +1256,9 @@ def validate(script: Script, db=None, allow_unverified: bool = False) -> tuple[l
     errors += more_errors
     warnings += more_warnings
     more_errors, more_warnings = _episode_errors(script)
+    errors += more_errors
+    warnings += more_warnings
+    more_errors, more_warnings = _villain_errors(script)
     errors += more_errors
     warnings += more_warnings
     seconds = estimate_seconds(script)

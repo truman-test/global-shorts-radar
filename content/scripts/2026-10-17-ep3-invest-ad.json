@@ -19,10 +19,11 @@
  "cast_style": "animal",
  "cast": {
   "ad": {
-   "voice": "F4",
+   "voice": "M4",
    "label": "광고",
    "role": "neutral",
-   "character": "ad"
+   "character": "ad",
+   "costume": "guru"
   },
   "dad": {
    "voice": "M1",
@@ -34,7 +35,8 @@
    "voice": "M2",
    "label": "여 과장",
    "role": "scammer",
-   "character": "scammer"
+   "character": "scammer",
+   "costume": "bank_suit"
   },
   "fox_inner": {
    "voice": "M5",
@@ -67,7 +69,8 @@
      "text": "노후 자금 좀 불려 볼까.",
      "face": "worried"
     }
-   ]
+   ],
+   "villain_set": "studio"
   },
   {
    "layout": "chat",
@@ -173,5 +176,6 @@
  "score": {
   "home": 6,
   "fox": 0
- }
+ },
+ "villain_set": "fake_office"
 }
