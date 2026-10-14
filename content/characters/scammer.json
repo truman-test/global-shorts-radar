@@ -1,0 +1,53 @@
+{
+  "id": "scammer",
+  "label": "여우",
+  "species": "fox",
+  "role_kind": "caller",
+  "voice": "M2",
+  "legacy": true,
+  "body": {
+    "height": "tall",
+    "build": "regular",
+    "pin": "scammer"
+  },
+  "palette": {
+    "fur": "#A45E3A",
+    "muzzle": "#EEE2CF",
+    "innerEar": "#E2CDB6",
+    "brow": "#4E2E1E",
+    "paw": "#3B2B24",
+    "pad": "#5A463C",
+    "earTip": "#3B2B24",
+    "nose": "#2E2622",
+    "marking": null
+  },
+  "markings": "none",
+  "age": {
+    "young": false,
+    "wrinkles": false,
+    "greyBrows": false
+  },
+  "eyes": "narrow",
+  "hair": {
+    "style": "none"
+  },
+  "glasses": "none",
+  "hat": null,
+  "clip": null,
+  "outfit": {
+    "type": "darkHoodie",
+    "top": "#2A2D36",
+    "inner": "#3A3F4B",
+    "accent": "#5FD3C8",
+    "legs": "#22252D",
+    "shoes": "#3A3F4B",
+    "skirt": false,
+    "sheen": false
+  },
+  "prop": "headset",
+  "acting": {
+    "habit": "smug",
+    "halfShadow": false
+  },
+  "notes": "붉은 여우 사기범: 어두운 후드(모자는 내림), 헤드셋. 변장(cast costume)을 입는 고정 악역. 레거시 캐릭터."
+}

@@ -1,0 +1,53 @@
+{
+  "id": "daughter",
+  "label": "딸",
+  "species": "dog",
+  "role_kind": "family",
+  "voice": "F2",
+  "legacy": true,
+  "body": {
+    "height": "adult",
+    "build": "slim",
+    "pin": "daughter"
+  },
+  "palette": {
+    "fur": "#D7AC78",
+    "muzzle": "#F6E9D1",
+    "innerEar": "#EFDABF",
+    "brow": "#8A6038",
+    "paw": "#D7AC78",
+    "pad": "#93694C",
+    "earTip": null,
+    "nose": "#2E2622",
+    "marking": null
+  },
+  "markings": "urajiro",
+  "age": {
+    "young": true,
+    "wrinkles": false,
+    "greyBrows": false
+  },
+  "eyes": "lash",
+  "hair": {
+    "style": "none"
+  },
+  "glasses": "none",
+  "hat": null,
+  "clip": "#5B6B7D",
+  "outfit": {
+    "type": "officeLanyard",
+    "top": "#3F8F8A",
+    "inner": "#D9A93F",
+    "accent": "#5B6B7D",
+    "legs": "#3E4A5C",
+    "shoes": "#2F2A28",
+    "skirt": false,
+    "sheen": false
+  },
+  "prop": "none",
+  "acting": {
+    "habit": null,
+    "halfShadow": false
+  },
+  "notes": "직장인 딸: 슬레이트 머리핀, 사원증 목걸이(빈 카드). 레거시 캐릭터."
+}

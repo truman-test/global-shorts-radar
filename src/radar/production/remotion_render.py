@@ -23,6 +23,7 @@ from radar.production.script import (CAST_STYLES, COLD_OPEN_LABEL, COLD_OPEN_REW
                                      cold_open_line, cold_open_stamp, default_staging, end_card_of, hook_title_lines,
                                      is_drama, line_gap, line_voice, mockup_side, scene_lead_in, series_chip,
                                      twist_scene_index)
+from radar.production.characters import resolved_spec
 from radar.production.textnorm import speakable_length, split_sentences
 from radar.production.themes import episode_number, record_style, resolve_style_report
 from radar.production.tts import TTSError
@@ -289,13 +290,16 @@ def lines_props(scene, spans: list[tuple[float, float]], cast: dict) -> list[dic
 
 
 def cast_props(script: Script) -> dict:
-    """{speaker: {label, role, side}} for every speaker who has a line (the caption chip and the mockup side)."""
+    """{speaker: {label, role, side}} for every speaker who has a line (the caption chip and the mockup side); a rigged
+    speaker also gets its character id, costume and the resolved registry spec (content/characters, no network)."""
     cast = cast_of(script)
     used = [line.speaker for scene in script.scenes for line in scene.lines]
     return {s: {"label": cast[s].get("label", ""), "role": cast[s]["role"],
                 **({"side": mockup_side(cast[s]["role"])} if mockup_side(cast[s]["role"]) else {}),
                 **({"character": cast[s]["character"]} if cast[s].get("character") else {}),
-                **({"costume": costume_of(cast, s)} if costume_of(cast, s) else {})}
+                **({"costume": costume_of(cast, s)} if costume_of(cast, s) else {}),
+                **({"spec": resolved_spec(cast[s]["character"])} if cast[s].get("character")
+                   and resolved_spec(cast[s]["character"]) else {})}
             for s in dict.fromkeys(used) if s in cast}
 
 

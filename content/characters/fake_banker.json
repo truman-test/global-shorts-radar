@@ -1,0 +1,53 @@
+{
+  "id": "fake_banker",
+  "label": "가짜 직원",
+  "species": "fox",
+  "role_kind": "caller",
+  "voice": "M2",
+  "legacy": true,
+  "body": {
+    "height": "tall",
+    "build": "regular",
+    "pin": "fake_banker"
+  },
+  "palette": {
+    "fur": "#A29C94",
+    "muzzle": "#F2EFEA",
+    "innerEar": "#E2DCD4",
+    "brow": "#45403B",
+    "paw": "#3A3633",
+    "pad": "#57514C",
+    "earTip": "#3A3633",
+    "nose": "#2E2622",
+    "marking": null
+  },
+  "markings": "none",
+  "age": {
+    "young": false,
+    "wrinkles": false,
+    "greyBrows": false
+  },
+  "eyes": "narrow",
+  "hair": {
+    "style": "slicked"
+  },
+  "glasses": "none",
+  "hat": null,
+  "clip": null,
+  "outfit": {
+    "type": "suitBadge",
+    "top": "#3A3F4B",
+    "inner": "#F4F2EC",
+    "accent": "#2F5E63",
+    "legs": "#3A3F4B",
+    "shoes": "#1E1B19",
+    "skirt": false,
+    "sheen": false
+  },
+  "prop": "none",
+  "acting": {
+    "habit": "fakeKind",
+    "halfShadow": true
+  },
+  "notes": "은회색 여우 가짜 은행원: 정장, 기관명 없는 빈 사원증, 통화창에서 얼굴 반쪽 그림자. 레거시 캐릭터."
+}

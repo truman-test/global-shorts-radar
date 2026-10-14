@@ -1,0 +1,22 @@
+{
+  "id": "cat_guard",
+  "label": "경비 할아버지",
+  "species": "cat",
+  "role_kind": "other",
+  "voice": "M4",
+  "body": {"height": "elder", "build": "regular"},
+  "palette": {"fur": "#A8A39A", "muzzle": "#F1EDE5", "innerEar": "#D8C8BE", "brow": "#ECE8E0", "paw": "#A8A39A",
+    "pad": "#8E7A72", "earTip": null, "nose": "#9A6F68", "marking": "#7A746B"},
+  "markings": "tabby",
+  "age": {"young": false, "wrinkles": true, "greyBrows": true},
+  "eyes": "sleepy",
+  "hair": {"style": "none"},
+  "glasses": "none",
+  "hat": {"style": "cap", "color": "#56625D"},
+  "clip": null,
+  "outfit": {"type": "workJacket", "top": "#5E6B74", "inner": "#DCD5C6", "accent": "#B9A57A", "legs": "#4A4E55",
+    "shoes": "#3B342E", "skirt": false, "sheen": false},
+  "prop": "whistle",
+  "acting": {"habit": null, "halfShadow": false},
+  "notes": "아파트 경비 할아버지 고양이(회색 고등어 무늬). 졸린 듯 차분한 눈매, 흰 숱 많은 눈썹, 주름 = 연륜 있는 어른(우스꽝스럽지 않게). 휘장 없는 무지 모자와 작업 점퍼, 호루라기가 '경비' 신호. 실제 경비업체·기관 제복 아님. 이웃을 지키는 조력자(role_kind other)."
+}

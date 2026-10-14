@@ -1,0 +1,55 @@
+{
+  "id": "mother",
+  "label": "엄마",
+  "species": "dog",
+  "role_kind": "family",
+  "voice": "F3",
+  "legacy": true,
+  "body": {
+    "height": "elder",
+    "build": "regular",
+    "pin": "mother"
+  },
+  "palette": {
+    "fur": "#C69460",
+    "muzzle": "#F2E3C7",
+    "innerEar": "#EAD4B4",
+    "brow": "#7E5832",
+    "paw": "#C69460",
+    "pad": "#8E6448",
+    "earTip": null,
+    "nose": "#2E2622",
+    "marking": null
+  },
+  "markings": "urajiro",
+  "age": {
+    "young": false,
+    "wrinkles": true,
+    "greyBrows": false
+  },
+  "eyes": "round",
+  "hair": {
+    "style": "perm",
+    "color": "#E9D7B6",
+    "shade": "#B99B72"
+  },
+  "glasses": "none",
+  "hat": null,
+  "clip": null,
+  "outfit": {
+    "type": "blouseCardigan",
+    "top": "#8E5B7A",
+    "inner": "#EADFC8",
+    "accent": "#F6F1E7",
+    "legs": "#5C4A5A",
+    "shoes": "#6B4A3A",
+    "skirt": true,
+    "sheen": false
+  },
+  "prop": "none",
+  "acting": {
+    "habit": null,
+    "halfShadow": false
+  },
+  "notes": "누렁이 어머니: 귀 사이 파마 털, 블라우스 위 카디건, 치마. 레거시 캐릭터."
+}

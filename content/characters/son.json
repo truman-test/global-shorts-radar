@@ -1,0 +1,53 @@
+{
+  "id": "son",
+  "label": "아들",
+  "species": "dog",
+  "role_kind": "family",
+  "voice": "M3",
+  "legacy": true,
+  "body": {
+    "height": "adult",
+    "build": "regular",
+    "pin": "son"
+  },
+  "palette": {
+    "fur": "#E7D8BE",
+    "muzzle": "#FBF6EC",
+    "innerEar": "#DCC2AC",
+    "brow": "#7A6450",
+    "paw": "#E7D8BE",
+    "pad": "#A68474",
+    "earTip": null,
+    "nose": "#2E2622",
+    "marking": null
+  },
+  "markings": "urajiro",
+  "age": {
+    "young": true,
+    "wrinkles": false,
+    "greyBrows": false
+  },
+  "eyes": "round",
+  "hair": {
+    "style": "forelock"
+  },
+  "glasses": "none",
+  "hat": null,
+  "clip": null,
+  "outfit": {
+    "type": "hoodie",
+    "top": "#5B6B7D",
+    "inner": "#F2F0EA",
+    "accent": "#3A4452",
+    "legs": "#4A5E7A",
+    "shoes": "#F2F0EA",
+    "skirt": false,
+    "sheen": false
+  },
+  "prop": "none",
+  "acting": {
+    "habit": null,
+    "halfShadow": false
+  },
+  "notes": "아들: 이마 털 한 가닥, 후드티. 레거시 캐릭터."
+}

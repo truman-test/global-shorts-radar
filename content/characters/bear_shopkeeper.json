@@ -1,0 +1,22 @@
+{
+  "id": "bear_shopkeeper",
+  "label": "가게 사장님",
+  "species": "bear",
+  "role_kind": "other",
+  "voice": "M1",
+  "body": {"height": "adult", "build": "broad"},
+  "palette": {"fur": "#4A4440", "muzzle": "#B9A48C", "innerEar": "#6E625A", "brow": "#C2AE96", "paw": "#4A4440",
+    "pad": "#2E2926", "earTip": null, "nose": "#1F1B19", "marking": "#EDE6D8"},
+  "markings": "none",
+  "age": {"young": false, "wrinkles": false, "greyBrows": false},
+  "eyes": "round",
+  "hair": {"style": "none"},
+  "glasses": "none",
+  "hat": null,
+  "clip": null,
+  "outfit": {"type": "vest", "top": "#D9D3C6", "inner": "#8A7A5E", "accent": "#5A6B7A", "legs": "#3E4650",
+    "shoes": "#2F2A28", "skirt": false, "sheen": false},
+  "prop": "pen",
+  "acting": {"habit": null, "halfShadow": false},
+  "notes": "동네 가게 사장님 반달가슴곰: 숯빛 털, 턱 밑 흰 반달 무늬, 가는 주둥이와 큰 흰자 눈(납작한 갈색 곰 캐릭터와 다르게). 셔츠 위 슬레이트 조끼, 주머니 펜. 종 템플릿 견본(bear)."
+}

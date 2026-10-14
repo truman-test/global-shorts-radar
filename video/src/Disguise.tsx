@@ -7,7 +7,7 @@
 // the head just under the title box and the body at the desk, so a hat's crown or a parcel alone would not change the
 // first frame. Drawn in the animal rig's local units (Animal.tsx), a pure function of the pose.
 import React from "react";
-import {BodySpec, INK, LEG_LOOKS, useInk} from "./Body";
+import {BodySpec, INK, useInk} from "./Body";
 import {ArmSpec, Costume, Look, shade} from "./Character";
 import type {Fur} from "./Animal";
 import {CharacterId, CostumeId, Expression} from "./types";
@@ -26,14 +26,15 @@ export const COSTUME_LOOKS: Record<CostumeId, CostumeLook> = {
 };
 
 export const lookOf = (L: Look, cos?: CostumeId): Look => (cos ? {...L, ...COSTUME_LOOKS[cos]} : L);
-export const legsOf = (id: CharacterId, cos?: CostumeId) => (cos && COSTUME_LOOKS[cos].legs) || LEG_LOOKS[id];
+export const legsOf = (usual: {cloth: string; shoe: string}, cos?: CostumeId) => (cos && COSTUME_LOOKS[cos].legs) || usual;
 
-/** The hood rolled down behind the neck (the hoodie, and under the mask). */
-export const hooded = (id: CharacterId, cos?: CostumeId) => (cos ? cos === "hoodie" || cos === "family_mask" : id === "scammer");
-/** The call centre's headset (the hoodie only). */
-export const headset = (id: CharacterId, cos?: CostumeId) => (cos ? cos === "hoodie" : id === "scammer");
-/** The usual slicked forehead fur of the suited foxes (a disguise brings its own hair or hat). */
-export const slicked = (id: CharacterId, cos?: CostumeId) => !cos && (id === "fake_banker" || id === "ad");
+/** The hood rolled down behind the neck (the hoodie, and under the mask); `usual` = the character wears its hood down
+ * without a disguise (registry outfit darkHoodie: the scammer). */
+export const hooded = (usual: boolean, cos?: CostumeId) => (cos ? cos === "hoodie" || cos === "family_mask" : usual);
+/** The call centre's headset (the hoodie only); `usual` = the registry prop headset (the scammer). */
+export const headset = (usual: boolean, cos?: CostumeId) => (cos ? cos === "hoodie" : usual);
+/** The usual slicked forehead fur (registry hair "slicked": the suited foxes); a disguise brings its own hair or hat. */
+export const slicked = (usual: boolean, cos?: CostumeId) => !cos && usual;
 
 /** How the ears sit: as drawn, squashed out sideways under the courier's cap. */
 export const earTransform = (cos: CostumeId | undefined, s: number) => (cos === "courier"

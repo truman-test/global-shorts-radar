@@ -1,0 +1,53 @@
+{
+  "id": "father",
+  "label": "아빠",
+  "species": "dog",
+  "role_kind": "family",
+  "voice": "M1",
+  "legacy": true,
+  "body": {
+    "height": "elder",
+    "build": "broad",
+    "pin": "father"
+  },
+  "palette": {
+    "fur": "#F0EBE1",
+    "muzzle": "#FFFDF8",
+    "innerEar": "#D9C3B6",
+    "brow": "#9C968C",
+    "paw": "#F0EBE1",
+    "pad": "#B89184",
+    "earTip": null,
+    "nose": "#2E2622",
+    "marking": null
+  },
+  "markings": "none",
+  "age": {
+    "young": false,
+    "wrinkles": true,
+    "greyBrows": true
+  },
+  "eyes": "round",
+  "hair": {
+    "style": "none"
+  },
+  "glasses": "halfMoon",
+  "hat": null,
+  "clip": null,
+  "outfit": {
+    "type": "cardigan",
+    "top": "#B98A5A",
+    "inner": "#7C8A5C",
+    "accent": "#6B5A3E",
+    "legs": "#5E5A52",
+    "shoes": "#3B302A",
+    "skirt": false,
+    "sheen": false
+  },
+  "prop": "none",
+  "acting": {
+    "habit": null,
+    "halfShadow": false
+  },
+  "notes": "흰 진돗개 아버지: 반달 돋보기, 회색 숱 많은 눈썹, 카디건. 레거시 캐릭터(사람 스킨도 있음)."
+}

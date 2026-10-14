@@ -4,12 +4,12 @@
 import React from "react";
 import {AbsoluteFill} from "remotion";
 import {Character} from "./Actor";
-import {bodyOf} from "./Body";
+import {bodyOfSpec, specOf} from "./registry";
 import {FONT} from "./fonts";
 import {neckY, RIG} from "./rig";
-import {CastStyle, CharacterId, Expression, Gesture} from "./types";
+import {CastStyle, Expression, Gesture} from "./types";
 
-export type LineupProps = {castStyle: CastStyle; ids: CharacterId[]; rows: {expr: Expression; gesture: Gesture;
+export type LineupProps = {castStyle: CastStyle; ids: string[]; rows: {expr: Expression; gesture: Gesture;
   talking?: boolean; mouth?: number; view?: "front" | "back"}[]; dark?: boolean; full?: boolean};
 
 export const CELL = {w: 360, h: 460};
@@ -23,7 +23,7 @@ export const Lineup: React.FC<LineupProps> = ({castStyle, ids, rows, dark, full}
     const r = rows[0];
     const k = FULL.k;
     const ink = dark ? "#EEE8DE" : "#2B2620";
-    const top = (id: CharacterId) => FULL.floor - (bodyOf(id).sole - RIG.head.top) * k;
+    const top = (id: string) => FULL.floor - (bodyOfSpec(specOf(id)).sole - RIG.head.top) * k;
     const parentTop = top("father");
     return (
       <AbsoluteFill style={{background: dark ? "#1E2230" : "#F4EEE2"}}>
@@ -47,7 +47,7 @@ export const Lineup: React.FC<LineupProps> = ({castStyle, ids, rows, dark, full}
         <div style={{position: "absolute", left: FULL.ruler, right: 0, top: parentTop - 1, height: 2,
           borderTop: `2px dashed ${ink}`, opacity: 0.3}} />
         {ids.map((id, i) => {
-          const B = bodyOf(id);
+          const B = bodyOfSpec(specOf(id));
           const pose = {id, x: FULL.w / 2, y: FULL.floor - B.sole * k, k, expr: r.expr, gesture: r.gesture,
             talking: r.talking, mouth: r.mouth, view: r.view, fx: [], turn: 0.12, rim: dark ? "#EEE8DE" : undefined,
             rimWidth: 4, look: [0, 0] as [number, number], tail: true};

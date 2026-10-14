@@ -1,0 +1,53 @@
+{
+  "id": "ad",
+  "label": "광고",
+  "species": "fox",
+  "role_kind": "presenter",
+  "voice": "M4",
+  "legacy": true,
+  "body": {
+    "height": "tall",
+    "build": "regular",
+    "pin": "ad"
+  },
+  "palette": {
+    "fur": "#BC7A4A",
+    "muzzle": "#F2E8D8",
+    "innerEar": "#E8D4BE",
+    "brow": "#5A3622",
+    "paw": "#3B2B24",
+    "pad": "#5A463C",
+    "earTip": "#3B2B24",
+    "nose": "#2E2622",
+    "marking": null
+  },
+  "markings": "none",
+  "age": {
+    "young": false,
+    "wrinkles": false,
+    "greyBrows": false
+  },
+  "eyes": "narrow",
+  "hair": {
+    "style": "slicked"
+  },
+  "glasses": "none",
+  "hat": null,
+  "clip": null,
+  "outfit": {
+    "type": "suit",
+    "top": "#6F7C92",
+    "inner": "#F4F2EC",
+    "accent": "#C99A2E",
+    "legs": "#34405A",
+    "shoes": "#1E1B19",
+    "skirt": false,
+    "sheen": true
+  },
+  "prop": "none",
+  "acting": {
+    "habit": "fakeKind",
+    "halfShadow": false
+  },
+  "notes": "광고 진행자 여우: 반짝이는 은청색 정장(watch_ad의 TV 속). 레거시 캐릭터."
+}

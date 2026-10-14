@@ -12,97 +12,43 @@
 // rig.eyeY and the mouth on rig.mouthY, so every staging's composition rules hold for both skins.
 // A caller with a cast costume (pose.costume) wears that disguise instead of his usual clothes (Disguise.tsx): the
 // same fox every episode, a different outfit per scam, and the disguise always leaks.
+// Parametric (2026-10-14 owner decision: characters are made per story): every character is a registry spec
+// (content/characters/<id>.json, registry.ts) drawn on a species template (Species.tsx: dog, fox, cat, rabbit, bear,
+// raccoon) with its palette, age cues (young head, wrinkles, grey brows, glasses, hair, cap, clip), outfit and prop;
+// the seven legacy characters are specs too and draw exactly as before.
 // Every value comes from the pose (a pure function of the frame).
 import React from "react";
 import COMP from "./composition.json";
 import {RIG} from "./rig";
-import {BodySpec, bodyOf, FloorShadow, InkContext, inkFor, LEG_LOOKS, Legs, shoulderOf, torsoPath, useInk} from "./Body";
-import {ArmSpec, armsOf, backArms, browSet, CharPose, Cloud, Costume, FxLayer, INK, LOOKS, Mouth, MOUTH_IN, P, Phone2,
+import {BodySpec, FloorShadow, InkContext, inkFor, Legs, shoulderOf, torsoPath, useInk} from "./Body";
+import {ArmSpec, armsOf, backArms, browSet, CharPose, Costume, FxLayer, INK, Look, Mouth, MOUTH_IN, Phone2,
   Pt, shade, sideShade, SLEEVE, squashAt, TONGUE} from "./Character";
 import {DisguiseBehind, DisguiseHead, DisguiseNeck, DisguiseSide, DisguiseTorso, earHidden, earTransform, headset,
   hooded, legsOf, lookOf, maskArm, Pointer, slicked} from "./Disguise";
-import {CharacterId, Expression} from "./types";
+import {bodyOfSpec, specOf} from "./registry";
+import {blush, BodyProp, browGeom, cheekPath, Crescent, darkEars, earPath, earsOverHead, FaceMarkings, Hair, Hat, HEADS,
+  NOSE, omegaRest, Outfit, RoundGlasses, Tail, Whiskers} from "./Species";
+import {CharacterId, CharacterSpec, Expression, OutfitType, Species} from "./types";
 
 const A = COMP.animal;
 const T = A.earTip;
-const W = A.halfWidth;
 
-type Species = "dog" | "fox";
 export type Fur = {species: Species; fur: string; mask: string; earIn: string; brow: string; paw: string; pad: string;
   young: boolean; tip?: string};
 
-/** Fur palettes: muted, grown-up tones (no candy colours); the foxes' rust is dulled toward brown. */
-export const FURS: Record<CharacterId, Fur> = {
-  father: {species: "dog", fur: "#F0EBE1", mask: "#FFFDF8", earIn: "#D9C3B6", brow: "#9C968C", paw: "#F0EBE1",
-    pad: "#B89184", young: false},
-  mother: {species: "dog", fur: "#C69460", mask: "#F2E3C7", earIn: "#EAD4B4", brow: "#7E5832", paw: "#C69460",
-    pad: "#8E6448", young: false},
-  daughter: {species: "dog", fur: "#D7AC78", mask: "#F6E9D1", earIn: "#EFDABF", brow: "#8A6038", paw: "#D7AC78",
-    pad: "#93694C", young: true},
-  son: {species: "dog", fur: "#E7D8BE", mask: "#FBF6EC", earIn: "#DCC2AC", brow: "#7A6450", paw: "#E7D8BE",
-    pad: "#A68474", young: true},
-  scammer: {species: "fox", fur: "#A45E3A", mask: "#EEE2CF", earIn: "#E2CDB6", brow: "#4E2E1E", paw: "#3B2B24",
-    pad: "#5A463C", young: false, tip: "#3B2B24"},
-  // a silver-grey fox: at a glance not the rust scammer
-  fake_banker: {species: "fox", fur: "#A29C94", mask: "#F2EFEA", earIn: "#E2DCD4", brow: "#45403B", paw: "#3A3633",
-    pad: "#57514C", young: false, tip: "#3A3633"},
-  ad: {species: "fox", fur: "#BC7A4A", mask: "#F2E8D8", earIn: "#E8D4BE", brow: "#5A3622", paw: "#3B2B24",
-    pad: "#5A463C", young: false, tip: "#3B2B24"},
-};
+/** The fur of a registry spec (muted, grown-up palettes; see content/characters/README.md). */
+export const furOf = (S: CharacterSpec): Fur => ({species: S.species, fur: S.palette.fur, mask: S.palette.muzzle,
+  earIn: S.palette.innerEar, brow: S.palette.brow, paw: S.palette.paw, pad: S.palette.pad, young: Boolean(S.age?.young),
+  tip: S.palette.earTip ?? undefined});
 
-/* ------------------------------------------------------------------ head shapes */
+/** The clothes of a registry spec as the rig's Look (only top / inner / accent / age are read by the animal skin). */
+export const lookOfSpec = (S: CharacterSpec): Look => ({skin: S.palette.fur, hair: S.hair?.color ?? S.palette.fur,
+  brow: S.palette.brow, top: S.outfit.top, inner: S.outfit.inner, accent: S.outfit.accent, face: "round", build: 1,
+  age: Boolean(S.age?.wrinkles)});
 
-/** A superellipse head: `nTop`/`nBot` squareness above/below the centre, `pinch` narrows the lower half (the fox's
- * tapering muzzle). */
-const headPath = (cy: number, top: number, bottom: number, nTop: number, nBot: number, pinch: number) => {
-  const pts: [number, number][] = [];
-  for (let i = 0; i < 120; i++) {
-    const a = (i / 120) * Math.PI * 2;
-    const c = Math.cos(a);
-    const s = Math.sin(a);
-    const lower = s > 0;
-    const n = lower ? nBot : nTop;
-    let x = 158 * Math.sign(c) * Math.abs(c) ** (2 / n);
-    const y = cy + (lower ? bottom - cy : cy - top) * Math.sign(s) * Math.abs(s) ** (2 / n);
-    if (lower) x *= 1 - pinch * s ** 1.6;
-    pts.push([x, y]);
-  }
-  return P(pts);
-};
-const HEADS: Record<Species, string> = {
-  dog: headPath(-200, A.skullTop, A.jowl, 2.3, 2.75, 0.05),
-  fox: headPath(-204, A.skullTop + 4, A.jowl + 2, 2.4, 1.8, 0.4),
-};
-
-/** An ear (side s = -1 viewer's left, 1 right): base on the skull, tip at the rig's head top. */
-const earPath = (sp: Species, s: number, inner: boolean) => {
-  if (sp === "dog") {
-    return inner
-      ? `M ${s * 70} -306 C ${s * 82} -346 ${s * 102} -384 ${s * 118} -392 C ${s * 132} -386 ${s * 140} -340 ${s * 140} -288 Z`
-      : `M ${s * 40} -312 C ${s * 58} -360 ${s * 90} ${T + 14} ${s * 106} ${T + 3} Q ${s * 122} ${T - 4} ${s * 134} ${T + 8}
-        C ${s * 154} -350 ${s * 164} -320 ${s * 162} -262 Z`;
-  }
-  return inner
-    ? `M ${s * 62} -300 C ${s * 80} -344 ${s * 112} -384 ${s * 132} -390 C ${s * 148} -380 ${s * 156} -330 ${s * 154} -268 Z`
-    : `M ${s * 28} -306 C ${s * 54} -364 ${s * 110} ${T + 2} ${s * 134} ${T} C ${s * 164} ${T + 4} ${s * 182} -330 ${s * 176} -238 Z`;
-};
-
-/** The fox's cream cheek fur poking out at the sides (behind the face outline): two short points. */
-const cheekPath = (s: number) => `M ${s * 118} -186 Q ${s * 150} -160 ${s * (W - 18)} -142 Q ${s * 158} -132 ${s * 146}
-  -122 Q ${s * 166} -110 ${s * (W - 26)} -96 Q ${s * 132} -92 ${s * 100} -98 Z`;
-
-/** The fox's cream mask: lower cheeks and chin, with the rust bridge of the nose running down the middle. */
-const FOX_MASK = "M -190 -168 C -132 -176 -84 -160 -52 -134 C -34 -120 -22 -146 0 -150 C 22 -146 34 -120 52 -134 C 84 -160 132 -176 190 -168 L 190 0 L -190 0 Z";
-
-/** The Jindo muzzle: a pale snout from between the eyes down to the chin, wider at the mouth (a dog's long muzzle
- * seen from the front, not a bear's round button). */
-const MUZZLE = `M -30 ${A.muzzle.top} C -34 -150 -72 -138 -92 -116 C -${A.muzzle.halfWidth + 8} -96 -${A.muzzle.halfWidth} -50 -70 -40
-  C -40 ${A.muzzle.bottom + 4} 40 ${A.muzzle.bottom + 4} 70 -40 C ${A.muzzle.halfWidth} -50 ${A.muzzle.halfWidth + 8} -96 92 -116
-  C 72 -138 34 -150 30 ${A.muzzle.top} Q 0 ${A.muzzle.top - 8} -30 ${A.muzzle.top} Z`;
-
-/** The perm: a curly tuft between the ears (circles under one outline). */
-const PERM: [number, number, number][] = [[-78, -346, 34], [-40, -368, 37], [0, -374, 37], [40, -368, 37],
-  [78, -350, 34], [-20, -346, 36], [24, -346, 36]];
+/** The legacy outfits are the human rig's costume layers (Character.tsx Costume, keyed by the legacy id). */
+const LEGACY_OUTFIT: Partial<Record<OutfitType, string>> = {cardigan: "father", blouseCardigan: "mother",
+  officeLanyard: "daughter", hoodie: "son", darkHoodie: "scammer", suitBadge: "fake_banker", suit: "ad"};
 
 /* ------------------------------------------------------------------ paws and arms */
 
@@ -215,10 +161,11 @@ const PawArm: React.FC<{spec: ArmSpec; side: number; B: BodySpec; color: string;
  * An animal eye readable at bust size: a white (17% of the head height) with an ink outline heavier along the top lid
  * (a grown-up look, not a baby's button), a dark iris that follows `look`, two highlights. Expressions: a shrunken pupil
  * (shocked), a big wet iris (panicked), happy arcs (relieved, fakeKind), a straight lid (suspicious, smug: `fur` is the
- * lid's colour), blinks as a lid coming down.
+ * lid's colour), blinks as a lid coming down. `sleepy` (eye style of calm elders): the lid rests a little lower on the
+ * quiet faces (neutral, worried), never on the wide-eyed ones.
  */
 const AnimalEye: React.FC<{cx: number; cy: number; e: Expression; blink: number; look: [number, number]; far: number;
-  side: number; fur: string}> = ({cx, cy, e, blink, look, far, side, fur}) => {
+  side: number; fur: string; sleepy?: boolean}> = ({cx, cy, e, blink, look, far, side, fur, sleepy}) => {
   const {lw, ks} = useInk();
   const sx = 1 - 0.16 * far;
   const rx = A.eye.rx;
@@ -245,7 +192,8 @@ const AnimalEye: React.FC<{cx: number; cy: number; e: Expression; blink: number;
   const lx = look[0] * (rx - irx - 1);
   const ly = look[1] * (ry - iry - 2) + (e === "worried" ? -3 : 0);
   // the top lid: down a little for a blink in progress; straight and low for the sly looks
-  const lidY = sly ? (e === "smug" ? -4 : -8) : -ry - 2 + blink * 1.3 * ry;
+  const rest = sleepy && (e === "neutral" || e === "worried") ? -ry * 0.62 : -Infinity;
+  const lidY = sly ? (e === "smug" ? -4 : -8) : Math.max(rest, -ry - 2 + blink * 1.3 * ry);
   const tilt = e === "suspicious" ? -side * 5 : e === "smug" ? side * 4 : 0;
   const lidHalf = (y: number) => rx * Math.sqrt(Math.max(0, 1 - (y / ry) ** 2));
   const lid = lidY > -ry + 2 ? (
@@ -294,17 +242,17 @@ const FoxLid: React.FC<{cx: number; cy: number; e: Expression; side: number; fur
 
 /** Nose, the line under it, and the mouth: the ω of a resting dog; the shared talking mouths, a little larger on the
  * muzzle; a big shocked mouth (30-40% of the face wide, teeth and tongue); the fox's smug grin shows a fang. */
-const Snout: React.FC<{sp: Species; e: Expression; talking: boolean; v: number; dx: number}> = ({sp, e, talking, v,
-  dx}) => {
+const Snout: React.FC<{sp: Species; e: Expression; talking: boolean; v: number; dx: number; nose: string}> = ({sp, e,
+  talking, v, dx, nose}) => {
   const {lw, ks} = useInk();
   const nx = dx * 1.25;
   const mx = dx * 1.15;
-  const ny = sp === "dog" ? A.nose : A.nose + 8;
-  const nw = sp === "dog" ? 34 : 19;
-  const nh = sp === "dog" ? 28 : 19;
+  const ny = NOSE[sp].y;
+  const nw = NOSE[sp].w;
+  const nh = NOSE[sp].h;
   const st = {stroke: INK, strokeWidth: lw, strokeLinecap: "round" as const, strokeLinejoin: "round" as const,
     fill: "none"};
-  const omega = !talking && (e === "neutral" || (sp === "dog" && e === "suspicious"));
+  const omega = !talking && (e === "neutral" || (omegaRest(sp) && e === "suspicious"));
   const shocked = !talking && e === "shocked";
   const my = RIG.mouthY + 16;
   const sc = 1.22;
@@ -325,10 +273,16 @@ const Snout: React.FC<{sp: Species; e: Expression; talking: boolean; v: number; 
       </g>
     );
   } else if (omega) {
-    mouth = (
-      <path d={`M ${mx - 32} ${RIG.mouthY - 2} Q ${mx - 15} ${RIG.mouthY + 14} ${mx} ${RIG.mouthY - 6}
-        Q ${mx + 15} ${RIG.mouthY + 14} ${mx + 32} ${RIG.mouthY - 2}`} {...st} />
-    );
+    const w = <path d={`M ${mx - 32} ${RIG.mouthY - 2} Q ${mx - 15} ${RIG.mouthY + 14} ${mx} ${RIG.mouthY - 6}
+        Q ${mx + 15} ${RIG.mouthY + 14} ${mx + 32} ${RIG.mouthY - 2}`} {...st} />;
+    // the rabbit's two front teeth peek out under the ω
+    mouth = sp === "rabbit" ? (
+      <g>
+        {[-1, 1].map((s) => <rect key={s} x={mx + (s < 0 ? -12 : 1)} y={RIG.mouthY - 2} width={11} height={15} rx={2.5}
+          fill="#FFFDF8" stroke={INK} strokeWidth={3.5 * ks} />)}
+        {w}
+      </g>
+    ) : w;
   } else {
     mouth = (
       <g transform={`translate(${mx} ${my}) scale(${sc}) translate(${-mx} ${-my})`}>
@@ -348,7 +302,7 @@ const Snout: React.FC<{sp: Species; e: Expression; talking: boolean; v: number; 
       ) : null}
       <path d={`M ${nx - nw} ${ny - nh * 0.45} Q ${nx} ${ny - nh * 0.8} ${nx + nw} ${ny - nh * 0.45} Q ${nx + nw * 1.05}
         ${ny + nh * 0.2} ${nx} ${ny + nh * 0.6} Q ${nx - nw * 1.05} ${ny + nh * 0.2} ${nx - nw} ${ny - nh * 0.45} Z`}
-        fill="#2E2622" stroke={INK} strokeWidth={4 * ks} strokeLinejoin="round" />
+        fill={nose} stroke={INK} strokeWidth={4 * ks} strokeLinejoin="round" />
       <ellipse cx={nx - nw * 0.35} cy={ny - nh * 0.32} rx={nw * 0.3} ry={nh * 0.14} fill="#FFFFFF" opacity={0.55} />
     </g>
   );
@@ -363,16 +317,20 @@ const Snout: React.FC<{sp: Species; e: Expression; talking: boolean; v: number; 
 export const AnimalCharacter: React.FC<{pose: CharPose; uid: string; box?: {w: number; h: number}; frame: number;
   style?: React.CSSProperties}> = ({pose, uid, box = {w: 1080, h: 1920}, frame, style}) => {
   const p = pose;
-  const F = FURS[p.id];
+  // the registry spec (props, else the bundled content/characters file of this id)
+  const S = specOf(p.id, p.spec);
+  const F = furOf(S);
   const sp = F.species;
-  // the fox's disguise of the episode (Disguise.tsx); the dogs never wear one
+  // the fox's disguise of the episode (Disguise.tsx); the other species never wear one
   const cos = sp === "fox" ? p.costume : undefined;
-  // the ad presenter's suit is a shiny silver-blue here (the two foxes in suits must not look alike)
-  const L = cos ? lookOf(LOOKS[p.id], cos) : p.id === "ad" ? {...LOOKS.ad, top: "#6F7C92"} : LOOKS[p.id];
-  const B = bodyOf(p.id);
+  const L = cos ? lookOf(lookOfSpec(S), cos) : lookOfSpec(S);
+  const B = bodyOfSpec(S);
   const ink = inkFor(p.px ?? p.k);
   const {lw, ks} = ink;
-  const legs = cos ? legsOf(p.id, cos) : LEG_LOOKS[p.id];
+  const legs = legsOf({cloth: S.outfit.legs, shoe: S.outfit.shoes}, cos);
+  const usualHood = S.outfit.type === "darkHoodie";
+  const legacyOutfit = LEGACY_OUTFIT[S.outfit.type];
+  const nose = S.palette.nose ?? "#2E2622";
   const back = p.view === "back";
   const turn = Math.max(-1, Math.min(1, p.turn ?? 0));
   const dx = turn * 28;
@@ -401,6 +359,9 @@ export const AnimalCharacter: React.FC<{pose: CharPose; uid: string; box?: {w: n
   const earDx = -turn * 14;
   const kid = F.young ? A.kidHead : 1;
   const st = {stroke: INK, strokeWidth: lw, strokeLinejoin: "round" as const};
+  const bushy = Boolean(S.age?.greyBrows);
+  // the sly lid is the colour round the eye: the fur, or the raccoon dog's dark patch
+  const lidFur = sp === "raccoon" ? S.palette.marking ?? shade(F.fur, 0.45) : F.fur;
 
   const armEl = (side: "L" | "R") => {
     const a = arms[side];
@@ -409,9 +370,10 @@ export const AnimalCharacter: React.FC<{pose: CharPose; uid: string; box?: {w: n
   };
 
   /** One ear (outline, inner fur, dark tip); `tag` keeps the clip ids apart when an ear is drawn twice. */
+  const earFur = darkEars(sp) ? S.palette.marking ?? shade(F.fur, 0.45) : F.fur;
   const ear = (s: number, tag = "") => (
     <g>
-      <path d={earPath(sp, s, false)} fill={back ? furShade : F.fur} {...st} />
+      <path d={earPath(sp, s, false)} fill={back ? shade(earFur) : earFur} {...st} />
       {back ? null : <path d={earPath(sp, s, true)} fill={F.earIn} />}
       {F.tip ? (
         <g>
@@ -434,7 +396,7 @@ export const AnimalCharacter: React.FC<{pose: CharPose; uid: string; box?: {w: n
 
   const head = (
     <g transform={`translate(${p.shake ?? 0} 0) rotate(${tilt} 0 -60) translate(0 -30) scale(${kid}) translate(0 30)`}>
-      {hooded(p.id, cos) ? (
+      {hooded(usualHood, cos) ? (
         // the hood, down: a soft roll behind the neck
         <g>
           <path d="M -176 34 C -184 -24 -126 -66 0 -66 C 126 -66 184 -24 176 34 C 118 52 -118 52 -176 34 Z"
@@ -443,10 +405,11 @@ export const AnimalCharacter: React.FC<{pose: CharPose; uid: string; box?: {w: n
             opacity={0.6} />
         </g>
       ) : null}
-      {ears}
-      {/* cheek fur, behind the face outline */}
-      {!back && sp === "fox" ? [-1, 1].map((s) => (
-        <path key={s} d={cheekPath(s)} fill={F.mask} {...st} transform={`translate(${-turn * 10} 0)`} />
+      {earsOverHead(sp) ? null : ears}
+      {/* cheek fur, behind the face outline (the fox's cream points, the cat's and the raccoon dog's fluff) */}
+      {!back && cheekPath(sp, 1) ? [-1, 1].map((s) => (
+        <path key={s} d={cheekPath(sp, s) ?? ""} fill={sp === "fox" ? F.mask : sp === "raccoon" ? shade(F.fur, -0.12) : F.fur}
+          {...st} transform={`translate(${-turn * 10} 0)`} />
       )) : null}
       <defs>
         <clipPath id={faceId}><path d={headD} /></clipPath>
@@ -455,15 +418,8 @@ export const AnimalCharacter: React.FC<{pose: CharPose; uid: string; box?: {w: n
       <g clipPath={`url(#${faceId})`}>
         <path d={headD} fill={furShade} />
         <path d={headD} fill={F.fur} transform="translate(-14 -10)" />
-        {!back && sp === "fox" ? <path d={FOX_MASK} fill={F.mask} transform={`translate(${dx * 1.1} 0)`} /> : null}
-        {!back && sp === "dog" ? (
-          <path d={MUZZLE} transform={`translate(${dx * 1.15} 0)`} fill={F.mask} stroke={shade(F.fur, 0.2)}
-            strokeWidth={4.5 * ks} />
-        ) : null}
-        {!back && sp === "dog" ? [-1, 1].map((s) => (
-          // the pale "eyebrow" patches of a Jindo / 누렁이 (urajiro), above each eye
-          <ellipse key={s} cx={s * 64 + dx} cy={-250} rx={18} ry={10} fill={F.mask} opacity={p.id === "father" ? 0 : 0.65} />
-        )) : null}
+        {/* the species' face: the fox mask, the Jindo muzzle, whisker pads, eye patches (Species.tsx) */}
+        {!back ? <FaceMarkings sp={sp} S={S} dx={dx} /> : null}
         {p.glow && p.glow.amount > 0 ? (
           <g opacity={p.glow.amount}>
             <defs>
@@ -483,43 +439,36 @@ export const AnimalCharacter: React.FC<{pose: CharPose; uid: string; box?: {w: n
             opacity={0.28 * (p.monitor ?? 0)} transform="translate(-16 -6)" />
         ) : null}
       </g>
-      {p.id === "mother" ? (
-        <Cloud circles={PERM.map(([x, y, r]) => [x + dx * 0.4, y, r] as [number, number, number])} fill="#E9D7B6"
-          extra={(
-            <g stroke="#B99B72" strokeWidth={4 * ks} fill="none" strokeLinecap="round">
-              {PERM.slice(0, 5).map(([x, y], i) => <path key={i} d={`M ${x + dx * 0.4 - 12} ${y - 2} q 12 -12 24 0`} />)}
-            </g>
-          )} />
-      ) : null}
-      {p.id === "son" && !back ? (
-        <path d={`M ${-34 + dx * 0.4} -346 Q ${-22 + dx * 0.4} -384 ${-2 + dx * 0.4} -366 Q ${8 + dx * 0.4} -392
-          ${30 + dx * 0.4} -350`} fill={F.fur} {...st} />
-      ) : null}
+      {/* the lop ears hang over the sides of the head */}
+      {earsOverHead(sp) ? ears : null}
+      {/* hair on the crown: the perm, the forelock, a bun */}
+      <Hair S={S} dx={dx} back={back} />
       {!back ? (
         <g>
           {[-1, 1].map((s) => (
             <g key={s}>
               <AnimalEye cx={s * RIG.eyeDX + dx} cy={RIG.eyeY} e={e} blink={p.blink ?? 0} look={look}
-                far={Math.sign(turn) === s ? far : 0} side={s} fur={F.fur} />
-              {sp === "fox" ? <FoxLid cx={s * RIG.eyeDX + dx} cy={RIG.eyeY} e={e} side={s} fur={F.fur}
+                far={Math.sign(turn) === s ? far : 0} side={s} fur={lidFur} sleepy={S.eyes === "sleepy"} />
+              {S.eyes === "narrow" ? <FoxLid cx={s * RIG.eyeDX + dx} cy={RIG.eyeY} e={e} side={s} fur={F.fur}
                 blink={p.blink ?? 0} /> : null}
-              {p.id === "daughter" && e !== "relieved" && e !== "fakeKind" ? (
+              {S.eyes === "lash" && e !== "relieved" && e !== "fakeKind" ? (
                 <path d={`M ${s * RIG.eyeDX + dx + s * 20} ${RIG.eyeY - 24} l ${s * 14} -10`} stroke={INK}
                   strokeWidth={6 * ks} strokeLinecap="round" />
               ) : null}
             </g>
           ))}
-          {/* brows: short tufts for the dogs (the father's grey and bushy), thin for the foxes */}
+          {/* brows: short tufts (grey and bushy for the greyBrows elders), thin for the foxes */}
           {[-1, 1].map((s, i) => {
             const [inner, outer] = brows[i];
-            const xi = s * (sp === "dog" ? 38 : 32) + dx;
-            const xo = s * (sp === "dog" ? 88 : 94) + dx;
-            const w = p.id === "father" ? 17 : sp === "dog" ? 12 : 9;
+            const [bi, bo, bw] = browGeom(sp);
+            const xi = s * bi + dx;
+            const xo = s * bo + dx;
+            const w = bushy ? 17 : bw;
             return (
               <g key={s}>
                 <path d={`M ${xo} ${outer} Q ${(xi + xo) / 2} ${Math.min(inner, outer) - 9} ${xi} ${inner}`}
                   stroke={F.brow} strokeWidth={w} fill="none" strokeLinecap="round" />
-                {p.id === "father" ? <path d={`M ${xo - s * 6} ${outer - 4} l ${s * 12} -10 M ${(xi + xo) / 2} ${Math.min(inner, outer) - 10}
+                {bushy ? <path d={`M ${xo - s * 6} ${outer - 4} l ${s * 12} -10 M ${(xi + xo) / 2} ${Math.min(inner, outer) - 10}
                   l ${s * 4} -12`} stroke={F.brow} strokeWidth={6 * ks} strokeLinecap="round" /> : null}
               </g>
             );
@@ -528,11 +477,13 @@ export const AnimalCharacter: React.FC<{pose: CharPose; uid: string; box?: {w: n
             <path key={s} d={`M ${s * 96 + dx} -198 l ${s * 14} -6 M ${s * 96 + dx} -182 l ${s * 14} 5`}
               stroke={shade(F.fur, 0.3)} strokeWidth={3.5 * ks} strokeLinecap="round" />
           )) : null}
-          {/* a touch of warmth on the cheeks (the dogs only) */}
-          {sp === "dog" ? [-1, 1].map((s) => <ellipse key={s} cx={s * 108 + dx} cy={-124} rx={24} ry={12} fill="#E39A86"
+          {/* a touch of warmth on the cheeks (not the foxes, nor the dark bear) */}
+          {blush(sp) ? [-1, 1].map((s) => <ellipse key={s} cx={s * 108 + dx} cy={-124} rx={24} ry={12} fill="#E39A86"
             opacity={0.22} />) : null}
-          <Snout sp={sp} e={e} talking={Boolean(p.talking)} v={p.mouth ?? 0} dx={dx} />
-          {p.id === "father" ? (
+          <Whiskers sp={sp} dx={dx} />
+          <Snout sp={sp} e={e} talking={Boolean(p.talking)} v={p.mouth ?? 0} dx={dx} nose={nose} />
+          {S.glasses === "round" ? <RoundGlasses dx={dx} /> : null}
+          {S.glasses === "halfMoon" ? (
             // half-moon reading glasses on the bridge of the muzzle (the eyes look over them)
             <g transform={`translate(${dx * 1.15} 0)`}>
               {[-1, 1].map((s) => (
@@ -543,14 +494,14 @@ export const AnimalCharacter: React.FC<{pose: CharPose; uid: string; box?: {w: n
               <path d="M -98 -170 L -152 -186 M 98 -170 L 152 -186" stroke={INK} strokeWidth={4 * ks} />
             </g>
           ) : null}
-          {p.id === "daughter" ? (
-            // a slate hair clip at the base of the right ear
+          {S.clip ? (
+            // a hair clip at the base of the right ear
             <g transform={`translate(${96 + earDx} -318) rotate(-28)`}>
-              <rect x={-30} y={-11} width={60} height={22} rx={11} fill="#5B6B7D" stroke={INK} strokeWidth={4.5 * ks} />
+              <rect x={-30} y={-11} width={60} height={22} rx={11} fill={S.clip} stroke={INK} strokeWidth={4.5 * ks} />
               <circle cx={-12} cy={0} r={4} fill="#DCE3EA" />
             </g>
           ) : null}
-          {slicked(p.id, cos) ? (
+          {slicked(S.hair?.style === "slicked", cos) ? (
             // slicked forehead fur with a side part
             <g>
               <path d={`M ${-96 + dx * 0.5} -300 C ${-50 + dx * 0.5} -340 ${30 + dx * 0.5} -346 ${96 + dx * 0.5} -318`}
@@ -566,7 +517,9 @@ export const AnimalCharacter: React.FC<{pose: CharPose; uid: string; box?: {w: n
           ) : null}
         </g>
       ) : null}
-      {headset(p.id, cos) ? (
+      {/* a plain cap over the crown, the ears beside it */}
+      {cos ? null : <Hat S={S} dx={dx} back={back} />}
+      {headset(S.prop === "headset", cos) ? (
         // headset: the band over the head between the ears, an ear cup, the mic boom to the mouth
         <g>
           <path d="M -170 -232 C -164 -382 164 -382 170 -232" stroke={INK} strokeWidth={22} fill="none" strokeLinecap="round" />
@@ -595,27 +548,24 @@ export const AnimalCharacter: React.FC<{pose: CharPose; uid: string; box?: {w: n
       filter: [rimCss, style?.filter].filter(Boolean).join(" ") || undefined}}>
       <g transform={`translate(${p.x} ${p.y}) scale(${p.k}) rotate(${p.lean ?? 0} 0 ${B.sole})`}>
         <FloorShadow B={B} uid={uid} />
-        {sp === "fox" && p.tail ? (
-          // the brush: a bushy tail out to the viewer's left behind the legs, a pale tip. Only where the feet show
-          // (pose.tail: the lineup); in the stagings a desk hides it, and it made the caller shots render ~4x slower
-          <g transform={`translate(${-B.hip + 20} ${B.crotch - 10}) rotate(${back ? 10 : -6})`}>
-            <path d="M 20 -30 C -60 -40 -150 10 -170 110 C -176 150 -150 176 -120 160 C -96 120 -40 60 30 30 Z"
-              fill={F.fur} {...st} />
-            <path d="M -170 110 C -176 150 -150 176 -120 160 C -120 140 -128 120 -150 96 Z" fill={F.mask} {...st} />
-          </g>
-        ) : null}
+        {/* the tail behind the legs (the fox's brush etc., Species.tsx). Only where the feet show (pose.tail: the
+            lineups); in the stagings a desk hides it, and it made the caller shots render ~4x slower */}
+        {p.tail ? <Tail S={S} B={B} back={back} /> : null}
         <Legs B={B} cloth={legs.cloth} legFill={F.fur} feet="paws" foot={F.paw} back={back} />
         {/* the upper body squashes and breathes over the hem; the legs stay planted */}
         <g transform={squashAt(B, squash, breathe)}>
           <DisguiseBehind cos={cos} F={F} back={back} />
           {/* neck (fur) */}
           <rect x={-46} y={-80} width={92} height={96} rx={24} fill={furShade} stroke={INK} strokeWidth={lw} />
+          {back ? null : <Crescent S={S} />}
           <defs><clipPath id={torsoId}><path d={torsoPath(B)} /></clipPath></defs>
           <path d={torsoPath(B)} fill={L.top} stroke={INK} strokeWidth={lw} strokeLinejoin="round" />
           <g clipPath={`url(#${torsoId})`}>
-            {cos ? <DisguiseTorso cos={cos} id={p.id} L={L} B={B} back={back} uid={uid} />
-              : <Costume id={p.id} L={L} B={B} back={back} uid={uid} />}
-            {p.id === "ad" && !cos && !back ? (
+            {cos ? <DisguiseTorso cos={cos} id={p.id as CharacterId} L={L} B={B} back={back} uid={uid} />
+              : legacyOutfit ? <Costume id={legacyOutfit as CharacterId} L={L} B={B} back={back} uid={uid} />
+              : <Outfit S={S} L={L} B={B} back={back} />}
+            {cos ? null : <BodyProp S={S} back={back} />}
+            {S.outfit.sheen && !cos && !back ? (
               // the shiny suit: two sheen streaks across the shoulders
               <g stroke="#FFFFFF" strokeLinecap="round" fill="none">
                 <path d={`M ${-B.w + 4} 120 L ${-B.w + 120} 46`} strokeWidth={14} opacity={0.32} />

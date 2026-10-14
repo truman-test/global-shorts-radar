@@ -13,7 +13,7 @@ import {BodySpec, bodyOf, FloorShadow, INK, InkContext, inkFor, LEG_LOOKS, Legs,
   useInk} from "./Body";
 import {FONT} from "./fonts";
 import {RIG} from "./rig";
-import {CharacterId, CostumeId, Expression, Gesture} from "./types";
+import {CharacterId, CharacterSpec, CostumeId, Expression, Gesture} from "./types";
 
 export {INK};
 export const MOUTH_IN = "#5A2C2E";
@@ -24,7 +24,7 @@ export type Fx = "sweat" | "sweat2" | "shockLines" | "blush" | "tears" | "questi
   | "vein";
 
 export type CharPose = {
-  id: CharacterId;
+  id: string; // a registry id (content/characters); the human skin draws the legacy CharacterIds only
   x: number; // neck base, in the svg's coordinates
   y: number;
   k: number; // scale (local unit -> svg px)
@@ -54,7 +54,8 @@ export type CharPose = {
   screen?: {bg: string; rows: string[]}; // the phone's screen when we can see it (back view)
   silhouette?: boolean; // the scammer's faceless hood
   monitor?: number; // 0..1 teal monitor light on the scammer's jaw and chest
-  tail?: boolean; // animal skin: draw the fox's tail (full figures only)
+  tail?: boolean; // animal skin: draw the tail (full figures only)
+  spec?: CharacterSpec; // animal skin: the registry spec (props); none = the bundled registry file of `id`
   costume?: CostumeId; // animal skin: the caller's disguise (Disguise.tsx); none = the character's usual look
   light?: string; // the key light's colour on the caller's jaw and chest (villain set; default the monitor teal)
 };
@@ -766,8 +767,10 @@ export const sideShade = (B: BodySpec) => `M ${B.sh - 30} 40 C ${B.w + 6} 96 ${B
 export const Character: React.FC<{pose: CharPose; uid: string; box?: {w: number; h: number}; frame: number;
   style?: React.CSSProperties}> = ({pose, uid, box = {w: 1080, h: 1920}, frame, style}) => {
   const p = pose;
-  const L = LOOKS[p.id];
-  const B = bodyOf(p.id);
+  // the human skin: the legacy cast only (Actor.tsx sends every other registry character to the animal skin)
+  const hid = (p.id in LOOKS ? p.id : "father") as CharacterId;
+  const L = LOOKS[hid];
+  const B = bodyOf(hid);
   const ink = inkFor(p.px ?? p.k);
   const {lw, ks} = ink;
   const back = p.view === "back";
@@ -784,7 +787,7 @@ export const Character: React.FC<{pose: CharPose; uid: string; box?: {w: number;
   const breathe = 1 + 0.012 * (p.breathe ?? 0);
   const squash = p.squash ?? 1;
   const tilt = (p.tilt ?? 0) + (p.nod ?? 0);
-  const legs = LEG_LOOKS[p.id];
+  const legs = LEG_LOOKS[hid];
   // rim light on dark stages: the silhouette grown by rimWidth px in the rim colour, as four hard CSS drop shadows
   // (a third of the cost of an SVG feMorphology dilate over a full-frame region)
   const rimPx = p.rim ? p.rimWidth ?? 7 : 0;
@@ -805,7 +808,7 @@ export const Character: React.FC<{pose: CharPose; uid: string; box?: {w: number;
 
   const head = (
     <g transform={`translate(${p.shake ?? 0} 0) rotate(${tilt} 0 -60)`}>
-      {back ? null : <HairBack id={p.id} L={L} back={false} />}
+      {back ? null : <HairBack id={hid} L={L} back={false} />}
       {/* ears (behind the face; the far one tucks in when the face turns) */}
       {!silhouette ? [-1, 1].map((s) => (
         <g key={s} transform={`translate(${s * 158 - turn * 22} -192)`}>
@@ -847,7 +850,7 @@ export const Character: React.FC<{pose: CharPose; uid: string; box?: {w: number;
             transform="translate(-16 -6)" />
         ) : null}
       </g>
-      {back ? <HairBack id={p.id} L={L} back /> : null}
+      {back ? <HairBack id={hid} L={L} back /> : null}
       {!back ? (
         <g>
           {silhouette ? (
@@ -902,7 +905,7 @@ export const Character: React.FC<{pose: CharPose; uid: string; box?: {w: number;
           ) : null}
         </g>
       ) : null}
-      <HairFront id={p.id} L={L} dx={dx} back={back} />
+      <HairFront id={hid} L={L} dx={dx} back={back} />
       {p.id === "scammer" ? (
         // headset: band over the hood, ear cup on the near side, the mic boom to the mouth
         <g>
@@ -937,7 +940,7 @@ export const Character: React.FC<{pose: CharPose; uid: string; box?: {w: number;
           <defs><clipPath id={torsoId}><path d={torsoPath(B)} /></clipPath></defs>
           <path d={torsoPath(B)} fill={L.top} stroke={INK} strokeWidth={lw} strokeLinejoin="round" />
           <g clipPath={`url(#${torsoId})`}>
-            <Costume id={p.id} L={L} B={B} back={back} uid={uid} />
+            <Costume id={hid} L={L} B={B} back={back} uid={uid} />
             <path d={sideShade(B)} fill="#000" opacity={0.12} />
             {silhouette && (p.monitor ?? 0) > 0 ? (
               <ellipse cx={240} cy={160} rx={160} ry={260} fill={p.light ?? L.accent} opacity={0.16 * (p.monitor ?? 0)} />

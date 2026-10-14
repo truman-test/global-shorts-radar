@@ -20,7 +20,8 @@ import {FocusLines, ForegroundProp, HomeSet, HomeVariant, PropKind, SetMode, VIL
 import {POSTER_PROPS, PosterPropView} from "./Props";
 import {FONT} from "./fonts";
 import {DRAMA, isLight, NOTE, TONES, useTheme} from "./themes";
-import {CastMember, CharacterId, Expression, Gesture, SceneProps, Staging, VillainSet} from "./types";
+import {CastMember, Expression, Gesture, SceneProps, Staging, VillainSet} from "./types";
+import {memberSpec} from "./registry";
 
 const RIM = "#EEE8DE";
 /** The opening scene keeps its first shot (the victim's face, the poster) this long; watch_ad cuts to the TV sooner
@@ -68,7 +69,7 @@ type PoseOpts = {gesture?: Gesture; look?: [number, number]; force?: Expression;
 
 /** A character's pose at this moment: the spot of the shot + the acting (rig.actingAt) + idle life. */
 const poseOf = (c: Ctx, spot: CharSpot, id: string | undefined, who: Who, o: PoseOpts = {}): CharPose => {
-  const character: CharacterId = (id ? c.cast[id]?.character : undefined) ?? (who === "presenter" ? "ad" : "father");
+  const character: string = (id ? c.cast[id]?.character : undefined) ?? (who === "presenter" ? "ad" : "father");
   const base = (o.gesture ?? spot.gestures[0] ?? "rest") as Gesture;
   const act = actingAt(c.scene, c.cast, id, who, c.staging, c.msA, base);
   const exprAt = (ms: number) => o.force ?? actingAt(c.scene, c.cast, id, who, c.staging, ms, base).expr;
@@ -94,7 +95,8 @@ const poseOf = (c: Ctx, spot: CharSpot, id: string | undefined, who: Who, o: Pos
     : ended ? 3.5 * Math.sin((Math.PI * (c.msA - ended.endMs)) / 320) : 0;
   const idle = o.noIdle ? 0 : 1.5 * Math.sin(2 * Math.PI * 0.2 * t + seed);
   return {
-    id: character, x: spot.x + (o.dx ?? 0), y: neckY(spot.eyeY, spot.k) + (o.dy ?? 0), k: spot.k, px: o.px,
+    id: character, spec: id ? memberSpec(c.cast[id]) : undefined, x: spot.x + (o.dx ?? 0),
+    y: neckY(spot.eyeY, spot.k) + (o.dy ?? 0), k: spot.k, px: o.px,
     view: spot.view === "back" ? "back" : "front", turn: spot.turn ?? 0, tilt: (o.tilt ?? 0) + idle, nod,
     breathe: o.noIdle ? 0 : Math.sin(2 * Math.PI * 0.25 * t + seed), expr, mouth: act.mouth, talking: act.talking,
     look: o.look ?? [0, 0], blink: blinkAt(c.frameA, seed, c.fps),
@@ -181,7 +183,7 @@ const CallerWindow: React.FC<{c: Ctx; box: {x: number; y: number; w: number; h: 
   const enter = c.index === 0 ? 1 : spr(c.frame, 3, 12, 0.04);
   const s = box.scale * (0.94 + 0.06 * w) * (0.7 + 0.3 * enter);
   const spot = {...SPEC.pip_call.windowChar, who: "caller" as Who, gestures: ["rest"], turn: -0.25};
-  const fake = id ? c.cast[id]?.character === "fake_banker" : false;
+  const fake = Boolean(memberSpec(id ? c.cast[id] : undefined)?.acting?.halfShadow);
   const pose = poseOf(c, spot, id, "caller", {look: [-0.6, 0.1], rim: VILLAIN[c.villain].rim, monitor: 1,
     shadowHalf: fake ? 1 : 0, px: spot.k * s});
   const level = id ? (c.scene.lines ?? []).reduce((m, l) => (l.speaker === id ? Math.max(m, lineLevel(l, c.ms)) : m), 0) : 0;
@@ -232,7 +234,7 @@ const TwistShot: React.FC<{c: Ctx; variant: HomeVariant}> = ({c, variant}) => {
   const zoom = 0.965 + 0.035 * Math.min(1, spr(cut, 0, 8, 0.02));
   // the close-up goes to whoever the twist is about: the victim by default, the fox when the scam fails
   const id = c.scene.twist?.on && c.cast[c.scene.twist.on] ? c.scene.twist.on : c.victim;
-  const isCallerId = isCaller(c.cast[id ?? ""]?.character);
+  const isCallerId = isCaller(c.cast[id ?? ""]);
   const face = (c.scene.twist?.face ?? "shocked") as Expression;
   const shocked = face === "shocked" || face === "panicked";
   const pose = poseOf(c, spot, id, isCallerId ? "caller" : "victim", {force: face,
@@ -290,7 +292,7 @@ const AsideShot: React.FC<{c: Ctx; zoom: number; startMs: number}> = ({c, zoom, 
   const inner = (c.scene.lines ?? []).filter((l) => isInner(c.cast, l.speaker));
   const line = [...inner].reverse().find((l) => l.startMs <= c.msA + 1) ?? inner[0];
   const id = line?.speaker;
-  const caller = isCaller(id ? c.cast[id]?.character : undefined);
+  const caller = isCaller(id ? c.cast[id] : undefined);
   const who: Who = caller ? "caller" : "victim";
   const spot = {...(ASIDE.chars[0] as CharSpot), who};
   const pose = poseOf(c, spot, id, who, {look: [0, 0], gesture: "rest", rim: caller ? VILLAIN[c.villain].rim : undefined,
@@ -327,7 +329,7 @@ const PipCall: React.FC<{c: Ctx; shot: string; zoom: number}> = ({c, shot, zoom}
   if (shot === "other") return <Solo c={c} shot="other" zoom={zoom} variant={roomOf(c, "living")} />;
   if (shot === "caller") {
     const spot = spec.chars[0];
-    const fake = c.caller ? c.cast[c.caller]?.character === "fake_banker" : false;
+    const fake = Boolean(memberSpec(c.caller ? c.cast[c.caller] : undefined)?.acting?.halfShadow);
     const pose = poseOf(c, spot, c.caller, "caller", {look: [-0.3, 0.2], rim: VILLAIN[c.villain].rim, monitor: 1,
       shadowHalf: fake ? 1 : 0});
     return (
@@ -369,7 +371,7 @@ const SplitCall: React.FC<{c: Ctx; zoom: number}> = ({c, zoom}) => {
   const [top, bottom] = spec.chars;
   const border = SPEC.split_call.border;
   const dy = Math.tan((border.tilt * Math.PI) / 180) * 540;
-  const fake = c.caller ? c.cast[c.caller]?.character === "fake_banker" : false;
+  const fake = Boolean(memberSpec(c.caller ? c.cast[c.caller] : undefined)?.acting?.halfShadow);
   const callerPose = poseOf(c, top, c.caller, "caller", {look: [0, 0.2], rim: VILLAIN[c.villain].rim, monitor: 1,
     shadowHalf: fake ? 1 : 0});
   const victimPose = poseOf(c, bottom, c.victim, "victim", {gesture: "phoneEar", look: [0.4, -0.6]});
@@ -408,7 +410,7 @@ const Solo: React.FC<{c: Ctx; shot: string; zoom: number; variant?: HomeVariant}
   const soloSpec = shotSpec("solo", shot) as {chars: CharSpot[]; prop?: {kind: string; top: number}};
   const spot = soloSpec.chars[0];
   if (shot === "caller") {
-    const fake = c.caller ? c.cast[c.caller]?.character === "fake_banker" : false;
+    const fake = Boolean(memberSpec(c.caller ? c.cast[c.caller] : undefined)?.acting?.halfShadow);
     const pose = poseOf(c, spot, c.caller, "caller", {rim: VILLAIN[c.villain].rim, monitor: 1, shadowHalf: fake ? 1 : 0,
       look: [-0.2, 0.1]});
     return (

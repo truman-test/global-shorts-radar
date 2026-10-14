@@ -160,7 +160,9 @@ def test_inner_voice_is_a_second_voice_of_the_same_character():
     # an aside-only scene is staged solo (the character alone), a call with an aside stays a pip_call
     assert default_staging(s.scenes[2], cast) == "solo" and default_staging(s.scenes[0], cast) == "pip_call"
     props = cast_props(s)
-    assert props["fox_inner"] == {"label": "여우 속마음", "role": "inner", "character": "scammer"}
+    assert {k: v for k, v in props["fox_inner"].items() if k != "spec"} == {"label": "여우 속마음", "role": "inner",
+                                                                           "character": "scammer"}
+    assert props["fox_inner"]["spec"]["id"] == "scammer"   # the resolved registry spec (no network at render time)
 
 
 def test_the_renderer_plays_inner_lines_as_an_aside():

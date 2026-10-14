@@ -34,9 +34,46 @@ export type Staging = "pip_call" | "split_call" | "solo" | "over_shoulder_chat" 
   | "dochi_explains";
 
 /** A cast member as the renderer needs it: the chip label ("" = no chip), its role and mockup side, and the
- * character rig that plays it (none = voice only). */
-export type CastMember = {label: string; role: SpeakerRole; side?: "me" | "them"; character?: CharacterId;
-  costume?: CostumeId};
+ * character that plays it (none = voice only): a registry id (content/characters; the legacy CharacterIds among
+ * them) and its resolved spec, put in by Python (registry.ts falls back to the bundled file when it is missing). */
+export type CastMember = {label: string; role: SpeakerRole; side?: "me" | "them"; character?: string;
+  costume?: CostumeId; spec?: CharacterSpec};
+
+/** Species templates of the animal skin (composition.json "species", Species.tsx). The hedgehog is 도치's only
+ * (Mascot.tsx), never a cast species. */
+export type Species = "dog" | "fox" | "cat" | "rabbit" | "bear" | "raccoon";
+
+/** What the story uses a registry character for (composition.json "roleKinds"): family = the people the story
+ * follows (the victim and family members), caller = the scam side (call window, villain sets, the fox's costumes),
+ * other = a bystander / helper who stands beside the victim, presenter = the TV ad voice (watch_ad). */
+export type RoleKind = "family" | "caller" | "other" | "presenter";
+
+/** Outfits over the short torso (composition.json "outfits"): the legacy seven, then the generic new ones. */
+export type OutfitType = "cardigan" | "blouseCardigan" | "officeLanyard" | "hoodie" | "darkHoodie" | "suitBadge" | "suit"
+  | "workJacket" | "vest" | "knit";
+
+/** The one prop that says who a character is (composition.json "characterProps"), drawn on the body or head. */
+export type CharacterProp = "none" | "headset" | "whistle" | "nameTag" | "brooch" | "pen";
+
+/** A registry character (content/characters/<id>.json; the schema is documented in its README.md). */
+export type CharacterSpec = {
+  id: string; label: string; species: Species; role_kind: RoleKind; voice?: string; legacy?: boolean;
+  body: {height: "elder" | "adult" | "tall"; build: "slim" | "regular" | "broad"; pin?: string};
+  palette: {fur: string; muzzle: string; innerEar: string; brow: string; paw: string; pad: string;
+    earTip?: string | null; nose?: string; marking?: string | null};
+  markings?: "none" | "urajiro" | "tabby" | "patch";
+  age?: {young?: boolean; wrinkles?: boolean; greyBrows?: boolean};
+  eyes?: "round" | "narrow" | "lash" | "sleepy";
+  hair?: {style: "none" | "perm" | "forelock" | "slicked" | "bun"; color?: string; shade?: string};
+  glasses?: "none" | "halfMoon" | "round";
+  hat?: {style: "cap"; color: string} | null;
+  clip?: string | null;
+  outfit: {type: OutfitType; top: string; inner: string; accent: string; legs: string; shoes: string; skirt?: boolean;
+    sheen?: boolean};
+  prop?: CharacterProp;
+  acting?: {habit?: Expression | null; halfShadow?: boolean};
+  notes?: string;
+};
 
 /** The fox's disguise per scam (script cast "costume", callers only; composition.json "costumes"): the same fox under
  * a different outfit, and the disguise never quite hides him (an ear through the hat, a crooked moustache, the tail).
