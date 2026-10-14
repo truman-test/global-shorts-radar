@@ -35,3 +35,10 @@ Craft rules:
 Save as content/scripts/<yyyy-mm-dd>-<slug>.json, run `PYTHONUTF8=1 ./.venv/Scripts/radar.exe script-check <file>
 --allow-unverified` until no errors/warnings. Never run `radar verify`. Report: file, hook line, title, estimate, and
 which details are dramatized vs sourced.
+
+Update 2026-10-14 (orchestrator, owner decision): the cast is created per story, not fixed. Write the people the story
+needs (age, job, relationship, personality) in the script's cast notes; reuse a registry character from
+content/characters/ only when it truly fits, otherwise ask for a new one — the character-designer agent designs it and
+returns the cast entries. The fox villain with a scam-specific disguise (cast `costume`, script `villain_set`) stays
+the default scammer. Since 2026-10-11 the skit format applies: no lecture/checklist scenes; the safe action is the move
+that beats the scammer (see reports/근본검토_결정.md).
