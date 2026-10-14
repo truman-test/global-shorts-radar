@@ -1,0 +1,22 @@
+{
+  "id": "rabbit_teller",
+  "label": "창구 직원",
+  "species": "rabbit",
+  "role_kind": "other",
+  "voice": "F4",
+  "body": {"height": "adult", "build": "slim"},
+  "palette": {"fur": "#C4B5A5", "muzzle": "#F3EDE4", "innerEar": "#E3CFC6", "brow": "#7E6E62", "paw": "#C4B5A5",
+    "pad": "#9C8478", "earTip": null, "nose": "#A07A72", "marking": null},
+  "markings": "none",
+  "age": {"young": true, "wrinkles": false, "greyBrows": false},
+  "eyes": "round",
+  "hair": {"style": "none"},
+  "glasses": "round",
+  "hat": null,
+  "clip": null,
+  "outfit": {"type": "vest", "top": "#E9E4DA", "inner": "#5F7F86", "accent": "#5C6B5A", "legs": "#4A5248",
+    "shoes": "#2F2A28", "skirt": false, "sheen": false},
+  "prop": "nameTag",
+  "acting": {"habit": null, "halfShadow": false},
+  "notes": "은행 창구 직원 토끼(처진 귀). 얇은 동그란 안경, 블라우스 위 올리브 조끼와 청록 스카프, 이름 없는 명찰. 가짜 은행원 여우(남색 정장·각진 안경·사원증)와 실루엣·색이 겹치지 않게 함. 특정 은행 유니폼·로고 없음. 피해자를 돕는 '진짜' 쪽(role_kind other)."
+}

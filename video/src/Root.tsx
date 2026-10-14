@@ -5,6 +5,7 @@ import type {ShortProps} from "./types";
 import {CELL, FULL, Lineup, LineupProps} from "./Lineup";
 import {BANNER, ChannelBanner, ChannelBannerProps, ChannelProfile, ChannelProfileProps} from "./ChannelArt";
 import {VillainLineup, VillainLineupProps, villainLineupSize} from "./Villains";
+import {CharacterSheet, CharacterSheetProps, sheetSize} from "./CharacterSheet";
 
 export const FPS = 30;
 
@@ -73,6 +74,10 @@ export const RemotionRoot: React.FC = () => (
       defaultProps={{subject: "mother", bg: "yellow"} as ChannelProfileProps} />
     <Composition id="ChannelBanner" component={ChannelBanner} width={BANNER.w} height={BANNER.h} fps={FPS}
       durationInFrames={1} defaultProps={{types: true} as ChannelBannerProps} />
+    {/* review sheet of the character registry (content/characters): every character or a list of ids, three faces
+        and the whole figure each (the character designer's check), never rendered by the pipeline */}
+    <Composition id="CharacterSheet" component={CharacterSheet} width={sheetSize({}).width} height={sheetSize({}).height}
+      fps={FPS} durationInFrames={1} defaultProps={{} as CharacterSheetProps} calculateMetadata={({props}) => sheetSize(props)} />
     {/* review sheet of the fox's disguises / the caller's rooms, never rendered by the pipeline */}
     <Composition
       id="VillainLineup"

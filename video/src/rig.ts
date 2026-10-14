@@ -3,6 +3,7 @@
 // of state between frames, so any frame renders on its own (stills, the poster tail, parallel render workers).
 import COMP from "./composition.json";
 import {activeLine} from "./dialogue";
+import {kindOf, memberSpec} from "./registry";
 import {CastMember, CaptionPage, CharacterId, CostumeId, Expression, Gesture, SceneProps, SpokenLine, Staging} from "./types";
 
 export const RIG = COMP.rig;
@@ -101,26 +102,29 @@ export const mouthAt = (pages: CaptionPage[], speaker: string, ms: number): numb
 
 /* ------------------------------------------------------------------ cast and staging */
 
-export const characterOf = (cast: Record<string, CastMember>, speaker?: string): CharacterId | undefined =>
+export const characterOf = (cast: Record<string, CastMember>, speaker?: string): string | undefined =>
   speaker ? cast[speaker]?.character : undefined;
 
-const FAMILY = new Set<string>(COMP.family);
-const CALLERS = new Set<string>(COMP.callers);
-export const isFamily = (c?: CharacterId) => Boolean(c && FAMILY.has(c));
-export const isCaller = (c?: CharacterId) => Boolean(c && CALLERS.has(c));
+/** The kind of a cast member (registry role_kind, registry.ts): the rules below read the kind, never the id, so a
+ * character made for one story (content/characters) plays the same stagings as the legacy cast. */
+export const isFamily = (m?: CastMember) => kindOf(m) === "family";
+export const isCaller = (m?: CastMember) => kindOf(m) === "caller";
+/** A bystander / helper (role_kind other) or a family member: who can stand in the "other" spot beside the victim. */
+export const isOther = (m?: CastMember) => kindOf(m) === "family" || kindOf(m) === "other";
+export const isPresenter = (m?: CastMember) => kindOf(m) === "presenter";
 
 /** The victim: the cast member with role victim and a family character (else the first family character). */
 export const victimOf = (cast: Record<string, CastMember>): string | undefined => {
   const ids = Object.keys(cast).filter((k) => cast[k].role !== "inner");
-  return ids.find((k) => cast[k].role === "victim" && isFamily(cast[k].character))
-    ?? ids.find((k) => isFamily(cast[k].character));
+  return ids.find((k) => cast[k].role === "victim" && isFamily(cast[k]))
+    ?? ids.find((k) => isFamily(cast[k]));
 };
 
 /** The caller (scammer / fake banker) of a scene: a speaker of its lines with a caller character, else any. */
 export const callerOf = (scene: SceneProps, cast: Record<string, CastMember>): string | undefined => {
   const speakers = (scene.lines ?? []).map((l) => l.speaker).filter((s) => !isInner(cast, s));
-  return speakers.find((s) => isCaller(cast[s]?.character))
-    ?? Object.keys(cast).find((k) => isCaller(cast[k].character) && !isInner(cast, k));
+  return speakers.find((s) => isCaller(cast[s]))
+    ?? Object.keys(cast).find((k) => isCaller(cast[k]) && !isInner(cast, k));
 };
 
 /** A cast member who is a character's inner voice (role inner, 속마음): played as an aside to the camera. */
@@ -135,14 +139,15 @@ export const costumeOf = (cast: Record<string, CastMember>, id?: string): Costum
   return Object.values(cast).find((o) => o.role !== "inner" && o.character === m.character && o.costume)?.costume;
 };
 
-/** Another family member who speaks in this scene (the daughter of "엄마, 누르지 마!"); never an inner voice. */
+/** Another family member (or a bystander / helper, role_kind other) who speaks in this scene (the daughter of "엄마,
+ * 누르지 마!", a bank clerk); never an inner voice. */
 export const otherOf = (scene: SceneProps, cast: Record<string, CastMember>, victim?: string): string | undefined =>
-  (scene.lines ?? []).map((l) => l.speaker).find((s) => s !== victim && isFamily(cast[s]?.character)
+  (scene.lines ?? []).map((l) => l.speaker).find((s) => s !== victim && isOther(cast[s])
     && !isInner(cast, s));
 
 /** The ad's voice (watch_ad): a speaker drawn as the presenter on the TV. */
 export const adOf = (scene: SceneProps, cast: Record<string, CastMember>): string | undefined =>
-  (scene.lines ?? []).map((l) => l.speaker).find((s) => cast[s]?.character === "ad");
+  (scene.lines ?? []).map((l) => l.speaker).find((s) => isPresenter(cast[s]));
 
 /**
  * The staging of a scene: its own (Python passes it, defaulted from the layout), else the same default here so plain
@@ -158,7 +163,7 @@ export const stagingOf = (scene: SceneProps, cast: Record<string, CastMember>): 
   if (lines.every((l) => isInner(cast, l.speaker))) return "solo";
   if (scene.layout === "call") return "pip_call";
   if (scene.layout === "chat" || scene.layout === "sms") return "over_shoulder_chat";
-  if (scene.layout === "card" && lines.some((l) => cast[l.speaker]?.character === "ad")) return "watch_ad";
+  if (scene.layout === "card" && lines.some((l) => isPresenter(cast[l.speaker]))) return "watch_ad";
   return undefined;
 };
 
@@ -377,18 +382,18 @@ export type Acting = {expr: Expression; gesture: Gesture; talking: boolean; mout
 /** The face a line is spoken with: the script's note, else the character's habit, else from the punctuation. */
 export const lineFace = (line: SpokenLine, member?: CastMember): Expression => {
   if (line.face) return line.face;
-  const c = member?.character;
-  if (c === "scammer") return "smug";
-  if (c === "fake_banker" || c === "ad") return "fakeKind";
+  // the character's habit (registry acting.habit: the scammer smug, the fake banker and the ad presenter fakeKind)
+  const habit = memberSpec(member)?.acting?.habit;
+  if (habit) return habit;
   if (line.text.includes("!")) return "shocked";
   if (line.text.includes("?")) return "suspicious";
   return "neutral";
 };
 
 /** How a character listens when it is not talking (before its first line of the scene). */
-const restingFace = (who: Who, staging: Staging, c?: CharacterId): Expression => {
-  if (c === "scammer") return "smug";
-  if (c === "fake_banker" || c === "ad") return "fakeKind";
+const restingFace = (who: Who, staging: Staging, member?: CastMember): Expression => {
+  const habit = memberSpec(member)?.acting?.habit;
+  if (habit) return habit;
   if (who === "victim" && (staging === "pip_call" || staging === "split_call")) return "worried";
   if (who === "victim" && staging === "watch_ad") return "excited"; // the lure: sparkle in the eyes
   return "neutral";
@@ -403,14 +408,13 @@ export const actingAt = (scene: SceneProps, cast: Record<string, CastMember>, id
   staging: Staging, ms: number, baseGesture: Gesture): Acting => {
   const lines = scene.lines ?? [];
   const member = id ? cast[id] : undefined;
-  const c = member?.character;
   const k = activeLine(lines, ms);
   const line = k >= 0 ? lines[k] : undefined;
   if (line && id && line.speaker === id) {
     return {expr: lineFace(line, member), gesture: line.gesture ?? baseGesture, talking: true,
       mouth: mouthAt(scene.pages, id, ms)};
   }
-  let expr = restingFace(who, staging, c);
+  let expr = restingFace(who, staging, member);
   let gesture = baseGesture;
   const own = id ? lines.filter((l) => l.speaker === id && l.endMs <= ms) : [];
   const last = own[own.length - 1];
@@ -422,8 +426,8 @@ export const actingAt = (scene: SceneProps, cast: Record<string, CastMember>, id
   }
   if (line && who !== "caller" && who !== "presenter") {
     const by = cast[line.speaker];
-    if (isFamily(by?.character) && line.text.includes("!")) expr = "shocked";
-    else if (isCaller(by?.character) && who === "victim" && !last && staging !== "watch_ad") expr = "worried";
+    if (isFamily(by) && line.text.includes("!")) expr = "shocked";
+    else if (isCaller(by) && who === "victim" && !last && staging !== "watch_ad") expr = "worried";
   }
   return {expr, gesture, talking: false, mouth: 0};
 };

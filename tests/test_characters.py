@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from radar.production.characters import registry
 from radar.production.remotion_render import build_props, cast_props, cast_style_of, lines_props, scene_props
 from radar.production.script import (CAST_STYLES, KEYWORD_BUBBLE_MAX_CHARS, CALLERS, CHARACTERS, EXPRESSIONS, FAMILY, GESTURES,
                                      STAGING_LAYOUTS, STAGINGS, Line, Scene, Script, cast_of, default_staging,
@@ -365,12 +366,11 @@ def test_the_animal_head_keeps_to_the_rig_head_box():
     assert (m["bottom"] - m["top"]) / HEAD_H >= 0.35                # long enough to read as a dog, not a bear
     assert RIG["eyeY"] < a["nose"] < RIG["mouthY"]
     assert 0.9 <= a["kidHead"] <= 1
-    # every character has an animal design: the family are dogs (진돗개), the callers and the ad foxes (여우)
-    for c in CHARACTERS:
-        assert re.search(rf"\b{c}: {{species: \"(dog|fox)\"", ANIMAL_TSX), c
-    family = re.findall(r"\b(father|mother|daughter|son): \{species: \"(\w+)\"", ANIMAL_TSX)
-    callers = re.findall(r"\b(scammer|fake_banker|ad): \{species: \"(\w+)\"", ANIMAL_TSX)
-    assert {sp for _, sp in family} == {"dog"} and {sp for _, sp in callers} == {"fox"}
+    # every legacy character has an animal design (its registry spec, content/characters): the family are dogs
+    # (진돗개), the callers and the ad foxes (여우)
+    reg = registry()
+    assert {reg[c]["species"] for c in FAMILY} == {"dog"}
+    assert {reg[c]["species"] for c in (*CALLERS, "ad")} == {"fox"}
 
 
 def test_every_staging_draws_through_the_skin_switch():
@@ -446,8 +446,7 @@ def test_outline_is_fixed_on_screen_and_faces_read_at_bust_size():
         assert 0.3 <= 2 * half / a["faceWidth"] <= 0.4, sp                # shocked mouth 30-40% of the face wide
     animal = ANIMAL_TSX
     assert 'if (e === "shocked" || e === "panicked") blink = 0;' in animal   # the twist never freezes on a blink
-    assert re.search(r'fake_banker: \{species: "fox", fur: "#([0-9A-F]{6})"', animal).group(1) != \
-        re.search(r'scammer: \{species: "fox", fur: "#([0-9A-F]{6})"', animal).group(1)
+    assert registry()["fake_banker"]["palette"]["fur"] != registry()["scammer"]["palette"]["fur"]
 
 
 def test_cheap_motion_stays_small():

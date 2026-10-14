@@ -1,0 +1,22 @@
+{
+  "id": "raccoon_neighbor",
+  "label": "옆집 아주머니",
+  "species": "raccoon",
+  "role_kind": "other",
+  "voice": "F5",
+  "body": {"height": "elder", "build": "regular"},
+  "palette": {"fur": "#9C9186", "muzzle": "#EEE7DC", "innerEar": "#E2D6C8", "brow": "#4D433C", "paw": "#5A4F48",
+    "pad": "#4A403A", "earTip": null, "nose": "#2E2622", "marking": "#4E443D"},
+  "markings": "none",
+  "age": {"young": false, "wrinkles": true, "greyBrows": false},
+  "eyes": "round",
+  "hair": {"style": "bun", "color": "#6A5F57", "shade": "#4A403A"},
+  "glasses": "none",
+  "hat": null,
+  "clip": null,
+  "outfit": {"type": "knit", "top": "#B89650", "inner": "#EFE6D6", "accent": "#7A5A3A", "legs": "#5C5550",
+    "shoes": "#4A3F38", "skirt": false, "sheen": false},
+  "prop": "brooch",
+  "acting": {"habit": null, "halfShadow": false},
+  "notes": "옆집 아주머니 너구리(국내 너구리: 회갈색, 눈가 검은 무늬, 둥근 검은 귀). 단정한 쪽머리, 겨자색 니트 카디건과 브로치. 엄마(누렁이·파마·자주 카디건)와 종·색·머리 모양이 다르게. 수다쟁이·참견꾼 같은 고정관념 없이 침착하게 도와주는 이웃(role_kind other)."
+}

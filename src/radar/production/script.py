@@ -45,6 +45,9 @@ The victim is the phone's owner (the "me" side of a call/chat/sms mockup); narra
 "twist": "사기였습니다" on a scene freezes its last frame for a moment under a hand-drawn red stamp (the reveal).
 Characters (드라마 등장인물, video/src/Character.tsx): a cast entry may name the rig that plays it,
   "character": father | mother | daughter | son | scammer | fake_banker | ad   (ad = the voice of an on-screen ad)
+  or any other registry id (content/characters/<id>.json, made per story by the character designer; see its
+  README). The rules read the registry's role_kind: family (the victim and family), caller (the scam side), other
+  (a bystander / helper beside the victim), presenter (the TV ad). New registry characters are animals only.
 and a dialogue scene whose speakers include one is staged with characters instead of a full-screen mockup:
   "staging": pip_call | split_call | solo | over_shoulder_chat | watch_ad | twist_closeup | dochi_explains
 (default from the layout: call -> pip_call, chat/sms -> over_shoulder_chat, a card with an ad voice -> watch_ad;
@@ -104,6 +107,8 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
+from radar.production.characters import (can_disguise, character_ids, has_human_skin, is_caller, is_family,
+                                         is_presenter, look_alike)
 from radar.production.render import ACCENTS, ICONS
 from radar.production.textnorm import normalize_for_tts, speakable_length, split_sentences, tts_problems
 
@@ -129,7 +134,9 @@ LINE_PAD, SENTENCE_PAD, COMMA_PAD = 0.15, 0.2, 0.06
 TWIST_DELAY = 0.08           # after the last word the frame freezes and the reveal stamp lands...
 TWIST_HOLD = 0.45            # ...and holds; a twist scene ends on its freeze-frame (no tail gap)
 SPEAKER_ROLES = ("scammer", "victim", "narrator", "dochi", "neutral", "inner")
-# Character system (video/src/composition.json; tests/test_characters.py keeps the two in sync)
+# Character system (video/src/composition.json; tests/test_characters.py keeps the two in sync). CHARACTERS / FAMILY /
+# CALLERS are the legacy cast (it also has a human skin); a cast may name any registry id (content/characters,
+# radar.production.characters) and the rules read its role_kind (is_family / is_caller / is_presenter), not these lists.
 CHARACTERS = ("father", "mother", "daughter", "son", "scammer", "fake_banker", "ad")
 FAMILY = ("father", "mother", "daughter", "son")
 CALLERS = ("scammer", "fake_banker")
@@ -733,9 +740,9 @@ def mockup_side(role: str) -> str | None:
 def victim_character(cast: dict) -> str | None:
     """The cast member the drama follows: role victim with a family character, else the first family character."""
     for key, entry in cast.items():
-        if entry.get("role") == "victim" and entry.get("character") in FAMILY:
+        if entry.get("role") == "victim" and is_family(entry.get("character")):
             return key
-    return next((k for k, e in cast.items() if e.get("character") in FAMILY and e.get("role") != "inner"), None)
+    return next((k for k, e in cast.items() if is_family(e.get("character")) and e.get("role") != "inner"), None)
 
 
 def default_staging(scene: Scene, cast: dict) -> str | None:
@@ -753,7 +760,7 @@ def default_staging(scene: Scene, cast: dict) -> str | None:
         return "pip_call"
     if scene.layout in ("chat", "sms"):
         return "over_shoulder_chat"
-    if scene.layout == "card" and "ad" in chars:
+    if scene.layout == "card" and any(is_presenter(c) for c in chars):
         return "watch_ad"
     return None
 
@@ -984,7 +991,7 @@ def first_frame_villain(script: Script) -> tuple[str, str, str] | None:
 
     def look(key: str, scene: Scene) -> tuple[str, str, str] | None:
         ch = cast.get(key, {}).get("character", "")
-        if ch not in COSTUME_CHARACTERS:
+        if not can_disguise(ch):
             return None
         return ch, costume_of(cast, key) or ("hoodie" if ch == "scammer" else ""), villain_set_of(script, scene)
 
@@ -1003,7 +1010,7 @@ def first_frame_villain(script: Script) -> tuple[str, str, str] | None:
     if cast.get(first.lines[0].speaker, {}).get("role") == "inner":
         return look(first.lines[0].speaker, first)
     if staging == "split_call":
-        caller = next((x.speaker for x in first.lines if cast.get(x.speaker, {}).get("character") in CALLERS), None)
+        caller = next((x.speaker for x in first.lines if is_caller(cast.get(x.speaker, {}).get("character"))), None)
         return look(caller, first) if caller else None
     if staging == "twist_closeup" and first.twist_on in cast:
         return look(first.twist_on, first)
@@ -1021,9 +1028,10 @@ def _villain_errors(script: Script) -> tuple[list[str], list[str]]:
         cos, ch = entry["costume"], entry.get("character", "")
         if cos not in COSTUMES:
             errors.append(f"cast '{key}': unknown costume '{cos}' (use {', '.join(COSTUMES)})")
-        if ch not in COSTUME_CHARACTERS:
-            errors.append(f"cast '{key}': a costume is the fox's disguise; only caller characters "
-                          f"({', '.join(COSTUME_CHARACTERS)}) wear one, not '{ch or 'no character'}'")
+        if not can_disguise(ch):
+            errors.append(f"cast '{key}': a costume is the fox's disguise; only caller characters (registry species "
+                          f"fox, role_kind caller or presenter, e.g. {', '.join(COSTUME_CHARACTERS)}) wear one, not "
+                          f"'{ch or 'no character'}'")
         if entry.get("role") == "inner":
             own = next((e.get("costume", "") for k, e in cast.items() if k != key and e.get("role") != "inner"
                         and e.get("character") == ch), "")
@@ -1039,20 +1047,39 @@ def _villain_errors(script: Script) -> tuple[list[str], list[str]]:
             errors.append(f"{w}: unknown villain_set '{v}' (use {', '.join(VILLAIN_SETS)})")
     if (used or any(sets)) and not is_drama(script):
         warnings.append("costume / villain_set only shown on dramas (dialogue played by rigged characters); ignored")
-    elif any(sets) and not any(e.get("character") in COSTUME_CHARACTERS for e in cast.values()):
+    elif any(sets) and not any(can_disguise(e.get("character")) or is_caller(e.get("character")) for e in cast.values()):
         warnings.append("villain_set is the caller's room, but no cast member plays a caller (scammer, fake_banker, "
                         "ad); ignored")
     return errors, warnings
+
+
+def _registry_warnings(script: Script) -> list[str]:
+    """Registry characters a script casts: a new character on the human skin (it has no human design; it is drawn as
+    its animal among the humans), and two cast characters that would read as one at phone size."""
+    warnings = []
+    chars = list(dict.fromkeys(e.get("character") for e in script.cast.values() if e.get("character")))
+    animal_only = [c for c in chars if c in character_ids() and not has_human_skin(c)]
+    if animal_only and (script.cast_style or "human") != "animal":
+        warnings.append(f"{', '.join(animal_only)}: registry characters without a human design are drawn on the animal "
+                        "skin only; set cast_style \"animal\" (else they stand as animals among the humans)")
+    for i, a in enumerate(chars):
+        for b in chars[i + 1:]:
+            if look_alike(a, b):
+                warnings.append(f"characters '{a}' and '{b}' look alike (same species, near fur and clothes); make one "
+                                "distinct in silhouette or colour")
+    return warnings
 
 
 def _character_errors(script: Script) -> list[str]:
     """Characters, stagings and acting notes."""
     errors = []
     cast = cast_of(script)
+    known = character_ids()
     for key, entry in script.cast.items():
         ch = entry.get("character", "")
-        if ch and ch not in CHARACTERS:
-            errors.append(f"cast '{key}': unknown character '{ch}' (use {', '.join(CHARACTERS)})")
+        if ch and ch not in known:
+            errors.append(f"cast '{key}': unknown character '{ch}' (use a registry id from content/characters: "
+                          f"{', '.join(known)}; the character designer adds new ones)")
     if script.cast_style and script.cast_style not in CAST_STYLES:
         errors.append(f"unknown cast_style '{script.cast_style}' (use {', '.join(CAST_STYLES)})")
     for key, entry in cast.items():
@@ -1065,7 +1092,7 @@ def _character_errors(script: Script) -> list[str]:
             errors.append(f"cast '{key}': inner voice of '{ch}', but no other cast member plays '{ch}' (add the "
                           "character's own entry, e.g. its phone voice)")
     victim = victim_character(cast)
-    callers = [k for k, e in cast.items() if e.get("character") in CALLERS]
+    callers = [k for k, e in cast.items() if is_caller(e.get("character"))]
     for i, sc in enumerate(script.scenes, start=1):
         for k, line in enumerate(sc.lines, start=1):
             where = f"scene {i} line {k}"
@@ -1097,7 +1124,7 @@ def _character_errors(script: Script) -> list[str]:
             errors.append(f"{where}: staging '{sc.staging}' plays the layouts {', '.join(STAGING_LAYOUTS[sc.staging])}, "
                           f"not '{sc.layout}'")
         if not victim:
-            errors.append(f"{where}: staging '{sc.staging}' needs a family character in the cast (the victim)")
+            errors.append(f"{where}: staging '{sc.staging}' needs a family character in the cast (the victim; registry role_kind family)")
         if sc.staging == "dochi_explains":
             if not sc.lines:
                 errors.append(f"{where}: dochi_explains needs 도치's lines")
@@ -1105,9 +1132,12 @@ def _character_errors(script: Script) -> list[str]:
         if not sc.lines:
             errors.append(f"{where}: staging '{sc.staging}' needs dialogue lines")
         if sc.staging in ("pip_call", "split_call") and not callers:
-            errors.append(f"{where}: staging '{sc.staging}' needs a caller character (scammer or fake_banker)")
-        if sc.staging == "watch_ad" and not any(cast.get(x.speaker, {}).get("character") == "ad" for x in sc.lines):
-            errors.append(f"{where}: watch_ad needs a line by a cast member with character 'ad' (the TV)")
+            errors.append(f"{where}: staging '{sc.staging}' needs a caller character (registry role_kind caller, "
+                          "e.g. scammer or fake_banker)")
+        if sc.staging == "watch_ad" and not any(is_presenter(cast.get(x.speaker, {}).get("character"))
+                                                for x in sc.lines):
+            errors.append(f"{where}: watch_ad needs a line by a cast member with character 'ad' (the TV; any registry "
+                          "role_kind presenter)")
     return errors
 
 
@@ -1278,7 +1308,7 @@ def validate(script: Script, db=None, allow_unverified: bool = False) -> tuple[l
     warnings += more_warnings
     more_errors, more_warnings = _villain_errors(script)
     errors += more_errors
-    warnings += more_warnings
+    warnings += more_warnings + _registry_warnings(script)
     seconds = estimate_seconds(script)
     if not MIN_SECONDS <= seconds <= MAX_SECONDS:
         errors.append(f"estimated length {seconds:.1f}s outside {MIN_SECONDS:.0f}-{MAX_SECONDS:.0f}s")
