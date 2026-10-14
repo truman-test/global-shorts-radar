@@ -3,6 +3,7 @@ import {CalculateMetadataFunction, Composition} from "remotion";
 import {Short} from "./Short";
 import type {ShortProps} from "./types";
 import {CELL, FULL, Lineup, LineupProps} from "./Lineup";
+import {BANNER, ChannelBanner, ChannelBannerProps, ChannelProfile, ChannelProfileProps} from "./ChannelArt";
 
 export const FPS = 30;
 
@@ -66,5 +67,10 @@ export const RemotionRoot: React.FC = () => (
       defaultProps={lineup}
       calculateMetadata={lineupMetadata}
     />
+    {/* channel art (profile picture, banner): stills for the YouTube channel page, never rendered by the pipeline */}
+    <Composition id="ChannelProfile" component={ChannelProfile} width={800} height={800} fps={FPS} durationInFrames={1}
+      defaultProps={{subject: "mother", bg: "yellow"} as ChannelProfileProps} />
+    <Composition id="ChannelBanner" component={ChannelBanner} width={BANNER.w} height={BANNER.h} fps={FPS}
+      durationInFrames={1} defaultProps={{home: 3, promise: "main"} as ChannelBannerProps} />
   </>
 );
