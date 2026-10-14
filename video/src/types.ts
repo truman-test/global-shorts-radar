@@ -122,8 +122,9 @@ export type HomeSetName = "living" | "shop";
 /** Evidence props for the hook frame (script scene "poster_prop"), generic and invented: no agency, logo or number. */
 export type PosterProp = "mail_notice";
 
-/** The closing scoreboard (script "score"): the standing after this episode; the winner's number ticks up to it. */
-export type Score = {home: number; fox: number; winner?: "home" | "fox"};
+/** The drama end card (script "end_card", Packaging.tsx EndCard): two short lines (<= 16 characters each) under the
+ * title box in the story's last ~1.5 s; Python fills the defaults ("오늘도 생존 성공" / "부모님 단톡방에 공유해 주세요"). */
+export type EndCardProps = {line1: string; line2?: string};
 
 /**
  * The flash-forward (script "cold_open", ColdOpen.tsx): the video opens on the twist scene `scene` frozen a moment
@@ -165,7 +166,7 @@ export type ShortProps = {
   hookTitle?: string | string[]; // drama: the fixed top situation title, 1-2 lines (a string breaks at "\n")
   disclosure?: string; // drama: the disclosure chip, default "재연 · AI 음성"
   seriesChip?: string; // drama: the small chip above the title box, e.g. "여우의 영업비밀 #3" (script series + ep)
-  score?: Score; // drama: the scoreboard that the series chip turns into in the last 1.2 s (before the tail)
+  endCard?: EndCardProps; // drama: the end card under the title in the story's last ~1.5 s (never in the poster tail)
   coldOpen?: ColdOpen; // drama: the flash-forward before the story (it shifts every scene by its durationMs)
   scenes: SceneProps[];
 };

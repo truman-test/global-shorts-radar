@@ -18,7 +18,7 @@ import {CastContext, useCast} from "./dialogue";
 import {CastScene} from "./CastScene";
 import {CastStyleContext} from "./Actor";
 import {isDrama, PACK, spikeAtMs, stagingOf, stampLook} from "./rig";
-import {DISCLOSURE, DisclosureChip, HookTitle, packagingOf, RewindChip, SeriesTab, SPIKE_FRAMES, SpikeAlert,
+import {DISCLOSURE, DisclosureChip, EndCard, HookTitle, packagingOf, RewindChip, SeriesTab, SPIKE_FRAMES, SpikeAlert,
   titleLines} from "./Packaging";
 import {COLD, coldFrames, ColdOpenFrames} from "./ColdOpen";
 import {Stamp} from "./Handwriting";
@@ -443,14 +443,14 @@ export const Short: React.FC<ShortProps> = (input) => {
       </Sequence>
     );
   })()) : null;
-  // the closing scoreboard: the last packaging.score.frames of the story, after a twist stamp in the last scene
-  const B = PACK.score;
-  const scoreFrom = (() => {
-    if (!n || !props.score) return undefined;
+  // the drama end card: the last packaging.endCard.frames of the story, after a twist stamp in the last scene
+  const E = PACK.endCard;
+  const endCardFrom = (() => {
+    if (!n || !props.endCard) return undefined;
     const lastS = props.scenes[n - 1];
-    let from = Math.max(spans[n - 1].from, end - B.frames);
-    if (lastS.twist) from = Math.max(from, spans[n - 1].from + Math.round((lastS.twist.atMs / 1000) * fps) + B.afterStamp);
-    return Math.min(from, end - B.minFrames);
+    let from = Math.max(spans[n - 1].from, end - E.frames);
+    if (lastS.twist) from = Math.max(from, spans[n - 1].from + Math.round((lastS.twist.atMs / 1000) * fps) + E.afterStamp);
+    return Math.max(0, Math.min(from, end - E.minFrames));
   })();
   return (
     <ThemeContext.Provider value={theme}>
@@ -613,8 +613,14 @@ export const Short: React.FC<ShortProps> = (input) => {
       ) : null}
       {/* the fixed situation title: frame 0 (the poster) to the last frame */}
       {dramaPack ? <HookTitle lines={titleLines(props.hookTitle)} /> : null}
-      {/* the series chip on the title box; in the story's last ~1.2 s it turns into the scoreboard (never in the tail) */}
-      {dramaPack ? <SeriesTab chip={props.seriesChip} score={props.score} scoreFrom={scoreFrom} end={end} /> : null}
+      {/* the series chip on the title box (static) */}
+      {dramaPack ? <SeriesTab chip={props.seriesChip} /> : null}
+      {/* the end card under the title in the story's last ~1.5 s: it ends where the poster tail begins (tail = frame 0) */}
+      {dramaPack && props.endCard && endCardFrom !== undefined && end > endCardFrom ? (
+        <Sequence from={endCardFrom} durationInFrames={end - endCardFrom}>
+          <EndCard card={props.endCard} lines={titleLines(props.hookTitle).length} frames={end - endCardFrom} />
+        </Sequence>
+      ) : null}
     </AbsoluteFill>
     </CategoryContext.Provider>
     </CastStyleContext.Provider>

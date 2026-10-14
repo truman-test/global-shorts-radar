@@ -20,8 +20,9 @@ from radar.production.assemble import (TRIM, ProductionError, ProductionResult, 
 from radar.production.script import (CAST_STYLES, COLD_OPEN_LABEL, COLD_OPEN_REWIND, DEFAULT_VILLAIN_SET, LAYOUT_LEAD_IN,
                                      LINE_GAP, costume_of, villain_set_of,
                                      TWIST_DELAY, TWIST_HOLD, Scene, Script, cast_of, caption_chunks, cold_open_hold,
-                                     cold_open_line, cold_open_stamp, default_staging, hook_title_lines, is_drama,
-                                     line_gap, line_voice, mockup_side, scene_lead_in, score_of, series_chip, twist_scene_index)
+                                     cold_open_line, cold_open_stamp, default_staging, end_card_of, hook_title_lines,
+                                     is_drama, line_gap, line_voice, mockup_side, scene_lead_in, series_chip,
+                                     twist_scene_index)
 from radar.production.textnorm import speakable_length, split_sentences
 from radar.production.themes import episode_number, record_style, resolve_style_report
 from radar.production.tts import TTSError
@@ -451,13 +452,13 @@ def build_props(script: Script, scenes: list[dict], channel_name: str, sfx: bool
         props.update(packaging="drama", hookTitle=hook_title_lines(script.hook_title), disclosure=DRAMA_DISCLOSURE,
                      scenes=[{**sc, "sub": "", **set_dressing(script, src)}
                              for sc, src in zip(scenes, list(script.scenes) + [None] * len(scenes))])
-        # the series chip above the title, the closing scoreboard, the flash-forward (Packaging.tsx, ColdOpen.tsx)
+        # the series chip above the title, the end card, the flash-forward (Packaging.tsx, ColdOpen.tsx); no score
         chip = series_chip(script)
         if chip:
             props["seriesChip"] = chip
-        score = score_of(script)
-        if score:
-            props["score"] = score
+        end_card = end_card_of(script)
+        if end_card:
+            props["endCard"] = end_card
         if cold_open:
             props["coldOpen"] = cold_open
     return props
@@ -639,8 +640,8 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
     extra["packaging"] = props.get("packaging", "explainer")
     if props.get("seriesChip"):
         extra["series"] = {"name": script.series, "ep": script.ep, "chip": props["seriesChip"]}
-    if props.get("score"):
-        extra["score"] = props["score"]
+    if props.get("endCard"):
+        extra["end_card"] = props["endCard"]
     if props.get("coldOpen"):
         extra["cold_open"] = {"line": script.cold_open.get("line"), "stamp": props["coldOpen"]["stamp"],
                               "seconds": round(props["coldOpen"]["durationMs"] / 1000, 2)}
