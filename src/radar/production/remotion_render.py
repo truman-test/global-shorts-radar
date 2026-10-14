@@ -17,7 +17,8 @@ from pathlib import Path
 from radar.config import PROJECT_ROOT
 from radar.production.assemble import (TRIM, ProductionError, ProductionResult, ffmpeg_exe, media_info, run_ffmpeg,
                                        write_meta)
-from radar.production.script import (CAST_STYLES, COLD_OPEN_LABEL, COLD_OPEN_REWIND, LAYOUT_LEAD_IN, LINE_GAP,
+from radar.production.script import (CAST_STYLES, COLD_OPEN_LABEL, COLD_OPEN_REWIND, DEFAULT_VILLAIN_SET, LAYOUT_LEAD_IN,
+                                     LINE_GAP, costume_of, villain_set_of,
                                      TWIST_DELAY, TWIST_HOLD, Scene, Script, cast_of, caption_chunks, cold_open_hold,
                                      cold_open_line, cold_open_stamp, default_staging, hook_title_lines, is_drama,
                                      line_gap, line_voice, mockup_side, scene_lead_in, score_of, series_chip, twist_scene_index)
@@ -292,7 +293,8 @@ def cast_props(script: Script) -> dict:
     used = [line.speaker for scene in script.scenes for line in scene.lines]
     return {s: {"label": cast[s].get("label", ""), "role": cast[s]["role"],
                 **({"side": mockup_side(cast[s]["role"])} if mockup_side(cast[s]["role"]) else {}),
-                **({"character": cast[s]["character"]} if cast[s].get("character") else {})}
+                **({"character": cast[s]["character"]} if cast[s].get("character") else {}),
+                **({"costume": costume_of(cast, s)} if costume_of(cast, s) else {})}
             for s in dict.fromkeys(used) if s in cast}
 
 
@@ -462,12 +464,15 @@ def build_props(script: Script, scenes: list[dict], channel_name: str, sfx: bool
 
 
 def set_dressing(script: Script, scene: Scene | None) -> dict:
-    """A drama scene's room ("set": the script's or its own, living by default) and its poster prop."""
+    """A drama scene's room ("set": the script's or its own, living by default), its poster prop and the caller's
+    room (villainSet, the call centre by default)."""
     if scene is None:
         return {}
     home = scene.home_set or script.home_set
+    villain = villain_set_of(script, scene)
     return {**({"set": home} if home and home != "living" else {}),
-            **({"posterProp": scene.poster_prop} if scene.poster_prop else {})}
+            **({"posterProp": scene.poster_prop} if scene.poster_prop else {}),
+            **({"villainSet": villain} if villain != DEFAULT_VILLAIN_SET else {})}
 
 
 def cast_style_of(script: Script) -> str:

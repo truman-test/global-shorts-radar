@@ -10,6 +10,8 @@
 // a bear), a shocked mouth 30-40% of the face wide with teeth and tongue; adult cues (brows, glasses, perm, lids).
 // The head stays inside the rig's head box (composition.json "animal", tests/test_characters.py), the eyes sit on
 // rig.eyeY and the mouth on rig.mouthY, so every staging's composition rules hold for both skins.
+// A caller with a cast costume (pose.costume) wears that disguise instead of his usual clothes (Disguise.tsx): the
+// same fox every episode, a different outfit per scam, and the disguise always leaks.
 // Every value comes from the pose (a pure function of the frame).
 import React from "react";
 import COMP from "./composition.json";
@@ -17,6 +19,8 @@ import {RIG} from "./rig";
 import {BodySpec, bodyOf, FloorShadow, InkContext, inkFor, LEG_LOOKS, Legs, shoulderOf, torsoPath, useInk} from "./Body";
 import {ArmSpec, armsOf, backArms, browSet, CharPose, Cloud, Costume, FxLayer, INK, LOOKS, Mouth, MOUTH_IN, P, Phone2,
   Pt, shade, sideShade, SLEEVE, squashAt, TONGUE} from "./Character";
+import {DisguiseBehind, DisguiseHead, DisguiseNeck, DisguiseSide, DisguiseTorso, earHidden, earTransform, headset,
+  hooded, legsOf, lookOf, maskArm, Pointer, slicked} from "./Disguise";
 import {CharacterId, Expression} from "./types";
 
 const A = COMP.animal;
@@ -171,7 +175,8 @@ const lerp = (a: Pt, b: Pt, t: number): Pt => [a[0] + (b[0] - a[0]) * t, a[1] + 
 
 /** A soft sleeve: one quadratic curve from the shoulder through (near) the elbow to the paw, so the arm bends in a
  * round line instead of two stiff segments. */
-const PawArm: React.FC<{spec: ArmSpec; side: number; B: BodySpec; color: string; F: Fur}> = ({spec, side, B, color, F}) => {
+const PawArm: React.FC<{spec: ArmSpec; side: number; B: BodySpec; color: string; F: Fur; pointer?: boolean}> = ({spec,
+  side, B, color, F, pointer}) => {
   const {lw} = useInk();
   const sh: Pt = shoulderOf(B, side);
   const mid = lerp(sh, spec.ha, 0.5);
@@ -198,6 +203,7 @@ const PawArm: React.FC<{spec: ArmSpec; side: number; B: BodySpec; color: string;
           <rect x={-46} y={-80} width={92} height={150} rx={16} fill="#2D323C" stroke={INK} strokeWidth={lw} />
         </g>
       ) : null}
+      {pointer ? <Pointer from={spec.el} at={spec.ha} /> : null}
       <PawHand at={spec.ha} from={spec.el} shape={hand} F={F} side={side} />
     </g>
   );
@@ -357,14 +363,16 @@ const Snout: React.FC<{sp: Species; e: Expression; talking: boolean; v: number; 
 export const AnimalCharacter: React.FC<{pose: CharPose; uid: string; box?: {w: number; h: number}; frame: number;
   style?: React.CSSProperties}> = ({pose, uid, box = {w: 1080, h: 1920}, frame, style}) => {
   const p = pose;
-  // the ad presenter's suit is a shiny silver-blue here (the two foxes in suits must not look alike)
-  const L = p.id === "ad" ? {...LOOKS.ad, top: "#6F7C92"} : LOOKS[p.id];
   const F = FURS[p.id];
   const sp = F.species;
+  // the fox's disguise of the episode (Disguise.tsx); the dogs never wear one
+  const cos = sp === "fox" ? p.costume : undefined;
+  // the ad presenter's suit is a shiny silver-blue here (the two foxes in suits must not look alike)
+  const L = cos ? lookOf(LOOKS[p.id], cos) : p.id === "ad" ? {...LOOKS.ad, top: "#6F7C92"} : LOOKS[p.id];
   const B = bodyOf(p.id);
   const ink = inkFor(p.px ?? p.k);
   const {lw, ks} = ink;
-  const legs = LEG_LOOKS[p.id];
+  const legs = cos ? legsOf(p.id, cos) : LEG_LOOKS[p.id];
   const back = p.view === "back";
   const turn = Math.max(-1, Math.min(1, p.turn ?? 0));
   const dx = turn * 28;
@@ -372,7 +380,10 @@ export const AnimalCharacter: React.FC<{pose: CharPose; uid: string; box?: {w: n
   const e = p.expr;
   const fx = p.fx ?? [];
   const gesture = p.gesture ?? "rest";
-  const arms = back ? backArms() : armsOf(gesture, Boolean(p.mirror), p.free, p.typing ?? frame);
+  const arms0 = back ? backArms() : armsOf(gesture, Boolean(p.mirror), p.free, p.typing ?? frame);
+  // the mask's stick in the right paw
+  const arms = cos && !back ? {...arms0, R: maskArm(cos, e, arms0.R)} : arms0;
+  const light = p.light ?? "#5FD3C8";
   const high = (a?: ArmSpec) => Boolean(a && a.ha[1] < -20);
   const holding = !back && (gesture === "phoneRead" || gesture === "phoneType");
   const breathe = 1 + 0.012 * (p.breathe ?? 0);
@@ -393,31 +404,37 @@ export const AnimalCharacter: React.FC<{pose: CharPose; uid: string; box?: {w: n
 
   const armEl = (side: "L" | "R") => {
     const a = arms[side];
-    return a ? <PawArm key={side} spec={a} side={side === "L" ? -1 : 1} B={B} color={L.top} F={F} /> : null;
+    return a ? <PawArm key={side} spec={a} side={side === "L" ? -1 : 1} B={B} color={L.top} F={F}
+      pointer={cos === "guru" && side === "R"} /> : null;
   };
+
+  /** One ear (outline, inner fur, dark tip); `tag` keeps the clip ids apart when an ear is drawn twice. */
+  const ear = (s: number, tag = "") => (
+    <g>
+      <path d={earPath(sp, s, false)} fill={back ? furShade : F.fur} {...st} />
+      {back ? null : <path d={earPath(sp, s, true)} fill={F.earIn} />}
+      {F.tip ? (
+        <g>
+          <clipPath id={`${uid}-tip${s}${tag}`}><path d={earPath(sp, s, false)} /></clipPath>
+          <rect x={-220} y={T - 10} width={440} height={52} fill={F.tip} clipPath={`url(#${uid}-tip${s}${tag})`}
+            transform={`rotate(${s * 8} ${s * 134} ${T})`} />
+          <path d={earPath(sp, s, false)} fill="none" {...st} />
+        </g>
+      ) : null}
+    </g>
+  );
 
   const ears = (
     <g transform={`translate(${earDx} 0)`}>
-      {[-1, 1].map((s) => (
-        <g key={s}>
-          <path d={earPath(sp, s, false)} fill={back ? furShade : F.fur} {...st} />
-          {back ? null : <path d={earPath(sp, s, true)} fill={F.earIn} />}
-          {F.tip ? (
-            <g>
-              <clipPath id={`${uid}-tip${s}`}><path d={earPath(sp, s, false)} /></clipPath>
-              <rect x={-220} y={T - 10} width={440} height={52} fill={F.tip} clipPath={`url(#${uid}-tip${s})`}
-                transform={`rotate(${s * 8} ${s * 134} ${T})`} />
-              <path d={earPath(sp, s, false)} fill="none" {...st} />
-            </g>
-          ) : null}
-        </g>
+      {[-1, 1].filter((s) => !earHidden(cos, s)).map((s) => (
+        <g key={s} transform={earTransform(cos, s)}>{ear(s)}</g>
       ))}
     </g>
   );
 
   const head = (
     <g transform={`translate(${p.shake ?? 0} 0) rotate(${tilt} 0 -60) translate(0 -30) scale(${kid}) translate(0 30)`}>
-      {p.id === "scammer" ? (
+      {hooded(p.id, cos) ? (
         // the hood, down: a soft roll behind the neck
         <g>
           <path d="M -176 34 C -184 -24 -126 -66 0 -66 C 126 -66 184 -24 176 34 C 118 52 -118 52 -176 34 Z"
@@ -462,7 +479,7 @@ export const AnimalCharacter: React.FC<{pose: CharPose; uid: string; box?: {w: n
         {fx.includes("gloom") && !back ? <rect x={-200} y={-400} width={400} height={170} fill="#6F7FD8" opacity={0.28} /> : null}
         {(p.monitor ?? 0) > 0 ? (
           // the monitor's teal light along the jaw (the screen is to the viewer's right)
-          <path d={headD} fill="none" stroke={L.accent === "#5FD3C8" ? L.accent : "#5FD3C8"} strokeWidth={34}
+          <path d={headD} fill="none" stroke={light} strokeWidth={34}
             opacity={0.28 * (p.monitor ?? 0)} transform="translate(-16 -6)" />
         ) : null}
       </g>
@@ -533,7 +550,7 @@ export const AnimalCharacter: React.FC<{pose: CharPose; uid: string; box?: {w: n
               <circle cx={-12} cy={0} r={4} fill="#DCE3EA" />
             </g>
           ) : null}
-          {p.id === "fake_banker" || p.id === "ad" ? (
+          {slicked(p.id, cos) ? (
             // slicked forehead fur with a side part
             <g>
               <path d={`M ${-96 + dx * 0.5} -300 C ${-50 + dx * 0.5} -340 ${30 + dx * 0.5} -346 ${96 + dx * 0.5} -318`}
@@ -549,7 +566,7 @@ export const AnimalCharacter: React.FC<{pose: CharPose; uid: string; box?: {w: n
           ) : null}
         </g>
       ) : null}
-      {p.id === "scammer" ? (
+      {headset(p.id, cos) ? (
         // headset: the band over the head between the ears, an ear cup, the mic boom to the mouth
         <g>
           <path d="M -170 -232 C -164 -382 164 -382 170 -232" stroke={INK} strokeWidth={22} fill="none" strokeLinecap="round" />
@@ -565,6 +582,8 @@ export const AnimalCharacter: React.FC<{pose: CharPose; uid: string; box?: {w: n
           )}
         </g>
       ) : null}
+      <DisguiseHead cos={cos} L={L} F={F} e={e} dx={dx} back={back} uid={uid} earDx={earDx}
+        talking={Boolean(p.talking)} mouth={p.mouth ?? 0} ear={(s) => ear(s, "d")} />
       <FxLayer fx={back ? fx.filter((f) => f === "sweat" || f === "shockLines" || f === "question") : fx} dx={dx}
         light={Boolean(p.rim)} frame={frame} />
     </g>
@@ -588,13 +607,15 @@ export const AnimalCharacter: React.FC<{pose: CharPose; uid: string; box?: {w: n
         <Legs B={B} cloth={legs.cloth} legFill={F.fur} feet="paws" foot={F.paw} back={back} />
         {/* the upper body squashes and breathes over the hem; the legs stay planted */}
         <g transform={squashAt(B, squash, breathe)}>
+          <DisguiseBehind cos={cos} F={F} back={back} />
           {/* neck (fur) */}
           <rect x={-46} y={-80} width={92} height={96} rx={24} fill={furShade} stroke={INK} strokeWidth={lw} />
           <defs><clipPath id={torsoId}><path d={torsoPath(B)} /></clipPath></defs>
           <path d={torsoPath(B)} fill={L.top} stroke={INK} strokeWidth={lw} strokeLinejoin="round" />
           <g clipPath={`url(#${torsoId})`}>
-            <Costume id={p.id} L={L} B={B} back={back} uid={uid} />
-            {p.id === "ad" && !back ? (
+            {cos ? <DisguiseTorso cos={cos} id={p.id} L={L} B={B} back={back} uid={uid} />
+              : <Costume id={p.id} L={L} B={B} back={back} uid={uid} />}
+            {p.id === "ad" && !cos && !back ? (
               // the shiny suit: two sheen streaks across the shoulders
               <g stroke="#FFFFFF" strokeLinecap="round" fill="none">
                 <path d={`M ${-B.w + 4} 120 L ${-B.w + 120} 46`} strokeWidth={14} opacity={0.32} />
@@ -604,9 +625,11 @@ export const AnimalCharacter: React.FC<{pose: CharPose; uid: string; box?: {w: n
             ) : null}
             <path d={sideShade(B)} fill="#000" opacity={0.12} />
             {(p.monitor ?? 0) > 0 ? (
-              <ellipse cx={240} cy={160} rx={160} ry={260} fill="#5FD3C8" opacity={0.14 * (p.monitor ?? 0)} />
+              <ellipse cx={240} cy={160} rx={160} ry={260} fill={light} opacity={0.14 * (p.monitor ?? 0)} />
             ) : null}
           </g>
+          <DisguiseNeck cos={cos} L={L} back={back} />
+          <DisguiseSide cos={cos} back={back} />
           {!high(arms.L) ? armEl("L") : null}
           {!high(arms.R) && !back ? armEl("R") : null}
           {holding ? (

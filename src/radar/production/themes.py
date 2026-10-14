@@ -482,3 +482,27 @@ def layout_repeat_warning(script, schedule_path: str | Path | None = None, scrip
         return (f"middle scenes repeat the previous episode's layout sequence ({prev}: {' → '.join(theirs)}); "
                 "swap in another layout (compare, toggle, flow, dots, chat, sms, timeline, stat...)")
     return None
+
+
+def villain_repeat_warning(script, schedule_path: str | Path | None = None, scripts_dir: str | Path | None = None,
+                           log_path: str | Path | None = None) -> str | None:
+    """A warning when this episode and the previous scheduled one both open on the fox (the first frame, the
+    thumbnail) in the same look: the same character, costume and villain_set (owner note 2026-10-14: the villain
+    looked the same in every video). Compares against the previous entry of content/schedule.json."""
+    from radar.production.script import ScriptError, first_frame_villain, load_script
+
+    mine = first_frame_villain(script)
+    if mine is None:
+        return None
+    prev = previous_episode(script, schedule_path, log_path)
+    if not prev:
+        return None
+    try:
+        theirs = first_frame_villain(load_script(Path(scripts_dir or SCRIPTS_DIR) / f"{prev}.json"))
+    except ScriptError:
+        return None
+    if theirs != mine:
+        return None
+    ch, cos, room = mine
+    return (f"the first frame repeats the previous episode's villain ({prev}: {ch} in '{cos or 'usual look'}' at "
+            f"'{room}'); give the fox another costume or villain_set so the two thumbnails differ")

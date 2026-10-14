@@ -3,6 +3,7 @@ import {CalculateMetadataFunction, Composition} from "remotion";
 import {Short} from "./Short";
 import type {ShortProps} from "./types";
 import {CELL, FULL, Lineup, LineupProps} from "./Lineup";
+import {VillainLineup, VillainLineupProps, villainLineupSize} from "./Villains";
 
 export const FPS = 30;
 
@@ -65,6 +66,17 @@ export const RemotionRoot: React.FC = () => (
       durationInFrames={1}
       defaultProps={lineup}
       calculateMetadata={lineupMetadata}
+    />
+    {/* review sheet of the fox's disguises / the caller's rooms, never rendered by the pipeline */}
+    <Composition
+      id="VillainLineup"
+      component={VillainLineup}
+      width={villainLineupSize({mode: "costumes"}).width}
+      height={villainLineupSize({mode: "costumes"}).height}
+      fps={FPS}
+      durationInFrames={1}
+      defaultProps={{mode: "costumes"} as VillainLineupProps}
+      calculateMetadata={({props}) => villainLineupSize(props)}
     />
   </>
 );
