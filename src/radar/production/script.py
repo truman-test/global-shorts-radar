@@ -69,13 +69,15 @@ A cast entry with "role": "inner" and the same "character" as another member is 
 warns when lesson-like time (explainer layouts, dochi_explains, 도치's lines) passes 10% of the runtime and
 rejects a checklist scene.
 
-Series, scoreboard, cold open and set dressing (dramas only; explainers ignore them with a warning):
+Series, end card, cold open and set dressing (dramas only; explainers ignore them with a warning):
   "series": "영업비밀", "ep": 3        # a small chip above the title box: "여우의 영업비밀 #3" ("역관광" ->
                                        # "진돗개네 역관광 EP2"; any other name of <= 8 characters -> "<name> #<ep>"),
                                        # so the hook_title lines can stay short (<= 10 characters recommended)
-  "score": {"home": 4, "fox": 0}       # the standing AFTER this episode: in the last 1.2 s the chip turns into a
-                                       # scoreboard "진돗개네 3 : 0 여우" and the winner's number ticks up to 4
-                                       # (optional "winner": "home" | "fox", default home)
+  "end_card": {"line1": "오늘도 생존 성공", "line2": "부모님 단톡방에 공유해 주세요"}
+                                       # optional: every drama ends with this two-line card under the title in the
+                                       # story's last ~1.5 s (these are the defaults; each line <= 16 characters,
+                                       # either may be overridden; false = no end card). No score: "score" is
+                                       # ignored with a warning (2026-10-14, the scammer gets caught, no tally)
   "cold_open": {"line": "어, 어어…?", "speaker": "fox", "seconds": 0.9,       # flash-forward: the video opens on
                 "stamp": "작전 실패", "label": "몇 분 전"}                     # the twist close-up (stamp on), the
        # exclamation (<= 6 syllables, the loser's voice) at 0.0 s, an 8-frame rewind, a "몇 분 전" chip, then the
@@ -142,10 +144,11 @@ SERIES = {"역관광": ("진돗개네 역관광", "EP"), "영업비밀": ("여�
 SERIES_MAX_CHARS = 8           # a free series name (the known ones map to their full chip text)
 EP_MAX = 999
 HOOK_TITLE_LINE_TARGET = 10    # with a series chip the title's lines are the situation only: <= 10 recommended
-# Scoreboard (packaging.score): the standing after this episode, the winner's number ticks up in the last 1.2 s
-SCORE_SIDES = ("home", "fox")
-SCORE_LABELS = {"home": "진돗개네", "fox": "여우"}
-SCORE_MAX = 999
+# End card (packaging.endCard, Packaging.tsx END_CARD): two short lines under the title in the story's last ~1.5 s
+END_CARD = {"line1": "오늘도 생존 성공", "line2": "부모님 단톡방에 공유해 주세요"}
+END_CARD_KEYS = ("line1", "line2")
+END_CARD_LINE_MAX_CHARS = 16
+_CHECK_GLYPH_RE = re.compile(r"\s*[✔✓✅☑]️?\s*$")   # the card draws its own check (Packaging.tsx endCardText)
 # Cold open (flash-forward, packaging.cold): the twist frame + one exclamation, an 8-frame rewind, then the story
 COLD_OPEN_SECONDS = 0.9        # the frozen twist shot's hold (at least the exclamation + COLD_OPEN_PAD)
 COLD_OPEN_SECONDS_RANGE = (0.6, 1.5)
@@ -267,7 +270,8 @@ class Script:
     hook_title: str = ""        # drama packaging: the fixed top situation title, 1-2 lines ("\n" breaks)
     series: str = ""            # drama: the series ("역관광", "영업비밀" or a name of <= 8 characters), with ep
     ep: object = None           # drama: the episode number in the series (int 1-999)
-    score: dict = field(default_factory=dict)       # drama: {"home": n, "fox": m, "winner"?} after this episode
+    score: object = None        # retired (2026-10-14: no score counting): kept only to warn that it is ignored
+    end_card: object = None     # drama: {"line1"?, "line2"?} overriding END_CARD; False = no end card; None = defaults
     cold_open: dict = field(default_factory=dict)   # drama: the flash-forward {"line", "speaker", "seconds", ...}
     home_set: str = ""          # JSON "set": the family's room in every staged scene (HOME_SETS); "" = living
 
@@ -374,12 +378,12 @@ def _hook_title(v) -> str:
     return str(v or "").strip()
 
 
-def _score(v) -> dict:
-    """score as given (validated later); a non-object is malformed."""
-    if v in (None, "", {}):
-        return {}
+def _end_card(v):
+    """end_card as given: None (absent: the defaults), False (off) or an object (validated later)."""
+    if v is None or v is False:
+        return v
     if not isinstance(v, dict):
-        raise TypeError("'score' must be an object like {\"home\": 4, \"fox\": 0}")
+        raise TypeError("'end_card' must be an object like {\"line1\": \"오늘도 생존 성공\"} or false")
     return dict(v)
 
 
@@ -443,7 +447,8 @@ def load_script(path: str | Path) -> Script:
                       cast_style=str(data.get("cast_style", "")).strip(),
                       hook_title=_hook_title(data.get("hook_title", "")),
                       series=str(data.get("series", "") or "").strip(), ep=data.get("ep"),
-                      score=_score(data.get("score")), cold_open=_cold_open(data.get("cold_open")),
+                      score=data.get("score"), end_card=_end_card(data.get("end_card")),
+                      cold_open=_cold_open(data.get("cold_open")),
                       home_set=str(data.get("set", "")).strip(),
                       extra={"pilot": str(data["pilot"]).strip()} if data.get("pilot") else {})
     except (KeyError, TypeError, AttributeError) as exc:
@@ -492,18 +497,24 @@ def series_chip(script: Script) -> str:
     return f"{full} {mark}{ep}"
 
 
-def score_of(script: Script) -> dict | None:
-    """{"home", "fox", "winner"} for the renderer's scoreboard, or None (no score / not valid)."""
-    sc = script.score
-    if not sc:
+def end_card_line(text) -> str:
+    """One end card line as shown: stripped, a trailing check glyph dropped (the card draws its own check)."""
+    return _CHECK_GLYPH_RE.sub("", str(text or "")).strip()
+
+
+def end_card_of(script: Script) -> dict | None:
+    """{"line1", "line2"} for the renderer's end card (the defaults overridden by the script's end_card), or None
+    (end_card false, or not a drama)."""
+    ec = script.end_card
+    if ec is False or not is_drama(script):
         return None
-    vals = {k: sc.get(k) for k in SCORE_SIDES}
-    if any(not isinstance(v, int) or isinstance(v, bool) or not 0 <= v <= SCORE_MAX for v in vals.values()):
-        return None
-    winner = str(sc.get("winner", "home") or "home")
-    if winner not in SCORE_SIDES or vals[winner] < 1:
-        return None
-    return {**vals, "winner": winner}
+    ec = ec if isinstance(ec, dict) else {}
+    out = {}
+    for key in END_CARD_KEYS:
+        v = ec.get(key)
+        line = end_card_line(v) if isinstance(v, str) else ""
+        out[key] = line or END_CARD[key]
+    return out
 
 
 def twist_scene_index(script: Script) -> int | None:
@@ -801,7 +812,11 @@ def _episode_errors(script: Script) -> tuple[list[str], list[str]]:
     """Series chip, scoreboard, cold open, set and poster props (errors, warnings). Dramas only: on an explainer the
     fields are ignored with a warning."""
     errors, warnings = [], []
-    used = [name for name, on in (("series", script.series or script.ep is not None), ("score", script.score),
+    if script.score not in (None, "", {}):
+        # retired 2026-10-14 (no score counting: the scammer gets caught, nobody keeps a tally); old scripts still pass
+        warnings.append("score is no longer shown (no score counting since 2026-10-14); ignored, remove the field")
+    used = [name for name, on in (("series", script.series or script.ep is not None),
+                                  ("end_card", isinstance(script.end_card, dict)),
                                   ("cold_open", script.cold_open)) if on]
     if not is_drama(script):
         if used:
@@ -830,23 +845,26 @@ def _episode_errors(script: Script) -> tuple[list[str], list[str]]:
             if any(len(t) > HOOK_TITLE_LINE_TARGET for t in lines):
                 warnings.append(f"drama: with a series chip keep the hook_title lines <= {HOOK_TITLE_LINE_TARGET} "
                                 f"characters (now {' / '.join(lines)})")
-    # scoreboard
-    if script.score:
-        sc = script.score
-        unknown = sorted(set(sc) - set(SCORE_SIDES) - {"winner"})
+    # end card (the defaults need no field; an override is checked like on-screen text)
+    if isinstance(script.end_card, dict):
+        ec = script.end_card
+        unknown = sorted(set(ec) - set(END_CARD_KEYS))
         if unknown:
-            errors.append(f"drama: score has unknown keys {', '.join(unknown)} (use home, fox, winner)")
-        for side in SCORE_SIDES:
-            v = sc.get(side)
-            if not isinstance(v, int) or isinstance(v, bool) or not 0 <= v <= SCORE_MAX:
-                errors.append(f"drama: score.{side} must be a whole number 0-{SCORE_MAX} (the standing after this "
-                              "episode)")
-        winner = sc.get("winner", "home")
-        if winner not in SCORE_SIDES:
-            errors.append("drama: score.winner must be home or fox")
-        elif isinstance(sc.get(winner), int) and sc[winner] < 1:
-            errors.append(f"drama: score.{winner} must be >= 1: it is the standing after this episode, the "
-                          "winner's number ticks up to it")
+            errors.append(f"drama: end_card has unknown keys {', '.join(unknown)} (use line1, line2)")
+        for key in END_CARD_KEYS:
+            if key not in ec:
+                continue
+            v = ec[key]
+            if not isinstance(v, str) or not end_card_line(v):
+                errors.append(f"drama: end_card.{key} must be a non-empty line of text (leave it out for the default "
+                              f"'{END_CARD[key]}')")
+                continue
+            line = end_card_line(v)
+            if len(line) > END_CARD_LINE_MAX_CHARS:
+                errors.append(f"drama: end_card.{key} '{line}' is longer than {END_CARD_LINE_MAX_CHARS} characters")
+            errors += [f"drama: end_card.{key} {p}" for p in mockup_text_problems(line)]
+            if re.search(r"\d+\s*(?:판|점|승|대|:)", line):
+                warnings.append(f"drama: end_card.{key} '{line}' reads like a score; no score counting")
     # cold open
     co = script.cold_open
     if co:

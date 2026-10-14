@@ -71,6 +71,6 @@ export const RemotionRoot: React.FC = () => (
     <Composition id="ChannelProfile" component={ChannelProfile} width={800} height={800} fps={FPS} durationInFrames={1}
       defaultProps={{subject: "mother", bg: "yellow"} as ChannelProfileProps} />
     <Composition id="ChannelBanner" component={ChannelBanner} width={BANNER.w} height={BANNER.h} fps={FPS}
-      durationInFrames={1} defaultProps={{home: 3, promise: "main"} as ChannelBannerProps} />
+      durationInFrames={1} defaultProps={{types: true} as ChannelBannerProps} />
   </>
 );

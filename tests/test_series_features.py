@@ -1,5 +1,5 @@
 """Series layer of the drama packaging (reports/직원회의_패키징.md 2-3 / 3-5, reports/직원회의_시리즈바이블.md 1-3):
-the series chip (series + ep), the closing scoreboard (score), the flash-forward (cold_open), the side-dish shop set
+the series chip (series + ep), the end card (end_card; the retired score), the flash-forward (cold_open), the side-dish shop set
 (set) and the mail-notice poster prop (poster_prop): the script fields and their gate, the props the renderer reads,
 the length estimate and the geometry (video/src/composition.json packaging / posterProps, Packaging.tsx, ColdOpen.tsx,
 Props.tsx, Sets.tsx)."""
@@ -12,7 +12,7 @@ from radar.production.remotion_render import build_props, cold_open_props, scene
 from radar.production.script import (COLD_OPEN_LABEL, COLD_OPEN_PAD, COLD_OPEN_REWIND, COLD_OPEN_SECONDS, HOME_SETS,
                                      POSTER_PROPS, Line, Scene, Script, cast_of, cold_open_hold, cold_open_line,
                                      cold_open_seconds, default_staging, estimate_seconds, line_seconds, line_voice,
-                                     load_script, score_of, series_chip, twist_scene_index, validate)
+                                     END_CARD, load_script, series_chip, twist_scene_index, validate)
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "video" / "src"
@@ -70,7 +70,7 @@ def test_series_chip_text(series, ep, chip):
 
 
 def test_the_sample_with_every_new_field_passes():
-    s = _drama(series="영업비밀", ep=3, score={"home": 4, "fox": 0}, cold_open=_cold(), home_set="shop")
+    s = _drama(series="영업비밀", ep=3, end_card={"line2": "엄마한테 보내 주세요"}, cold_open=_cold(), home_set="shop")
     errors, warnings = validate(s)
     assert errors == [] and not [w for w in warnings if w.startswith("drama:")], (errors, warnings)
 
@@ -97,39 +97,14 @@ def test_series_chip_frees_the_title():
 
 def test_new_fields_on_an_explainer_are_ignored_with_a_warning():
     s = load_script(ROOT / "content" / "scripts" / "2026-10-08-zero-click.json")
-    s.series, s.ep, s.score = "영업비밀", 3, {"home": 4, "fox": 0}
+    s.series, s.ep, s.end_card = "영업비밀", 3, {"line1": "오늘도 생존 성공"}
     s.cold_open = _cold()
     errors, warnings = validate(s)
     assert errors == [] and any("only shown on dramas" in w for w in warnings)
     assert cold_open_seconds(s) == 0.0 and cold_open_line(s) is None
 
 
-# ------------------------------------------------------------------ scoreboard
-
-def test_score_gate_and_props():
-    assert score_of(_drama(score={"home": 4, "fox": 0})) == {"home": 4, "fox": 0, "winner": "home"}
-    for bad, problem in (({"home": 0, "fox": 0}, "score.home must be >= 1"), ({"home": -1, "fox": 0}, "0-999"),
-                         ({"home": 4}, "score.fox"), ({"home": 4, "fox": 0, "winner": "dog"}, "winner"),
-                         ({"home": 4, "fox": 0, "draw": 1}, "unknown keys")):
-        s = _drama(score=bad)
-        assert any(problem in e for e in _errors(s)), (bad, _errors(s))
-    assert score_of(_drama(score={"home": 0, "fox": 0})) is None
-
-
-def test_scoreboard_geometry_stays_out_of_the_safe_zones():
-    t, se, sc = PACK["title"], PACK["series"], PACK["score"]
-    bottom = t["top"] + se["overlap"]
-    top = bottom - sc["h"]
-    assert top > 12 + 30                                     # under the progress bar, room for the "+1" tick
-    assert bottom < FRAME["captionBand"][0] and bottom < FRAME["bottomSafe"]
-    # the plate's width (Packaging.tsx boardWidth with the textWidth estimate) is centred, clear of the disclosure chip
-    hangul = lambda s: sum(0.3 if c == " " else 0.98 for c in s)
-    w = (hangul("진돗개네") + hangul("여우")) * sc["font"] + 2 * sc["tile"] + 0.4 * sc["digit"] + 4 * sc["gap"] + 2 * sc["padX"]
-    chip = PACK["chip"]
-    disclosure_right = chip["x"] + 2 * 18 + hangul("재연 ·  음성") * chip["font"] + 2 * 0.7 * chip["font"]
-    assert 540 - w / 2 > disclosure_right + 20 and 540 + w / 2 < FRAME["rightColumn"]["x"]
-    assert sc["frames"] == 36 and sc["flipAt"] + sc["flipFrames"] + 8 <= sc["frames"]     # settles inside 1.2 s
-    assert sc["minFrames"] <= sc["frames"]
+# ------------------------------------------------------------------ the retired scoreboard: tests/test_end_card.py
 
 
 def test_series_chip_sits_on_the_title_box_beside_the_disclosure():
@@ -210,11 +185,11 @@ def test_cold_open_props():
     scenes = [scene_props(sc, "", 0.0, 2.0, 2.3, [], None, default_staging(sc, cast)) for sc in s.scenes]
     props = build_props(s, scenes, "ch", cold_open=co)
     assert props["coldOpen"] is co
-    s.series, s.ep, s.score = "영업비밀", 3, {"home": 4, "fox": 0}
+    s.series, s.ep = "영업비밀", 3
     props = build_props(s, scenes, "ch", cold_open=co)
-    assert props["seriesChip"] == "여우의 영업비밀 #3" and props["score"]["winner"] == "home"
+    assert props["seriesChip"] == "여우의 영업비밀 #3" and props["endCard"] == END_CARD
     plain = build_props(_drama(), scenes, "ch")
-    assert not {"seriesChip", "score", "coldOpen"} & set(plain)
+    assert not {"seriesChip", "score", "coldOpen"} & set(plain) and plain["endCard"] == END_CARD
 
 
 def test_cold_open_line_is_synthesized_like_a_line(tmp_path):
@@ -290,7 +265,7 @@ def test_shop_set_and_poster_prop_fields():
 
 def test_load_script_reads_the_new_fields(tmp_path):
     data = json.loads((ROOT / "content" / "scripts" / "2026-10-12-fox-bank-income.json").read_text(encoding="utf-8"))
-    data.update(series="영업비밀", ep=3, score={"home": 4, "fox": 0}, set="shop", hook_title="소득 맞히는\n은행 전화",
+    data.update(series="영업비밀", ep=3, end_card={"line1": "오늘도 생존 성공 ✔"}, set="shop", hook_title="소득 맞히는\n은행 전화",
                 cold_open={"line": "어, 어어…?", "speaker": "fox", "stamp": "작전 실패"})
     data["scenes"][0]["poster_prop"] = "mail_notice"
     p = tmp_path / "s.json"
