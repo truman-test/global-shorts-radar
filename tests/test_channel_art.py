@@ -1,7 +1,10 @@
 """Channel art (video/src/ChannelArt.tsx): the YouTube profile picture and banner stills. Source-level checks: the
 compositions are registered with YouTube's sizes, the banner's key content is laid out in the 1546x423 centre safe
 area, the copy tells a stranger the topic (digital scams, surviving them) and stays honest (a dramatized series, no
-agency claim), there is no score anywhere (2026-10-14), and nothing names a real brand or number."""
+agency claim), there is no score anywhere (2026-10-14), and nothing names a real brand or number. v3 (2026-10-14):
+characters are cast per story, so the banner shows everyday neighbours of different species and ages from the
+registry (not one family) and the fox in a disguise; the profile picture is 도치 from the front, no text."""
+import json
 import re
 from pathlib import Path
 
@@ -37,7 +40,7 @@ def test_banner_tells_the_topic_without_a_score():
     assert "보이스피싱 · 문자 사기 · 가짜 투자 광고" in ART                         # the kinds of scams
     assert "모르는 번호" in ART and "수신 전화" in ART                            # the generic incoming call
     assert 'text="사기꾼"' in ART and '<Stamp text="사기 실패"' in ART            # the caller is named and fails
-    assert "생존" in ART and "<SurvivedBadge" in ART                              # the family's survival cue
+    assert "SurvivedBadge" not in ART                                             # v3: no badge crowding the cast
     for gone in ("ScoreChip", "SCORE_LABELS", "home:", "작전 실패", "0점", "잘못 걸리는 30초"):
         assert gone not in ART, gone
     assert "home" not in ROOT_TSX[ROOT_TSX.index('id="ChannelBanner"'):]
@@ -50,3 +53,44 @@ def test_copy_is_honest_and_generic():
         assert banned not in ART, banned
     assert not re.search(r"\d{2,4}-\d{3,4}-\d{4}", ART)      # no phone numbers
     assert "fetch(" not in ART and "http" not in ART          # plain props, no network
+
+
+def _spec(cid):
+    return json.loads((ROOT / "content" / "characters" / f"{cid}.json").read_text(encoding="utf-8"))
+
+
+def _neighbours():
+    block = ART[ART.index("export const NEIGHBOURS"):]
+    block = block[:block.index("];")]
+    return re.findall(r'\{id: "([a-z_]+)", x: (-?\d+), eyeY: (\d+), k: ([\d.]+), expr: "(\w+)"', block)
+
+
+def test_banner_shows_everyday_neighbours_not_one_family():
+    rows = _neighbours()
+    assert 3 <= len(rows) <= 4
+    for cid, x, eye_y, _k, expr in rows:
+        assert _spec(cid)["role_kind"] in ("family", "other"), cid      # never the caller's side
+        assert expr in ("suspicious", "smug"), (cid, expr)              # a calm "안 속아", never shocked
+        assert 0 <= int(x) <= 1546 and 0 <= int(eye_y) <= 423          # in the safe area
+    species = {_spec(cid)["species"] for cid, *_ in rows}
+    assert len(species) == len(rows) and "dog" not in species         # all different, not the Jindo family
+    assert {"elder", "adult"} <= {_spec(cid)["body"]["height"] for cid, *_ in rows}   # different ages
+    assert "fill={REGISTRY[holder.id]?.palette.paw" in ART              # the grip paw is the holder's own
+
+
+def test_fox_wears_a_disguise_that_leaks():
+    assert 'costume = "bank_suit"' in ART
+    fox = re.search(r'<Actor id="scammer" costume=\{costume\}[^>]*/>', ART, re.S)
+    assert fox and re.search(r"\btail\b", fox.group(0))                  # his tail stays out
+
+
+def test_profile_is_dochi_from_the_front_without_text():
+    profile_reg = ROOT_TSX[ROOT_TSX.index('id="ChannelProfile"'):]
+    assert 'defaultProps={{subject: "dochi", bg: "yellow"}' in profile_reg[:300]
+    mascot = (SRC / "Mascot.tsx").read_text(encoding="utf-8")
+    assert "export const DochiFront" in mascot and "export const Dochi:" in mascot     # additive to the side view
+    front = mascot[mascot.index("export const DochiFront"):mascot.index("where 도치 stands")]
+    assert "useCurrentFrame" not in front                                # a pure function of the pose
+    profile = ART[ART.index("export const ChannelProfile"):ART.index("export type ChannelBannerProps")]
+    assert "<DochiFront" in profile and 'bristle: 1, expr: "alarmed"' in profile
+    assert not re.search(r">\s*[가-힣A-Za-z]", profile)                  # no text in the picture

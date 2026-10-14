@@ -268,6 +268,117 @@ export const Dochi: React.FC<{pose: Pose; blink: number; frame: number; palette?
   );
 };
 
+/* ------------------------------------------------------------------ 도치 from the front (stills) */
+
+export type FrontPose = {
+  cx: number; // centre of the body
+  cy: number;
+  size: number; // body width (the spikes reach ~1.4x)
+  bristle: number; // 0 relaxed .. 1 spikes up (alarm)
+  expr: "alarmed" | "neutral";
+  lookX?: number; // pupils, -1..1
+  lookY?: number;
+  ink?: number; // outline weight (1 = the side view's S * 0.026)
+};
+
+/**
+ * 도치 facing the viewer (additive to the side-view rig above, same palette): a round body under a crown of
+ * scalloped quills (two layers, the back one in the darker spike tone), the cream face with the hedgehog's peak on
+ * the forehead, round ears, the black nose, wide eyes when alarmed, two paws held up at the chin.
+ * Built for small sizes (the channel's profile picture, a 40-98 px circle): few big shapes, a thick outline, the
+ * quills longest at the top when they bristle. A pure function of the pose (no frame).
+ */
+export const DochiFront: React.FC<{pose: FrontPose; palette?: MascotPalette}> = ({pose, palette = MASCOT_PALETTES.paper}) => {
+  const {ink: INK, spike: SPIKE, spikeDark: SPIKE_DARK, face: FACE, ear: EAR} = palette;
+  const S = pose.size;
+  const b = Math.min(1, Math.max(0, pose.bristle));
+  const lw = S * 0.026 * (pose.ink ?? 1);
+  const rx = 0.5 * S;
+  const ry = 0.46 * S;
+  const big = pose.expr === "alarmed";
+  const lx = (pose.lookX ?? 0) * S * 0.022;
+  const ly = (pose.lookY ?? 0) * S * 0.022;
+  // the quill crown: tips over the upper arc (from a little below the left side, over the top, to the right side),
+  // longest at the top; the belly closes the outline along the lower arc
+  const crown = (n: number, offset: number, scale: number): string => {
+    const a0 = Math.PI - 0.5;
+    const a1 = 2 * Math.PI + 0.5;
+    const pts: Pt[] = [];
+    for (let i = 0; i <= n * 2; i++) {
+      const a = a0 + ((a1 - a0) * (i + offset)) / (n * 2);
+      const up = Math.max(0, -Math.sin(a)); // 1 at the top, 0 at the sides
+      const L = (0.16 + 0.1 * b + (0.06 + 0.12 * b) * up) * scale;
+      const r = i % 2 ? 1 + L : 1;
+      pts.push([Math.cos(a) * rx * r, Math.sin(a) * ry * r]);
+    }
+    for (let i = 1; i < 16; i++) {
+      const a = a1 + ((a0 + 2 * Math.PI - a1) * i) / 16;
+      pts.push([Math.cos(a) * rx, Math.sin(a) * ry]);
+    }
+    return "M" + pts.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join(" L") + " Z";
+  };
+  const u = (v: number) => (v * S).toFixed(1);
+  const face = `M 0 ${u(-0.09)} C ${u(0.12)} ${u(-0.25)} ${u(0.3)} ${u(-0.21)} ${u(0.38)} ${u(-0.07)}
+    C ${u(0.46)} ${u(0.07)} ${u(0.43)} ${u(0.3)} ${u(0.29)} ${u(0.39)} C ${u(0.18)} ${u(0.45)} ${u(-0.18)} ${u(0.45)}
+    ${u(-0.29)} ${u(0.39)} C ${u(-0.43)} ${u(0.3)} ${u(-0.46)} ${u(0.07)} ${u(-0.38)} ${u(-0.07)}
+    C ${u(-0.3)} ${u(-0.21)} ${u(-0.12)} ${u(-0.25)} 0 ${u(-0.09)} Z`;
+  const st = {stroke: INK, strokeWidth: lw, strokeLinejoin: "round" as const, strokeLinecap: "round" as const};
+  const pad = S * 1.1;
+  return (
+    <svg width={pad * 2} height={pad * 2} style={{position: "absolute", left: pose.cx - pad, top: pose.cy - pad,
+      overflow: "visible", pointerEvents: "none"}}>
+      <g transform={`translate(${pad} ${pad})`}>
+        {/* feet, then the back row of quills (darker, half a step over), then the front row and the body */}
+        {[-1, 1].map((s) => (
+          <ellipse key={s} cx={s * 0.19 * S} cy={0.45 * S} rx={0.1 * S} ry={0.06 * S} fill={SPIKE_DARK} {...st} />
+        ))}
+        <path d={crown(8, 1, 0.92)} fill={SPIKE_DARK} {...st} />
+        <path d={crown(8, 0, 1)} fill={SPIKE} {...st} />
+        {/* quill texture: short strokes in the dark tone, radiating */}
+        <g stroke={SPIKE_DARK} strokeWidth={lw * 0.8} strokeLinecap="round">
+          {[-2.55, -2.1, -1.57, -1.04, -0.59].map((a, k) => (
+            <path key={k} d={`M${Math.cos(a) * rx * 0.72} ${Math.sin(a) * ry * 0.72} L${Math.cos(a) * rx * 0.9}
+              ${Math.sin(a) * ry * 0.9}`} />
+          ))}
+        </g>
+        {/* ears at the face's upper corners */}
+        {[-1, 1].map((s) => (
+          <circle key={s} cx={s * 0.36 * S} cy={-0.16 * S} r={0.085 * S} fill={EAR} {...st} />
+        ))}
+        <path d={face} fill={FACE} {...st} />
+        {/* cheeks */}
+        {[-1, 1].map((s) => (
+          <ellipse key={s} cx={s * 0.27 * S} cy={0.16 * S} rx={0.06 * S} ry={0.035 * S} fill={EAR} opacity={0.75} />
+        ))}
+        {/* eyes: wide whites when alarmed (they still read in a 40 px circle) */}
+        {[-1, 1].map((s) => (
+          <g key={s}>
+            {big ? <circle cx={s * 0.15 * S} cy={0.0} r={0.088 * S} fill="#FFFFFF" {...st} strokeWidth={lw * 0.8} /> : null}
+            <ellipse cx={s * 0.15 * S + lx} cy={ly} rx={(big ? 0.048 : 0.045) * S} ry={(big ? 0.052 : 0.05) * S} fill={INK} />
+            <circle cx={s * 0.15 * S + lx - 0.016 * S} cy={ly - 0.02 * S} r={0.016 * S} fill="#FFFFFF" />
+          </g>
+        ))}
+        {/* raised brows (the alarm) */}
+        {big ? [-1, 1].map((s) => (
+          <path key={s} d={`M${s * 0.09 * S} ${-0.13 * S} Q${s * 0.15 * S} ${-0.17 * S} ${s * 0.22 * S} ${-0.12 * S}`}
+            fill="none" {...st} strokeWidth={lw * 0.8} />
+        )) : null}
+        {/* nose and mouth */}
+        <ellipse cx={0} cy={0.13 * S} rx={0.07 * S} ry={0.052 * S} fill={INK} />
+        <ellipse cx={-0.02 * S} cy={0.113 * S} rx={0.018 * S} ry={0.011 * S} fill="#FFFFFF" opacity={0.75} />
+        {big ? <ellipse cx={0} cy={0.222 * S} rx={0.024 * S} ry={0.026 * S} fill={INK} />
+          : <path d={`M${-0.04 * S} ${0.215 * S} Q0 ${0.24 * S} ${0.04 * S} ${0.215 * S}`} fill="none" {...st}
+            strokeWidth={lw * 0.8} />}
+        {/* paws up at the chin */}
+        {[-1, 1].map((s) => (
+          <ellipse key={s} cx={s * 0.21 * S} cy={0.36 * S} rx={0.07 * S} ry={0.06 * S} fill={FACE} {...st}
+            strokeWidth={lw * 0.8} />
+        ))}
+      </g>
+    </svg>
+  );
+};
+
 /* ------------------------------------------------------------------ where 도치 stands and how it reacts */
 
 export const SIZE = 166; // ~15% of the frame width (body; ~19% with the snout and quills)

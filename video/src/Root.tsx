@@ -69,9 +69,10 @@ export const RemotionRoot: React.FC = () => (
       defaultProps={lineup}
       calculateMetadata={lineupMetadata}
     />
-    {/* channel art (profile picture, banner): stills for the YouTube channel page, never rendered by the pipeline */}
+    {/* channel art (profile picture: 도치 from the front, "mother" = the v2 face; banner): stills for the YouTube
+        channel page, never rendered by the pipeline */}
     <Composition id="ChannelProfile" component={ChannelProfile} width={800} height={800} fps={FPS} durationInFrames={1}
-      defaultProps={{subject: "mother", bg: "yellow"} as ChannelProfileProps} />
+      defaultProps={{subject: "dochi", bg: "yellow"} as ChannelProfileProps} />
     <Composition id="ChannelBanner" component={ChannelBanner} width={BANNER.w} height={BANNER.h} fps={FPS}
       durationInFrames={1} defaultProps={{types: true} as ChannelBannerProps} />
     {/* review sheet of the character registry (content/characters): every character or a list of ids, three faces
