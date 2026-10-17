@@ -33,7 +33,7 @@
    "label": "여 과장",
    "role": "scammer",
    "character": "scammer",
-   "costume": "hoodie"
+   "costume": "courier"
   },
   "mom": {
    "voice": "F3",
@@ -76,7 +76,7 @@
    ],
    "twist": "차단!",
    "twist_on": "fox",
-   "twist_face": "shocked"
+   "twist_face": "caught"
   },
   {
    "layout": "call",
