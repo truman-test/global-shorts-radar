@@ -142,7 +142,8 @@ def test_ending_stamp_sits_on_the_chest_zone_or_the_top_right_corner():
     assert b <= chip_top and l >= E["x"] + 0.6 * E["size"] and r < FRAME["rightColumn"]["x"]   # beside 도치, under the chip
     assert t > PACK["safeTop"]
     l, t, r, b = _stamp_box(E["stampAlt"])                                      # when the twist stamp holds the chest
-    assert t >= PACK["safeTop"] and r <= FRAME["w"] - 16 and b < FRAME["rightColumn"]["y"][0]
+    # the right column only matters where the box reaches it
+    assert t >= PACK["safeTop"] and r <= FRAME["w"] - 16 and (b < FRAME["rightColumn"]["y"][0] or r < FRAME["rightColumn"]["x"])
     assert "endingAlt = n > 0 && Boolean(props.scenes[n - 1].twist)" in SHORT
 
 

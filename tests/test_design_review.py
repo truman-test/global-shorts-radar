@@ -93,10 +93,10 @@ def test_props_carry_the_effective_twist_face():
     props = build_props(s, scenes, "ch")
     assert props["scenes"][1]["twist"]["face"] == DEFEAT_FACES[2] == "deflated"
     assert props["scenes"][1]["twist"]["on"] == "fox" and "twist" not in props["scenes"][0]
-    for sid, face in (("2026-10-12-fox-bank-income", "shocked"), ("2026-10-15-ep2-compensation-sms", "panicked")):
+    for sid in ("2026-10-12-fox-bank-income", "2026-10-15-ep2-compensation-sms"):
         script = load_script(ROOT / "content" / "scripts" / f"{sid}.json")
         tw = next(sc for sc in script.scenes if sc.twist)
-        assert twist_face_of(script, tw) == face                              # explicit faces are kept
+        assert tw.twist_face and twist_face_of(script, tw) == tw.twist_face  # explicit faces are kept
 
 
 def test_one_panic_symbol_set_at_a_time():
