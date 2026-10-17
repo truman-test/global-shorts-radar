@@ -3,21 +3,25 @@
 // through the last dramatized scene) and a fixed situation title at the top (1-2 lines, from frame 0 to the end, the
 // way Korean skit channels pin theirs). 도치 does not lecture here: it is the silent 가시 감지기 that pops in from the
 // lower-left corner with its spikes up and a "삐빅!" burst when a line says a known scam demand.
-// Series layer (script series/ep, cold_open, end_card): a small series chip on the title box ("여우의 영업비밀 #3", not
-// the explainer's brand-line chip), the cold open's "몇 분 전" chip under the title, and the end card under the title
-// in the story's last ~1.5 s ("오늘도 생존 성공" / "부모님 단톡방에 공유해 주세요"). No score anywhere (2026-10-14:
-// the scammer gets caught and the family survives; nobody keeps a tally).
+// Series layer (script series/ep, cold_open): a small series chip on the title box ("여우의 영업비밀 #3", not the
+// explainer's brand-line chip) for the opening beat and the poster tail, the cold open's "몇 분 전" chip under the
+// title, and the 도치 stamp ending (DochiEnding) in the story's last ~1.2 s: 도치 pops up from behind the desk edge
+// and stamps "생존!" on the picture (2026-10-17: it replaced the white end card, which read as a public-notice
+// poster; the sharing line lives in the pinned comment). No score anywhere (2026-10-14: the scammer gets caught and
+// the family survives; nobody keeps a tally). Chips: never more than two at once (the disclosure chip and the speaker
+// chip) once the dialogue runs.
 // Geometry: composition.json "packaging"; colours: tokens.json "drama". Everything is a pure function of the frame.
 import React from "react";
 import {interpolate, useCurrentFrame} from "remotion";
-import {Check, Rewind} from "lucide-react";
+import {Rewind} from "lucide-react";
 import {FONT} from "./fonts";
+import {Stamp} from "./Handwriting";
 import {clamp} from "./kit";
 import {Dochi, Pose} from "./Mascot";
 import {spr} from "./motion";
-import {isDrama, PACK, stagingOf} from "./rig";
+import {isDrama, PACK, stagingOf, stampLook} from "./rig";
 import {DRAMA, isLight, MASCOT_PALETTES, useTheme} from "./themes";
-import {EndCardProps, Packaging, ShortProps} from "./types";
+import {Packaging, ShortProps} from "./types";
 
 export const DISCLOSURE = "재연 · AI 음성";
 
@@ -80,16 +84,23 @@ export const titleBottom = (n: number) => {
 export const textWidth = (text: string, font: number) => [...text].reduce((a, ch) => a + (ch === " " ? 0.3
   : /[가-힣]/.test(ch) ? 0.98 : /[0-9]/.test(ch) ? 0.62 : /[A-Z#]/.test(ch) ? 0.7 : 0.6), 0) * font;
 
-/** The series chip on the title box ("여우의 영업비밀 #3"): a tab whose bottom overlaps the box's top border, static. */
-export const SeriesTab: React.FC<{chip?: string}> = ({chip}) => {
+/**
+ * The series chip on the title box ("여우의 영업비밀 #3"): a tab whose bottom overlaps the box's top border. Up for the
+ * opening showFrames (frame 0 is the poster: the chip is on the thumbnail) and again from `end` (the poster tail),
+ * gone in between so the dialogue never has more than two chips on screen (the disclosure chip, the speaker chip).
+ */
+export const SeriesTab: React.FC<{chip?: string; end?: number}> = ({chip, end}) => {
+  const f = useCurrentFrame();
   if (!chip) return null;
   const T = PACK.title;
   const S = PACK.series;
   const s = DRAMA.series;
   const bottom = T.top + S.overlap;
+  const op = end !== undefined && f >= end ? 1 : interpolate(f, [S.showFrames - S.fade, S.showFrames], [1, 0], clamp);
+  if (op <= 0) return null;
   return (
     <div style={{position: "absolute", left: 0, right: 0, top: bottom - S.h, height: S.h, display: "flex",
-      justifyContent: "center", pointerEvents: "none", fontFamily: FONT}}>
+      justifyContent: "center", pointerEvents: "none", fontFamily: FONT, opacity: op}}>
       <div style={{height: S.h, padding: `0 ${S.padX}px`, borderRadius: S.h / 2, background: s.bg,
         border: `${S.ring}px solid ${s.ring}`, boxSizing: "border-box", boxShadow: "0 8px 18px rgba(0,0,0,0.28)",
         display: "flex", alignItems: "center", fontSize: S.font, fontWeight: 800, color: s.text, whiteSpace: "nowrap",
@@ -100,48 +111,46 @@ export const SeriesTab: React.FC<{chip?: string}> = ({chip}) => {
   );
 };
 
-/** The end card's default lines (script end_card overrides either; remotion_render.END_CARD keeps the same text). */
-export const END_CARD = {line1: "오늘도 생존 성공", line2: "부모님 단톡방에 공유해 주세요"} as const;
+/** The ending's stamp text and geometry (composition.json packaging.ending). */
+export const ENDING = PACK.ending;
 
-/** A trailing check mark typed into a line ("… ✔"): the card draws its own check, so the glyph is dropped. */
-export const endCardText = (s: string) => s.replace(/\s*[✔✓✅☑]️?\s*$/u, "").trim();
+/** The ending stamp's look: the twist stamp's style ("생존!" = the short box), scaled by the spot's `scale`. */
+export const endingStampLook = (scale: number) => {
+  const look = stampLook(ENDING.text);
+  return {shape: look.shape, font: look.font * scale, w: look.w * scale, h: look.h * scale};
+};
 
 /**
- * The end card of a drama (props.endCard): in the story's last ~1.5 s (after a twist stamp in the last scene), a
- * small two-line note drops out from under the title box: a green check and "오늘도 생존 성공", then a quieter
- * "부모님 단톡방에 공유해 주세요". Paper and ink like the title box, the safe tone's check the one accent. It lands in
- * 10 frames (6% overshoot), the check pops 4 frames later, and it fades over the last 5 frames, ending exactly where
- * the poster tail begins (the tail is frame 0, which has no end card). No sound.
+ * The 도치 stamp ending (props: none; every drama): in the story's last ~1.2 s (ENDING.frames, after a twist stamp +
+ * afterStamp, ending exactly where the poster tail begins, so the tail = frame 0 never shows it) 도치 pops up from
+ * behind the desk edge at the spike slot (clipped at clipY, so it never enters the caption band), raises its paw
+ * and slams it down as a red "생존!" stamp (the twist stamp's style) lands on the chest zone of the picture, or in
+ * the top-right corner (`alt`) when the last scene's own twist stamp already sits on the chest. Happy once it has
+ * landed; everything fades over the last outFrames. No sound: the last line may still be speaking.
  */
-export const EndCard: React.FC<{card: EndCardProps; lines: number; frames: number}> = ({card, lines, frames}) => {
+export const DochiEnding: React.FC<{frames: number; alt?: boolean}> = ({frames, alt}) => {
   const f = useCurrentFrame();
-  const E = PACK.endCard;
+  const theme = useTheme();
+  const E = ENDING;
   if (f < 0 || f >= frames) return null;
-  const c = DRAMA.endCard;
-  const l1 = endCardText(card.line1 || END_CARD.line1);
-  const l2 = endCardText(card.line2 ?? END_CARD.line2);
-  const p = spr(f, 0, E.inFrames, 0.06);
-  const check = spr(f, E.checkAt, 8, 0.12);
+  const night = !isLight(theme);
+  const rise = Math.min(1, spr(f, 0, E.rise, 0.06));
   const out = interpolate(f, [frames - E.outFrames, frames], [1, 0], clamp);
-  const op = Math.min(1, p * 1.5) * out;
+  // the paw: up over the swing frames before the stamp, down on it (a 2-frame slam), settling after
+  const t = f - (E.stampAt - E.swing);
+  const landed = f >= E.stampAt;
+  const since = f - E.stampAt;
+  const pawAngle = t < 0 ? -20 : !landed ? -20 - 55 * Math.min(1, (t + 1) / 2) : 28 - 18 * Math.min(1, since / 4);
+  const squash = landed ? 1 - 0.1 * Math.exp(-since / 3) * Math.cos(since * 0.8) : 1;
+  const pose: Pose = {x: E.x, y: E.feetY + (1 - rise) * 1.3 * E.size, size: E.size, lookX: 1, lookY: alt ? -0.8 : 0.3,
+    expr: landed ? "happy" : "neutral", paw: t < 0 ? "none" : "point", pawAngle, tilt: landed ? -3 : 0, bristle: 0,
+    shiver: 0, curl: 0, sweat: false, sy: squash, lift: 0, walk: 0, opacity: out, clipY: E.clipY};
+  const spot = alt ? E.stampAlt : E.stamp;
   return (
-    <div style={{position: "absolute", left: 0, right: 0, top: titleBottom(lines) + E.gap, display: "flex",
-      justifyContent: "center", pointerEvents: "none"}}>
-      <div style={{padding: `${E.padY}px ${E.padX}px`, borderRadius: 22, background: c.bg,
-        border: `${E.border}px solid ${c.border}`, boxShadow: "0 12px 26px rgba(0,0,0,0.26)", display: "flex",
-        flexDirection: "column", alignItems: "center", gap: E.gap2, fontFamily: FONT, opacity: op,
-        transform: `translateY(${(1 - p) * -E.drop}px) scale(${0.94 + 0.06 * p})`, transformOrigin: "50% 0%",
-        maxWidth: 1080 - 2 * E.margin, boxSizing: "border-box", wordBreak: "keep-all", textAlign: "center"}}>
-        <div style={{display: "flex", alignItems: "center", gap: 12}}>
-          <div style={{width: E.icon, height: E.icon, borderRadius: "50%", background: c.check, flex: "0 0 auto",
-            display: "flex", alignItems: "center", justifyContent: "center", transform: `scale(${check})`}}>
-            <Check size={E.icon * 0.66} color={c.checkInk} strokeWidth={3.6} />
-          </div>
-          <div style={{fontSize: E.font1, lineHeight: 1.15, fontWeight: 900, color: c.ink, letterSpacing: -1}}>{l1}</div>
-        </div>
-        {l2 ? (
-          <div style={{fontSize: E.font2, lineHeight: 1.2, fontWeight: 700, color: c.sub, letterSpacing: -0.5}}>{l2}</div>
-        ) : null}
+    <div style={{position: "absolute", inset: 0, pointerEvents: "none"}}>
+      <Dochi pose={pose} blink={0} frame={f} palette={MASCOT_PALETTES[night ? "night" : "paper"]} rim={night ? 1 : 0} />
+      <div style={{position: "absolute", inset: 0, opacity: out}}>
+        <Stamp text={E.text} at={E.stampAt} x={spot.x} y={spot.y} rotate={spot.rotate} look={endingStampLook(spot.scale)} />
       </div>
     </div>
   );

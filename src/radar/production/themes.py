@@ -484,6 +484,48 @@ def layout_repeat_warning(script, schedule_path: str | Path | None = None, scrip
     return None
 
 
+def previous_episodes(script, n: int, schedule_path: str | Path | None = None) -> list[str]:
+    """The `n` scheduled entries before `script` (nearest first); a script that is not scheduled sees the last n."""
+    ids = [e["script"] for e in _scheduled(Path(schedule_path or SCHEDULE))]
+    seen: list[str] = []
+    for sid in ids:
+        if sid not in seen:
+            seen.append(sid)
+    k = seen.index(script.id) if script.id in seen else len(seen)
+    return list(reversed(seen[max(0, k - n):k]))
+
+
+def variety_warning(script, schedule_path: str | Path | None = None, scripts_dir: str | Path | None = None,
+                    log_path: str | Path | None = None) -> str | None:
+    """The variety gate (2026-10-17 design re-review: five of six videos ended on the same fox face in the same room):
+    a warning when this drama shares VARIETY_MAX_SHARED or more of VARIETY_AXES (the fox's costume, his villain_set,
+    the effective twist face, the stage's luminance) with either of the previous VARIETY_LOOKBACK scheduled dramas."""
+    from radar.production.script import (VARIETY_AXES, VARIETY_LOOKBACK, VARIETY_MAX_SHARED, ScriptError, is_drama,
+                                         load_script, variety_signature)
+
+    if not is_drama(script):
+        return None
+    walk = {sid: style for sid, style, _w, _src in resolve_schedule(schedule_path, scripts_dir, log_path, extra=script)}
+    mine = variety_signature(script, walk[script.id].luminance if script.id in walk else "")
+    hits = []
+    for prev in previous_episodes(script, VARIETY_LOOKBACK, schedule_path):
+        try:
+            other = load_script(Path(scripts_dir or SCRIPTS_DIR) / f"{prev}.json")
+        except ScriptError:
+            continue
+        if not is_drama(other):
+            continue
+        theirs = variety_signature(other, walk[prev].luminance if prev in walk else "")
+        shared = [a for a in VARIETY_AXES if mine[a] and mine[a] == theirs[a]]
+        if len(shared) >= VARIETY_MAX_SHARED:
+            hits.append(f"{prev}: same {', '.join(f'{a} {mine[a]!r}' for a in shared)}")
+    if not hits:
+        return None
+    return (f"variety: this episode repeats {VARIETY_MAX_SHARED}+ of {', '.join(VARIETY_AXES)} of a previous one "
+            f"({'; '.join(hits)}); change the fox's costume, his villain_set, the twist_face or the stage so "
+            "consecutive videos do not look like the same one")
+
+
 def villain_repeat_warning(script, schedule_path: str | Path | None = None, scripts_dir: str | Path | None = None,
                            log_path: str | Path | None = None) -> str | None:
     """A warning when this episode and the previous scheduled one both open on the fox (the first frame, the

@@ -1,5 +1,5 @@
 """Series layer of the drama packaging (reports/직원회의_패키징.md 2-3 / 3-5, reports/직원회의_시리즈바이블.md 1-3):
-the series chip (series + ep), the end card (end_card; the retired score), the flash-forward (cold_open), the side-dish shop set
+the series chip (series + ep), the retired end card and score (tests/test_ending.py), the flash-forward (cold_open), the side-dish shop set
 (set) and the mail-notice poster prop (poster_prop): the script fields and their gate, the props the renderer reads,
 the length estimate and the geometry (video/src/composition.json packaging / posterProps, Packaging.tsx, ColdOpen.tsx,
 Props.tsx, Sets.tsx)."""
@@ -12,7 +12,7 @@ from radar.production.remotion_render import build_props, cold_open_props, scene
 from radar.production.script import (COLD_OPEN_LABEL, COLD_OPEN_PAD, COLD_OPEN_REWIND, COLD_OPEN_SECONDS, HOME_SETS,
                                      POSTER_PROPS, Line, Scene, Script, cast_of, cold_open_hold, cold_open_line,
                                      cold_open_seconds, default_staging, estimate_seconds, line_seconds, line_voice,
-                                     END_CARD, load_script, series_chip, twist_scene_index, validate)
+                                     load_script, series_chip, twist_scene_index, validate)
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "video" / "src"
@@ -70,7 +70,7 @@ def test_series_chip_text(series, ep, chip):
 
 
 def test_the_sample_with_every_new_field_passes():
-    s = _drama(series="영업비밀", ep=3, end_card={"line2": "엄마한테 보내 주세요"}, cold_open=_cold(), home_set="shop")
+    s = _drama(series="영업비밀", ep=3, cold_open=_cold(), home_set="shop")
     errors, warnings = validate(s)
     assert errors == [] and not [w for w in warnings if w.startswith("drama:")], (errors, warnings)
 
@@ -97,7 +97,7 @@ def test_series_chip_frees_the_title():
 
 def test_new_fields_on_an_explainer_are_ignored_with_a_warning():
     s = load_script(ROOT / "content" / "scripts" / "2026-10-08-zero-click.json")
-    s.series, s.ep, s.end_card = "영업비밀", 3, {"line1": "오늘도 생존 성공"}
+    s.series, s.ep = "영업비밀", 3
     s.cold_open = _cold()
     errors, warnings = validate(s)
     assert errors == [] and any("only shown on dramas" in w for w in warnings)
@@ -187,9 +187,9 @@ def test_cold_open_props():
     assert props["coldOpen"] is co
     s.series, s.ep = "영업비밀", 3
     props = build_props(s, scenes, "ch", cold_open=co)
-    assert props["seriesChip"] == "여우의 영업비밀 #3" and props["endCard"] == END_CARD
+    assert props["seriesChip"] == "여우의 영업비밀 #3" and "endCard" not in props    # the 도치 stamp ending needs no props
     plain = build_props(_drama(), scenes, "ch")
-    assert not {"seriesChip", "score", "coldOpen"} & set(plain) and plain["endCard"] == END_CARD
+    assert not {"seriesChip", "score", "coldOpen", "endCard"} & set(plain)
 
 
 def test_cold_open_line_is_synthesized_like_a_line(tmp_path):
@@ -265,7 +265,7 @@ def test_shop_set_and_poster_prop_fields():
 
 def test_load_script_reads_the_new_fields(tmp_path):
     data = json.loads((ROOT / "content" / "scripts" / "2026-10-12-fox-bank-income.json").read_text(encoding="utf-8"))
-    data.update(series="영업비밀", ep=3, end_card={"line1": "오늘도 생존 성공 ✔"}, set="shop", hook_title="소득 맞히는\n은행 전화",
+    data.update(series="영업비밀", ep=3, set="shop", hook_title="소득 맞히는\n은행 전화",
                 cold_open={"line": "어, 어어…?", "speaker": "fox", "stamp": "작전 실패"})
     data["scenes"][0]["poster_prop"] = "mail_notice"
     p = tmp_path / "s.json"

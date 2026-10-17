@@ -20,9 +20,9 @@ from radar.production.assemble import (TRIM, ProductionError, ProductionResult, 
 from radar.production.script import (CAST_STYLES, COLD_OPEN_LABEL, COLD_OPEN_REWIND, DEFAULT_VILLAIN_SET, LAYOUT_LEAD_IN,
                                      LINE_GAP, costume_of, villain_set_of,
                                      TWIST_DELAY, TWIST_HOLD, Scene, Script, cast_of, caption_chunks, cold_open_hold,
-                                     cold_open_line, cold_open_stamp, default_staging, end_card_of, hook_title_lines,
+                                     cold_open_line, cold_open_stamp, default_staging, hook_title_lines,
                                      is_drama, line_gap, line_voice, mockup_side, scene_lead_in, series_chip,
-                                     twist_scene_index)
+                                     twist_face_of, twist_scene_index)
 from radar.production.characters import resolved_spec
 from radar.production.textnorm import speakable_length, split_sentences
 from radar.production.themes import episode_number, record_style, resolve_style_report
@@ -454,15 +454,13 @@ def build_props(script: Script, scenes: list[dict], channel_name: str, sfx: bool
         for key in ("episodeNo", "shareLine", "cta"):
             props.pop(key, None)
         props.update(packaging="drama", hookTitle=hook_title_lines(script.hook_title), disclosure=DRAMA_DISCLOSURE,
-                     scenes=[{**sc, "sub": "", **set_dressing(script, src)}
+                     scenes=[{**sc, "sub": "", **set_dressing(script, src), **twist_dressing(script, src, sc)}
                              for sc, src in zip(scenes, list(script.scenes) + [None] * len(scenes))])
-        # the series chip above the title, the end card, the flash-forward (Packaging.tsx, ColdOpen.tsx); no score
+        # the series chip above the title, the flash-forward (Packaging.tsx, ColdOpen.tsx); no score, no end card:
+        # every drama ends with the 도치 stamp (Packaging.tsx DochiEnding, no props needed)
         chip = series_chip(script)
         if chip:
             props["seriesChip"] = chip
-        end_card = end_card_of(script)
-        if end_card:
-            props["endCard"] = end_card
         if cold_open:
             props["coldOpen"] = cold_open
     return props
@@ -478,6 +476,14 @@ def set_dressing(script: Script, scene: Scene | None) -> dict:
     return {**({"set": home} if home and home != "living" else {}),
             **({"posterProp": scene.poster_prop} if scene.poster_prop else {}),
             **({"villainSet": villain} if villain != DEFAULT_VILLAIN_SET else {})}
+
+
+def twist_dressing(script: Script, scene: Scene | None, props: dict) -> dict:
+    """The twist close-up's face written into the props (script.twist_face_of: the scene's, else the family's shocked
+    or the fox's defeat look rotated by the episode), so the renderer never falls back to the same face twice."""
+    if scene is None or not scene.twist or not props.get("twist"):
+        return {}
+    return {"twist": {**props["twist"], "face": twist_face_of(script, scene)}}
 
 
 def cast_style_of(script: Script) -> str:
@@ -644,8 +650,6 @@ def produce_remotion(script: Script, out_root: str | Path, *, tts, channel_name:
     extra["packaging"] = props.get("packaging", "explainer")
     if props.get("seriesChip"):
         extra["series"] = {"name": script.series, "ep": script.ep, "chip": props["seriesChip"]}
-    if props.get("endCard"):
-        extra["end_card"] = props["endCard"]
     if props.get("coldOpen"):
         extra["cold_open"] = {"line": script.cold_open.get("line"), "stamp": props["coldOpen"]["stamp"],
                               "seconds": round(props["coldOpen"]["durationMs"] / 1000, 2)}

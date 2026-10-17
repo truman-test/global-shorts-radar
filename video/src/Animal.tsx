@@ -22,7 +22,7 @@ import COMP from "./composition.json";
 import {RIG} from "./rig";
 import {BodySpec, FloorShadow, InkContext, inkFor, Legs, shoulderOf, torsoPath, useInk} from "./Body";
 import {ArmSpec, armsOf, backArms, browSet, CharPose, Costume, FxLayer, INK, Look, Mouth, MOUTH_IN, Phone2,
-  Pt, shade, sideShade, SLEEVE, squashAt, TONGUE} from "./Character";
+  Pt, shade, sideShade, SLEEVE, squashAt, TONGUE, ZippedMouth} from "./Character";
 import {DisguiseBehind, DisguiseHead, DisguiseNeck, DisguiseSide, DisguiseTorso, earHidden, earTransform, headset,
   hooded, legsOf, lookOf, maskArm, Pointer, slicked} from "./Disguise";
 import {bodyOfSpec, specOf} from "./registry";
@@ -175,14 +175,18 @@ const AnimalEye: React.FC<{cx: number; cy: number; e: Expression; blink: number;
   if (e === "relieved" || e === "fakeKind") return g(<path d={`M ${-rx} 8 Q 0 -22 ${rx} 8`} {...line} />);
   // wide-eyed faces never blink (like the human Eye): the twist freezes on a shocked face, never on a blink
   if (e === "shocked" || e === "panicked") blink = 0;
+  if (e === "caught") blink = 0; // the same wide stare
   const sly = e === "suspicious" || e === "smug";
   if (blink > 0.5 && !sly) return g(<path d={`M ${-rx} 0 Q 0 14 ${rx} 0`} {...line} />);
-  if (e === "shocked") {
+  if (e === "shocked" || e === "caught") {
+    // a wide stare: the shrunken pupil, caught: smaller still and a little off centre (nowhere to look)
+    const r = e === "caught" ? 6.5 : 8;
+    const ox = e === "caught" ? side * 3 : 0;
     return g(
       <>
         <ellipse rx={rx + 4} ry={ry + 5} fill="#FFFFFF" stroke={INK} strokeWidth={lw} />
-        <circle cx={look[0] * 5} cy={look[1] * 5} r={8} fill={INK} />
-        <circle cx={look[0] * 5 - 3} cy={look[1] * 5 - 3} r={2.4} fill="#FFFFFF" />
+        <circle cx={look[0] * 5 + ox} cy={look[1] * 5 + 2} r={r} fill={INK} />
+        <circle cx={look[0] * 5 + ox - 3} cy={look[1] * 5 - 1} r={2.4} fill="#FFFFFF" />
       </>,
     );
   }
@@ -190,9 +194,10 @@ const AnimalEye: React.FC<{cx: number; cy: number; e: Expression; blink: number;
   const irx = big ? 20 : e === "worried" ? 16 : 18;
   const iry = big ? 25 : e === "worried" ? 20 : 23;
   const lx = look[0] * (rx - irx - 1);
-  const ly = look[1] * (ry - iry - 2) + (e === "worried" ? -3 : 0);
-  // the top lid: down a little for a blink in progress; straight and low for the sly looks
-  const rest = sleepy && (e === "neutral" || e === "worried") ? -ry * 0.62 : -Infinity;
+  const ly = look[1] * (ry - iry - 2) + (e === "worried" ? -3 : e === "deflated" ? 6 : 0);
+  // the top lid: down a little for a blink in progress; straight and low for the sly looks; half way down for the
+  // deflated look (the air gone out of him)
+  const rest = sleepy && (e === "neutral" || e === "worried") ? -ry * 0.62 : e === "deflated" ? -ry * 0.1 : -Infinity;
   const lidY = sly ? (e === "smug" ? -4 : -8) : Math.max(rest, -ry - 2 + blink * 1.3 * ry);
   const tilt = e === "suspicious" ? -side * 5 : e === "smug" ? side * 4 : 0;
   const lidHalf = (y: number) => rx * Math.sqrt(Math.max(0, 1 - (y / ry) ** 2));
@@ -254,6 +259,7 @@ const Snout: React.FC<{sp: Species; e: Expression; talking: boolean; v: number; 
     fill: "none"};
   const omega = !talking && (e === "neutral" || (omegaRest(sp) && e === "suspicious"));
   const shocked = !talking && e === "shocked";
+  const flat = !talking && (e === "deflated" || e === "caught");
   const my = RIG.mouthY + 16;
   const sc = 1.22;
   const mouthTop = ny + nh * 0.6;
@@ -272,6 +278,13 @@ const Snout: React.FC<{sp: Species; e: Expression; talking: boolean; v: number; 
         <ellipse rx={rx} ry={ry} fill="none" stroke={INK} strokeWidth={lw} />
       </g>
     );
+  } else if (flat) {
+    // deflated: a flat line, a little long; caught: the zip (Character.tsx ZippedMouth, scaled like the talking mouths)
+    mouth = e === "caught" ? (
+      <g transform={`translate(${mx} ${my}) scale(${sc}) translate(${-mx} ${-my})`}>
+        <ZippedMouth mx={mx} my={my} ink={INK} ks={ks} lw={lw} />
+      </g>
+    ) : <path d={`M ${mx - 30} ${my + 2} L ${mx + 30} ${my + 2}`} {...st} />;
   } else if (omega) {
     const w = <path d={`M ${mx - 32} ${RIG.mouthY - 2} Q ${mx - 15} ${RIG.mouthY + 14} ${mx} ${RIG.mouthY - 6}
         Q ${mx + 15} ${RIG.mouthY + 14} ${mx + 32} ${RIG.mouthY - 2}`} {...st} />;
@@ -386,10 +399,12 @@ export const AnimalCharacter: React.FC<{pose: CharPose; uid: string; box?: {w: n
     </g>
   );
 
+  // the ears droop outward and down on the deflated face (the upright-eared species: dog, fox, cat)
+  const droop = e === "deflated" && (sp === "dog" || sp === "fox" || sp === "cat");
   const ears = (
     <g transform={`translate(${earDx} 0)`}>
       {[-1, 1].filter((s) => !earHidden(cos, s)).map((s) => (
-        <g key={s} transform={earTransform(cos, s)}>{ear(s)}</g>
+        <g key={s} transform={earTransform(cos, s) ?? (droop ? `rotate(${s * 48} ${s * 60} -296)` : undefined)}>{ear(s)}</g>
       ))}
     </g>
   );
@@ -477,9 +492,10 @@ export const AnimalCharacter: React.FC<{pose: CharPose; uid: string; box?: {w: n
             <path key={s} d={`M ${s * 96 + dx} -198 l ${s * 14} -6 M ${s * 96 + dx} -182 l ${s * 14} 5`}
               stroke={shade(F.fur, 0.3)} strokeWidth={3.5 * ks} strokeLinecap="round" />
           )) : null}
-          {/* a touch of warmth on the cheeks (not the foxes, nor the dark bear) */}
-          {blush(sp) ? [-1, 1].map((s) => <ellipse key={s} cx={s * 108 + dx} cy={-124} rx={24} ry={12} fill="#E39A86"
-            opacity={0.22} />) : null}
+          {/* a touch of warmth on the cheeks: the young only (not the foxes, nor the dark bear); a grown-up with
+              blushed cheeks reads as a children's cartoon to the 60-year-old viewer (2026-10-17 review) */}
+          {blush(sp, F.young) ? [-1, 1].map((s) => <ellipse key={s} cx={s * 108 + dx} cy={-124} rx={24} ry={12}
+            fill="#E39A86" opacity={0.22} />) : null}
           <Whiskers sp={sp} dx={dx} />
           <Snout sp={sp} e={e} talking={Boolean(p.talking)} v={p.mouth ?? 0} dx={dx} nose={nose} />
           {S.glasses === "round" ? <RoundGlasses dx={dx} /> : null}
@@ -537,8 +553,9 @@ export const AnimalCharacter: React.FC<{pose: CharPose; uid: string; box?: {w: n
       ) : null}
       <DisguiseHead cos={cos} L={L} F={F} e={e} dx={dx} back={back} uid={uid} earDx={earDx}
         talking={Boolean(p.talking)} mouth={p.mouth ?? 0} ear={(s) => ear(s, "d")} />
-      <FxLayer fx={back ? fx.filter((f) => f === "sweat" || f === "shockLines" || f === "question") : fx} dx={dx}
-        light={Boolean(p.rim)} frame={frame} />
+      {/* (the gloom's hanging lines would cross a disguise's hat or wig: the face shade alone carries it there) */}
+      <FxLayer fx={back ? fx.filter((f) => f === "sweat" || f === "shockLines" || f === "question")
+        : cos && cos !== "hoodie" ? fx.filter((f) => f !== "gloom") : fx} dx={dx} light={Boolean(p.rim)} frame={frame} />
     </g>
   );
 

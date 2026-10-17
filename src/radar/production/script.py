@@ -65,7 +65,8 @@ Drama packaging (a script whose dialogue is played by rigged characters, see is_
 entertainment Short, not a notice. No brand line, category / series chip, CTA or on-screen source subs; one small
 "재연 · AI 음성" chip and a fixed situation title at the top, the voice from 0.0 s (no lead-in).
   "hook_title": "비웃던 아버지\n두 번째 전화엔"   # required: 1-2 lines (break with \n, or a space is picked),
-                                                # <= 12 characters per line (spaces count); no brands or numbers
+                                                # <= 12 characters per line (spaces count; <= 10 recommended, the
+                                                # gate warns above it); no brands or numbers
 A cast entry with "role": "inner" and the same "character" as another member is that character's inner voice
 (속마음, its own TTS voice): its lines play as an aside to the camera with a 속마음 tag. A line may set "spike": true
 (or a word of the line) to have 도치 the 가시 감지기 pop in with its spikes up as it is said (no voice). The gate
@@ -76,11 +77,10 @@ Series, end card, cold open and set dressing (dramas only; explainers ignore the
   "series": "영업비밀", "ep": 3        # a small chip above the title box: "여우의 영업비밀 #3" ("역관광" ->
                                        # "진돗개네 역관광 EP2"; any other name of <= 8 characters -> "<name> #<ep>"),
                                        # so the hook_title lines can stay short (<= 10 characters recommended)
-  "end_card": {"line1": "오늘도 생존 성공", "line2": "부모님 단톡방에 공유해 주세요"}
-                                       # optional: every drama ends with this two-line card under the title in the
-                                       # story's last ~1.5 s (these are the defaults; each line <= 16 characters,
-                                       # either may be overridden; false = no end card). No score: "score" is
-                                       # ignored with a warning (2026-10-14, the scammer gets caught, no tally)
+  "end_card": ...                      # retired 2026-10-17: every drama now ends with the 도치 stamp (도치 pops up
+                                       # and stamps "생존!" on the picture, video/src/Packaging.tsx DochiEnding); the
+                                       # field is accepted and ignored with a warning (the sharing line goes to the
+                                       # pinned comment). No score: "score" is ignored with a warning (2026-10-14)
   "cold_open": {"line": "어, 어어…?", "speaker": "fox", "seconds": 0.9,       # flash-forward: the video opens on
                 "stamp": "작전 실패", "label": "몇 분 전"}                     # the twist close-up (stamp on), the
        # exclamation (<= 6 syllables, the loser's voice) at 0.0 s, an 8-frame rewind, a "몇 분 전" chip, then the
@@ -104,6 +104,7 @@ from __future__ import annotations
 
 import json
 import re
+import zlib
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -141,7 +142,17 @@ CHARACTERS = ("father", "mother", "daughter", "son", "scammer", "fake_banker", "
 FAMILY = ("father", "mother", "daughter", "son")
 CALLERS = ("scammer", "fake_banker")
 STAGINGS = ("pip_call", "split_call", "solo", "over_shoulder_chat", "watch_ad", "twist_closeup", "dochi_explains")
-EXPRESSIONS = ("neutral", "worried", "shocked", "panicked", "relieved", "suspicious", "smug", "fakeKind", "excited")
+EXPRESSIONS = ("neutral", "worried", "shocked", "panicked", "relieved", "suspicious", "smug", "fakeKind", "excited",
+               "deflated", "caught")
+# The fox's defeat looks (composition.json "defeatFaces"): a twist close-up on a caller without twist_face rotates
+# through them by the series ep (else a hash of the id), so two episodes in a row do not end on the same fox face
+DEFEAT_FACES = ("shocked", "panicked", "deflated", "caught")
+# The variety gate (script-check): a drama that shares at least VARIETY_MAX_SHARED of VARIETY_AXES with either of the
+# previous VARIETY_LOOKBACK scheduled entries gets a warning (2026-10-17 review: five of six videos ended on the same
+# fox face in the same room)
+VARIETY_AXES = ("costume", "villain_set", "twist_face", "luminance")
+VARIETY_MAX_SHARED = 2
+VARIETY_LOOKBACK = 2
 GESTURES = ("rest", "phoneEar", "phoneRead", "phoneType", "handOnHead", "handsOnCheeks", "point", "palmOut",
             "clutchChest")
 CAST_STYLES = ("human", "animal")   # the characters' skin (composition.json "castStyles"); default human
@@ -160,12 +171,12 @@ LESSON_SHARE_MAX = 0.10        # lesson-like time (explainer layouts, dochi_expl
 SERIES = {"역관광": ("진돗개네 역관광", "EP"), "영업비밀": ("여우의 영업비밀", "#")}
 SERIES_MAX_CHARS = 8           # a free series name (the known ones map to their full chip text)
 EP_MAX = 999
-HOOK_TITLE_LINE_TARGET = 10    # with a series chip the title's lines are the situation only: <= 10 recommended
-# End card (packaging.endCard, Packaging.tsx END_CARD): two short lines under the title in the story's last ~1.5 s
-END_CARD = {"line1": "오늘도 생존 성공", "line2": "부모님 단톡방에 공유해 주세요"}
-END_CARD_KEYS = ("line1", "line2")
-END_CARD_LINE_MAX_CHARS = 16
-_CHECK_GLYPH_RE = re.compile(r"\s*[✔✓✅☑]️?\s*$")   # the card draws its own check (Packaging.tsx endCardText)
+HOOK_TITLE_LINE_TARGET = 10    # the packaging spec's line length: <= 10 recommended (the gate warns above it)
+# The ending (packaging.ending, Packaging.tsx DochiEnding): 도치 pops up and stamps this on the picture in the story's
+# last ~1.2 s. The old end_card field is accepted and ignored (END_CARD_RETIRED is the warning's reason).
+ENDING_STAMP = "생존!"
+END_CARD_RETIRED = ("end_card is no longer shown (since 2026-10-17 every drama ends with the 도치 stamp \"생존!\"; the "
+                    "sharing line goes to the pinned comment); ignored, remove the field")
 # Cold open (flash-forward, packaging.cold): the twist frame + one exclamation, an 8-frame rewind, then the story
 COLD_OPEN_SECONDS = 0.9        # the frozen twist shot's hold (at least the exclamation + COLD_OPEN_PAD)
 COLD_OPEN_SECONDS_RANGE = (0.6, 1.5)
@@ -294,7 +305,7 @@ class Script:
     series: str = ""            # drama: the series ("역관광", "영업비밀" or a name of <= 8 characters), with ep
     ep: object = None           # drama: the episode number in the series (int 1-999)
     score: object = None        # retired (2026-10-14: no score counting): kept only to warn that it is ignored
-    end_card: object = None     # drama: {"line1"?, "line2"?} overriding END_CARD; False = no end card; None = defaults
+    end_card: object = None     # retired (2026-10-17): accepted as given and ignored with a warning
     cold_open: dict = field(default_factory=dict)   # drama: the flash-forward {"line", "speaker", "seconds", ...}
     home_set: str = ""          # JSON "set": the family's room in every staged scene (HOME_SETS); "" = living
     villain_set: str = ""       # the caller's room in every scene (VILLAIN_SETS); "" = callcentre
@@ -403,12 +414,8 @@ def _hook_title(v) -> str:
 
 
 def _end_card(v):
-    """end_card as given: None (absent: the defaults), False (off) or an object (validated later)."""
-    if v is None or v is False:
-        return v
-    if not isinstance(v, dict):
-        raise TypeError("'end_card' must be an object like {\"line1\": \"오늘도 생존 성공\"} or false")
-    return dict(v)
+    """end_card as given (retired: whatever it is, validation only warns that it is ignored)."""
+    return v
 
 
 def _cold_open(v) -> dict:
@@ -523,24 +530,39 @@ def series_chip(script: Script) -> str:
     return f"{full} {mark}{ep}"
 
 
-def end_card_line(text) -> str:
-    """One end card line as shown: stripped, a trailing check glyph dropped (the card draws its own check)."""
-    return _CHECK_GLYPH_RE.sub("", str(text or "")).strip()
+def twist_face_of(script: Script, scene: Scene) -> str:
+    """The face of a twist close-up: the scene's twist_face, else "shocked" for the family and, for the fox (the twist
+    on a caller), the episode's defeat look: DEFEAT_FACES rotated by the series ep (ep 1 = shocked, 2 = panicked, ...),
+    else by the CRC32 of the script id (what the renderer's seed is). Mirrors video/src/rig.ts defeatFaceOf."""
+    if scene.twist_face:
+        return scene.twist_face
+    cast = cast_of(script)
+    on = scene.twist_on if scene.twist_on in cast else victim_character(cast)
+    if not is_caller(cast.get(on or "", {}).get("character")):
+        return "shocked"
+    ep = script.ep
+    n = ep - 1 if isinstance(ep, int) and not isinstance(ep, bool) and ep >= 1 else zlib.crc32(script.id.encode("utf-8"))
+    return DEFEAT_FACES[n % len(DEFEAT_FACES)]
 
 
-def end_card_of(script: Script) -> dict | None:
-    """{"line1", "line2"} for the renderer's end card (the defaults overridden by the script's end_card), or None
-    (end_card false, or not a drama)."""
-    ec = script.end_card
-    if ec is False or not is_drama(script):
-        return None
-    ec = ec if isinstance(ec, dict) else {}
-    out = {}
-    for key in END_CARD_KEYS:
-        v = ec.get(key)
-        line = end_card_line(v) if isinstance(v, str) else ""
-        out[key] = line or END_CARD[key]
-    return out
+def fox_costume_of(script: Script) -> str:
+    """The fox's disguise of an episode: the first caller cast member's costume ("hoodie" = the scammer's usual look,
+    "" = another caller's usual look); the variety gate's costume axis."""
+    cast = cast_of(script)
+    for key, entry in cast.items():
+        ch = entry.get("character", "")
+        if entry.get("role") != "inner" and can_disguise(ch):
+            return costume_of(cast, key) or ("hoodie" if ch == "scammer" else "")
+    return ""
+
+
+def variety_signature(script: Script, luminance: str = "") -> dict[str, str]:
+    """The looks the variety gate compares between consecutive dramas: the fox's costume, his room (the script's
+    villain_set), the twist face (the effective one, rotation included) and the stage's luminance (passed in: it
+    comes from the schedule walk, themes.resolve_style)."""
+    twist = next((sc for sc in script.scenes if sc.twist and sc.lines), None)
+    return {"costume": fox_costume_of(script), "villain_set": script.villain_set or DEFAULT_VILLAIN_SET,
+            "twist_face": twist_face_of(script, twist) if twist else "", "luminance": luminance}
 
 
 def twist_scene_index(script: Script) -> int | None:
@@ -821,6 +843,10 @@ def _drama_errors(script: Script) -> tuple[list[str], list[str]]:
     elif len(lines) > HOOK_TITLE_MAX_LINES or any(len(t) > HOOK_TITLE_LINE_CHARS for t in lines):
         errors.append(f"drama: hook_title must be 1-{HOOK_TITLE_MAX_LINES} lines of <= {HOOK_TITLE_LINE_CHARS} "
                       f"characters (spaces count; break it with \\n): {' / '.join(lines)}")
+    elif any(len(t) > HOOK_TITLE_LINE_TARGET for t in lines):
+        # the packaging spec (reports/직원회의_패키징.md): 10 characters a line read on a 390 px phone; 12 is the hard limit
+        warnings.append(f"drama: keep the hook_title lines <= {HOOK_TITLE_LINE_TARGET} characters "
+                        f"(now {' / '.join(lines)})")
     errors += [f"drama: hook_title {p}" for p in mockup_text_problems(script.hook_title.replace("\n", " "))]
     for i, sc in enumerate(script.scenes, start=1):
         if sc.layout == "checklist":
@@ -841,8 +867,10 @@ def _episode_errors(script: Script) -> tuple[list[str], list[str]]:
     if script.score not in (None, "", {}):
         # retired 2026-10-14 (no score counting: the scammer gets caught, nobody keeps a tally); old scripts still pass
         warnings.append("score is no longer shown (no score counting since 2026-10-14); ignored, remove the field")
+    if script.end_card is not None:
+        # retired 2026-10-17 (the white card read as a public-notice poster): the 도치 stamp ending plays instead
+        warnings.append(END_CARD_RETIRED)
     used = [name for name, on in (("series", script.series or script.ep is not None),
-                                  ("end_card", isinstance(script.end_card, dict)),
                                   ("cold_open", script.cold_open)) if on]
     if not is_drama(script):
         if used:
@@ -868,29 +896,6 @@ def _episode_errors(script: Script) -> tuple[list[str], list[str]]:
             name = SERIES.get(script.series, (script.series, ""))[0]
             if any(name in t or re.search(r"(?:EP|#)\s*\d", t) for t in lines):
                 warnings.append(f"drama: the series chip already says '{chip}'; keep the hook_title to the situation")
-            if any(len(t) > HOOK_TITLE_LINE_TARGET for t in lines):
-                warnings.append(f"drama: with a series chip keep the hook_title lines <= {HOOK_TITLE_LINE_TARGET} "
-                                f"characters (now {' / '.join(lines)})")
-    # end card (the defaults need no field; an override is checked like on-screen text)
-    if isinstance(script.end_card, dict):
-        ec = script.end_card
-        unknown = sorted(set(ec) - set(END_CARD_KEYS))
-        if unknown:
-            errors.append(f"drama: end_card has unknown keys {', '.join(unknown)} (use line1, line2)")
-        for key in END_CARD_KEYS:
-            if key not in ec:
-                continue
-            v = ec[key]
-            if not isinstance(v, str) or not end_card_line(v):
-                errors.append(f"drama: end_card.{key} must be a non-empty line of text (leave it out for the default "
-                              f"'{END_CARD[key]}')")
-                continue
-            line = end_card_line(v)
-            if len(line) > END_CARD_LINE_MAX_CHARS:
-                errors.append(f"drama: end_card.{key} '{line}' is longer than {END_CARD_LINE_MAX_CHARS} characters")
-            errors += [f"drama: end_card.{key} {p}" for p in mockup_text_problems(line)]
-            if re.search(r"\d+\s*(?:판|점|승|대|:)", line):
-                warnings.append(f"drama: end_card.{key} '{line}' reads like a score; no score counting")
     # cold open
     co = script.cold_open
     if co:
@@ -1070,9 +1075,9 @@ def _registry_warnings(script: Script) -> list[str]:
     return warnings
 
 
-def _character_errors(script: Script) -> list[str]:
-    """Characters, stagings and acting notes."""
-    errors = []
+def _character_errors(script: Script) -> tuple[list[str], list[str]]:
+    """Characters, stagings and acting notes (errors, warnings)."""
+    errors, warnings = [], []
     cast = cast_of(script)
     known = character_ids()
     for key, entry in script.cast.items():
@@ -1104,6 +1109,9 @@ def _character_errors(script: Script) -> list[str]:
                     errors.append(f"{where}: spike must be true or a word of the line")
                 if cast.get(line.speaker, {}).get("role") == "dochi":
                     errors.append(f"{where}: 도치 does not spike at its own line (it reacts to what others say)")
+                elif cast.get(line.speaker, {}).get("role") == "inner" and is_caller(cast[line.speaker].get("character")):
+                    warnings.append(f"{where}: spike on the fox's own aside; 도치 is the family's pet and only pops in "
+                                    "on the family side, so the alert is skipped there (flag a line the family hears)")
             if line.face and line.face not in EXPRESSIONS:
                 errors.append(f"{where}: unknown face '{line.face}' (use {', '.join(EXPRESSIONS)})")
             if line.gesture and line.gesture not in GESTURES:
@@ -1138,7 +1146,7 @@ def _character_errors(script: Script) -> list[str]:
                                                 for x in sc.lines):
             errors.append(f"{where}: watch_ad needs a line by a cast member with character 'ad' (the TV; any registry "
                           "role_kind presenter)")
-    return errors
+    return errors, warnings
 
 
 def _dialogue_errors(script: Script) -> tuple[list[str], list[str]]:
@@ -1158,6 +1166,9 @@ def _dialogue_errors(script: Script) -> tuple[list[str], list[str]]:
         label = cast[key].get("label", "")
         if len(label) > LABEL_MAX_CHARS:
             errors.append(f"{where}: label '{label}' is longer than {LABEL_MAX_CHARS} characters (it is a small chip)")
+        if cast[key]["role"] == "inner" and INNER_LABEL not in label:
+            warnings.append(f"{where}: an inner voice's label should say {INNER_LABEL} (e.g. '여우 {INNER_LABEL}'); "
+                            "otherwise the aside adds its own 속마음 tag, a third chip on screen")
         if cast[key]["role"] in ("scammer", "victim", "neutral") and not label:
             errors.append(f"{where}: needs a label (shown as the speaker chip, e.g. 사기범 / 엄마)")
         errors += [f"{where}: {p}" for p in mockup_text_problems(label)]
@@ -1204,7 +1215,9 @@ def _dialogue_errors(script: Script) -> tuple[list[str], list[str]]:
             errors.append(f"scene {i}: unknown twist_face '{sc.twist_face}' (use {', '.join(EXPRESSIONS)})")
     if sum(1 for sc in script.scenes if sc.twist) > 1:
         warnings.append("more than one twist stamp; keep one reveal per video")
-    errors += _character_errors(script)
+    more_errors, more_warnings = _character_errors(script)
+    errors += more_errors
+    warnings += more_warnings
     if dialogue and "재연" not in script.disclaimer:
         errors.append("dialogue scenes are an invented re-enactment: the disclaimer must say 재연")
     unused = sorted(set(script.cast) - used - set(DEFAULT_CAST))

@@ -274,9 +274,14 @@ export const browSet = (e: Expression): [[number, number], [number, number]] => 
     case "smug": return [[-242, -260], [-246, -262]];
     case "fakeKind": return [[-274, -266], [-274, -266]];
     case "excited": return [[-276, -266], [-276, -266]];
+    case "deflated": return [[-240, -262], [-240, -262]]; // inner ends down: the air gone out
+    case "caught": return [[-292, -276], [-292, -276]]; // up high, frozen
     default: return [[-252, -256], [-252, -256]];
   }
 };
+
+/** The defeat looks that draw the shocked eye whites (a wide stare): shocked, panicked and caught. */
+export const wideEyed = (e: Expression) => e === "shocked" || e === "panicked" || e === "caught";
 
 export const Eye: React.FC<{cx: number; cy: number; e: Expression; blink: number; look: [number, number]; far: number;
   side: number}> = ({cx, cy, e, blink, look, far, side}) => {
@@ -288,11 +293,20 @@ export const Eye: React.FC<{cx: number; cy: number; e: Expression; blink: number
   const closed = <path d={`M ${-17} 2 Q 0 11 17 2`} {...stroke} />;
   const g = (child: React.ReactNode) => <g transform={`translate(${cx} ${cy}) scale(${sx} 1)`}>{child}</g>;
   if (e === "relieved" || e === "fakeKind") return g(<path d={`M -18 6 Q 0 -15 18 6`} {...stroke} />);
-  if (e === "shocked" || e === "panicked") {
+  if (e === "deflated") {
+    // half-closed: the lid rests over the top of the iris, the pupil low
+    return g(
+      <>
+        <ellipse cx={lx} cy={4 + ly} rx={15} ry={12} fill={INK} />
+        <path d={`M -19 -2 Q 0 -8 19 -2`} {...stroke} />
+      </>,
+    );
+  }
+  if (wideEyed(e)) {
     return g(
       <>
         <ellipse rx={26} ry={30} fill="#FFFFFF" stroke={INK} strokeWidth={5 * ks} />
-        {e === "shocked" ? <circle cx={lx * 0.8} cy={ly * 0.8} r={6.5} fill={INK} /> : (
+        {e !== "panicked" ? <circle cx={lx * 0.8} cy={ly * 0.8} r={e === "caught" ? 5 : 6.5} fill={INK} /> : (
           <>
             <ellipse cx={lx * 0.6} cy={3 + ly * 0.6} rx={13} ry={16} fill={INK} />
             <circle cx={lx * 0.6 - 5} cy={-3 + ly * 0.6} r={5} fill="#fff" />
@@ -337,7 +351,7 @@ export const Mouth: React.FC<{e: Expression; talking: boolean; v: number; mx: nu
   const inside = light ? "#E8E0D4" : MOUTH_IN;
   const st = {stroke: ink, strokeWidth: lw, strokeLinecap: "round" as const, strokeLinejoin: "round" as const};
   const happy = e === "fakeKind" || e === "excited" || e === "smug" || e === "relieved";
-  const sad = e === "worried" || e === "panicked";
+  const sad = e === "worried" || e === "panicked" || e === "deflated";
   const open = (w: number, h: number, tongue: boolean, teeth: boolean) => happy ? (
     <g transform={`translate(${mx} ${my})`}>
       <path d={`M ${-w} ${-h * 0.35} Q 0 ${-h * 0.55} ${w} ${-h * 0.35} Q ${w * 0.9} ${h} 0 ${h} Q ${-w * 0.9} ${h}
@@ -382,9 +396,21 @@ export const Mouth: React.FC<{e: Expression; talking: boolean; v: number; mx: nu
     ) : line("M -24 2 Q 6 10 28 -12");
     case "fakeKind": return open(40, 26, false, true);
     case "excited": return open(30, 24, true, true);
+    case "deflated": return line("M -22 2 L 22 2"); // flat
+    case "caught": return <ZippedMouth mx={mx} my={my} ink={ink} ks={ks} lw={lw} />;
     default: return line("M -20 -2 Q 0 10 20 -2");
   }
 };
+
+/** The mouth zipped shut (caught): a flat line with the zip's short teeth and its pull at the corner. */
+export const ZippedMouth: React.FC<{mx: number; my: number; ink: string; ks: number; lw: number}> = ({mx, my, ink, ks,
+  lw}) => (
+  <g transform={`translate(${mx} ${my})`} stroke={ink} strokeLinecap="round" fill="none">
+    <path d="M -30 0 L 30 0" strokeWidth={lw} />
+    {[-22, -14, -6, 2, 10, 18].map((x) => <path key={x} d={`M ${x} -5 v 10`} strokeWidth={3.5 * ks} />)}
+    <path d="M 30 0 l 8 -6 l 4 4" strokeWidth={4 * ks} />
+  </g>
+);
 
 /* ------------------------------------------------------------------ hair and heads */
 
@@ -880,9 +906,11 @@ export const Character: React.FC<{pose: CharPose; uid: string; box?: {w: number;
                 <path key={s} d={`M ${s * 94 + dx} -198 l ${s * 14} -6 M ${s * 94 + dx} -182 l ${s * 14} 5`}
                   stroke={shade(L.skin, 0.28)} strokeWidth={3.5 * ks} strokeLinecap="round" />
               )) : null}
-              {/* a touch of colour on the cheeks */}
-              {[-1, 1].map((s) => <ellipse key={s} cx={s * 100 + dx} cy={-128} rx={26} ry={13} fill="#F2A08F"
-                opacity={0.22} />)}
+              {/* a touch of colour on the cheeks: the young only (a grown-up with blushed cheeks reads as a child's
+                  cartoon to the 60-year-old viewer, 2026-10-17 review) */}
+              {!L.age && (p.id === "daughter" || p.id === "son") ? [-1, 1].map((s) => (
+                <ellipse key={s} cx={s * 100 + dx} cy={-128} rx={26} ry={13} fill="#F2A08F" opacity={0.22} />
+              )) : null}
             </g>
           )}
           <Mouth e={e} talking={Boolean(p.talking)} v={p.mouth ?? 0} mx={dx * 1.1} my={RIG.mouthY} light={lightMouth} />

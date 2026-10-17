@@ -13,7 +13,11 @@
 // crop, also the middle of the 2560x423 desktop crop). v4 (2026-10-14, after YouTube's crop tool cut v3's cast at the
 // chest and 도치 at the band's top): every key element lies wholly in that band with MARGIN to spare, the figures
 // whole (ears to feet, smaller), 도치 lowered with the card; outside the band only decoration (paper / dark sides,
-// the slant, 엄마 in the desktop-only strip). Honest: a dramatized-fiction channel (no agency look, no seal, no real brands or numbers).
+// the slant, 엄마 in the desktop-only strip). v5 (2026-10-17 design re-review): the fox wears the in-video bank_suit
+// leak (the cheap wig both ears poke through, the crooked moustache), the "사기 실패" stamp is the video's red stamp
+// at twice its size (80 px lettering: ~20 px on a 390 px phone) across the fox's legs, the card a touch narrower to
+// make room for it; the profile picture is unchanged. Honest: a dramatized-fiction channel (no agency look, no seal,
+// no real brands or numbers).
 import React from "react";
 import {AbsoluteFill} from "remotion";
 import {Phone, PhoneOff} from "lucide-react";
@@ -236,13 +240,16 @@ export const EXTRA: Neighbour = {id: "mother", x: -104, eyeY: 120, k: 0.335, exp
 
 /** The key elements in safe-area coordinates (each one must lie in the band with MARGIN to spare). */
 export const LAYOUT = {
-  card: {l: 552, t: 96, w: 584, h: 272},
+  card: {l: 552, t: 96, w: 548, h: 272},
   phone: {cx: 436, cy: 170, w: 144, h: 252, rotate: 5},
   fox: {x: 1318, eyeY: 99, k: 0.32},
-  tag: {cx: 1290, cy: 232, s: 0.72, rotate: -6},
-  stamp: {x: 1402, y: 338, font: 40, w: 214, h: 90, rotate: -8},
+  tag: {cx: 1290, cy: 184, s: 0.66, rotate: -6},
+  stamp: {x: 1309, y: 300, font: 80, w: 380, h: 140, rotate: -5},
   dochi: {inset: 62, sink: 8, size: 76},
 } as const;
+/** The card's title size (v5: 80 px, >= 20 px on a 390 px phone) and the stamp's minimum lettering (2x v4's 40). */
+export const CARD_TITLE_FONT = 80;
+export const STAMP_MIN_FONT = 80;
 
 type Box = {l: number; t: number; r: number; b: number; name: string};
 const figureBox = (name: string, id: string, x: number, eyeY: number, k: number): Box => {
@@ -303,9 +310,10 @@ export const ChannelBanner: React.FC<ChannelBannerProps> = ({types = true, guide
       <GripPaw cx={phone.cx - phone.w * 0.36} cy={phone.cy + phone.h * 0.42} r={0.72}
         fill={REGISTRY[holder.id]?.palette.paw ?? "#A8A39A"} />
 
-      {/* the fox caller, caught in his disguise (ears and tail out): hand on head, sweating, the name tag, the stamp */}
-      <Actor id="scammer" costume={costume} x={fox.x} eyeY={fox.eyeY} k={fox.k} expr="panicked" gesture="handOnHead"
-        turn={-0.3} fx={["sweat2"]} look={[-0.5, 0.2]} w={W} h={H} uid="bx" rim="#EEE8DE" ink={1.15} tail />
+      {/* the fox caller, caught in his disguise (the wig's holes let both ears out, the crooked moustache, the tail):
+          hand on head, sweating, the name tag on his chest, the big red stamp across his legs */}
+      <Actor id="scammer" costume={costume} x={fox.x} eyeY={fox.eyeY} k={fox.k} expr="panicked" gesture="rest"
+        turn={-0.2} fx={["sweat2"]} look={[-0.5, 0.2]} w={W} h={H} uid="bx" rim="#EEE8DE" ink={1.15} tail />
       <NameTag cx={X(tag.cx)} cy={Y(tag.cy)} s={tag.s} text="사기꾼" rotate={tag.rotate} />
       <Stamp text="사기 실패" at={-30} x={X(stamp.x)} y={Y(stamp.y)} rotate={stamp.rotate}
         look={{shape: "box", font: stamp.font, w: stamp.w, h: stamp.h}} />
@@ -316,7 +324,7 @@ export const ChannelBanner: React.FC<ChannelBannerProps> = ({types = true, guide
         <div style={{position: "relative", width: "100%", height: "100%", background: NOTE.paper, borderRadius: NOTE.radius,
           border: `5px solid ${INK}`, boxSizing: "border-box", display: "flex", flexDirection: "column",
           alignItems: "center", justifyContent: "center", gap: 14, wordBreak: "keep-all", textAlign: "center"}}>
-          <div style={{fontSize: 88, fontWeight: 900, color: INK, letterSpacing: -3, lineHeight: 1}}>디지털 생존노트</div>
+          <div style={{fontSize: CARD_TITLE_FONT, fontWeight: 900, color: INK, letterSpacing: -3, lineHeight: 1}}>디지털 생존노트</div>
           <div style={{fontSize: 43, fontWeight: 800, color: INK, letterSpacing: -1, lineHeight: 1.15, padding: "2px 16px",
             background: `linear-gradient(transparent 52%, ${YELLOW} 52%, ${YELLOW} 92%, transparent 92%)`}}>{TAGLINE.main}</div>
           {types ? (

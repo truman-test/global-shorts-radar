@@ -21,9 +21,10 @@ export type CharacterId = "father" | "mother" | "daughter" | "son" | "scammer" |
  * our animal cast (Animal.tsx: 진돗개 family, 여우 callers). Default human. */
 export type CastStyle = "human" | "animal";
 
-/** Character expressions (the 8 of the brief + "excited", the lured look). */
+/** Character expressions (the 8 of the brief + "excited", the lured look, + the fox's other defeat looks: "deflated"
+ * = ears down, half-closed eyes, a flat mouth; "caught" = wide eyes, one sweat drop, the mouth zipped shut). */
 export type Expression = "neutral" | "worried" | "shocked" | "panicked" | "relieved" | "suspicious" | "smug" | "fakeKind"
-  | "excited";
+  | "excited" | "deflated" | "caught";
 
 /** Arm/hand poses of a character. */
 export type Gesture = "rest" | "phoneEar" | "phoneRead" | "phoneType" | "handOnHead" | "handsOnCheeks" | "point"
@@ -91,7 +92,9 @@ export type SpokenLine = {speaker: string; text: string; startMs: number; endMs:
   face?: Expression; gesture?: Gesture; bubble?: string; spike?: boolean | string};
 
 /** The reveal: at atMs the scene's frame freezes and a hand-drawn stamp lands on it. */
-/** on: cast id in the twist close-up (default the victim); face: its expression (default "shocked"). */
+/** on: cast id in the twist close-up (default the victim); face: its expression (default "shocked" for the family;
+ * for the fox one of composition.json defeatFaces, rotated by the episode: Python writes it, rig.ts defeatFaceOf for
+ * plain props). */
 export type Twist = {text: string; atMs: number; on?: string; face?: string};
 
 export type Layout = "card" | "call" | "chat" | "sms" | "alert" | "stat" | "timeline" | "checklist" | "compare"
@@ -159,8 +162,8 @@ export type HomeSetName = "living" | "shop";
 /** Evidence props for the hook frame (script scene "poster_prop"), generic and invented: no agency, logo or number. */
 export type PosterProp = "mail_notice";
 
-/** The drama end card (script "end_card", Packaging.tsx EndCard): two short lines (<= 16 characters each) under the
- * title box in the story's last ~1.5 s; Python fills the defaults ("오늘도 생존 성공" / "부모님 단톡방에 공유해 주세요"). */
+/** Retired 2026-10-17 (the white end card read as a public-notice poster): accepted in old props and ignored. Every
+ * drama now ends with the 도치 stamp (Packaging.tsx DochiEnding); the sharing line lives in the pinned comment. */
 export type EndCardProps = {line1: string; line2?: string};
 
 /**
@@ -203,7 +206,7 @@ export type ShortProps = {
   hookTitle?: string | string[]; // drama: the fixed top situation title, 1-2 lines (a string breaks at "\n")
   disclosure?: string; // drama: the disclosure chip, default "재연 · AI 음성"
   seriesChip?: string; // drama: the small chip above the title box, e.g. "여우의 영업비밀 #3" (script series + ep)
-  endCard?: EndCardProps; // drama: the end card under the title in the story's last ~1.5 s (never in the poster tail)
+  endCard?: EndCardProps; // retired (2026-10-17): ignored; the 도치 stamp ending plays in every drama's last ~1.2 s
   coldOpen?: ColdOpen; // drama: the flash-forward before the story (it shifts every scene by its durationMs)
   scenes: SceneProps[];
 };

@@ -16,6 +16,21 @@ export const SPEC = COMP.stagings_spec;
 /** The inner-voice aside shot (composition.json "aside") and the drama packaging geometry ("packaging"). */
 export const ASIDE = COMP.aside;
 export const PACK = COMP.packaging;
+/** The fox's defeat looks (composition.json "defeatFaces"): the twist close-up on a caller rotates through them. */
+export const DEFEAT_FACES = COMP.defeatFaces as Expression[];
+
+/** The fox's default defeat face of an episode (no script twist_face): rotated on the episode's seed (Python: the
+ * series ep, else the CRC32 of the id; here the seed Python passes), so consecutive episodes end on different faces. */
+export const defeatFaceOf = (seed: number): Expression => DEFEAT_FACES[Math.abs(Math.round(seed)) % DEFEAT_FACES.length];
+
+/** The opening scene keeps its first shot (the victim's face, the poster) this long; watch_ad cuts to the TV sooner
+ * (the ad speaks first and its close-up is the scene's hook). */
+export const POSTER_HOLD_MS = 1500;
+export const posterHold = (staging: Staging) => (staging === "watch_ad" ? 700 : POSTER_HOLD_MS);
+
+/** Whether an inner voice's aside gets the 속마음 tag: only when its speaker chip (the cast label) does not already
+ * say 속마음, so no more than two chips are on screen (the disclosure chip and the speaker chip). */
+export const thoughtTagged = (m?: CastMember) => Boolean(m && m.role === "inner" && !(m.label ?? "").includes("속마음"));
 
 export type Who = "victim" | "caller" | "other" | "presenter";
 export type CharSpot = {who: Who; x: number; eyeY: number; k: number; turn?: number; view?: string; gestures: string[];
@@ -236,7 +251,9 @@ export const planShots = (scene: SceneProps, cast: Record<string, CastMember>, s
           return;
         }
         const caller = l.speaker !== victim;
-        const pick = () => (caller ? rot.caller[kc++ % rot.caller.length] : rot.victim[kv++ % rot.victim.length]);
+        // 도치 pops in on the family side only: a flagged caller line plays on the victim with the caller's window
+        const pick = () => (caller ? (l.spike ? "wide" : rot.caller[kc++ % rot.caller.length])
+          : rot.victim[kv++ % rot.victim.length]);
         const end = until(i);
         if (l.endMs - l.startMs > SPLIT_OVER) {
           const mid = (l.startMs + l.endMs) / 2;
@@ -261,7 +278,9 @@ export const planShots = (scene: SceneProps, cast: Record<string, CastMember>, s
           push("over", faceTo, end);
           return;
         }
-        const solo = l.speaker === other ? "other" : l.speaker === caller && cast[l.speaker]?.character ? "caller" : "";
+        // (a flagged caller line skips the fox's solo: 도치 reacts over the thread in the victim's hand)
+        const solo = l.speaker === other ? "other"
+          : l.speaker === caller && cast[l.speaker]?.character && !l.spike ? "caller" : "";
         const soloTo = solo ? Math.min(l.startMs + 1500, l.endMs - (dur > 2000 ? 700 : 0)) : l.startMs;
         if (solo) push(solo, l.startMs, soloTo);
         const nextIsVictim = i + 1 < lines.length && lines[i + 1].speaker === victim;
@@ -296,8 +315,9 @@ export const planShots = (scene: SceneProps, cast: Record<string, CastMember>, s
     case "solo": {
       const caller = callerOf(scene, cast);
       push("victim", -1e9, first);
-      lines.forEach((l, i) => push(l.speaker === victim ? "victim" : l.speaker === caller ? "caller" : "other",
-        l.startMs, until(i)));
+      // a flagged caller line cuts to the victim listening (도치 stays on the family side)
+      lines.forEach((l, i) => push(l.speaker === victim || (l.speaker === caller && l.spike && victim) ? "victim"
+        : l.speaker === caller ? "caller" : "other", l.startMs, until(i)));
       break;
     }
     case "split_call":
@@ -495,6 +515,40 @@ export const spikeAtMs = (scene: SceneProps, i: number): number | undefined => {
     if (w) return w.startMs;
   }
   return l.startMs + (l.endMs - l.startMs) / 3;
+};
+
+/** Shots that show the caller's room (the villain set): the fox's bust, the TV ad, the fox's aside, the twist on him. */
+const callerSideShot = (scene: SceneProps, cast: Record<string, CastMember>, shot: Shot, ms: number): boolean => {
+  if (shot.name === "caller" || shot.name === "tv") return true;
+  if (shot.name === "aside") {
+    const k = activeLine(scene.lines, ms);
+    const speaker = k >= 0 ? scene.lines?.[k].speaker : undefined;
+    const inner = speaker && isInner(cast, speaker) ? speaker
+      : [...(scene.lines ?? [])].reverse().find((l) => l.startMs <= ms && isInner(cast, l.speaker))?.speaker;
+    return isCaller(inner ? cast[inner] : undefined);
+  }
+  if (shot.name === "twist") {
+    const on = scene.twist?.on && cast[scene.twist.on] ? scene.twist.on : victimOf(cast);
+    return isCaller(on ? cast[on] : undefined);
+  }
+  return false;
+};
+
+/**
+ * When 도치 the 가시 감지기 is shown on line `i` (scene ms): spikeAtMs, unless the shot on screen then is the caller's
+ * room (the fox's aside, his bust, the TV, the twist on him): 도치 is the family's pet and never appears inside the
+ * villain set (2026-10-17 EP2 fix), so the alert (and its beep) is skipped there. planShots already keeps a flagged
+ * caller line on the family side where it can (the victim with the window, the thread in the hand, the victim
+ * listening); what is left is an inner line of the fox or a twist on him. `first`: the opening scene (poster hold).
+ */
+export const spikeShownAt = (scene: SceneProps, cast: Record<string, CastMember>, i: number, first = false
+): number | undefined => {
+  const ms = spikeAtMs(scene, i);
+  if (ms === undefined) return undefined;
+  const staging = stagingOf(scene, cast);
+  if (!staging || !isDrama(staging)) return ms;
+  const shots = planShots(scene, cast, staging, first ? posterHold(staging) : 0);
+  return callerSideShot(scene, cast, shotAt(shots, ms), ms) ? undefined : ms;
 };
 
 /** Width of a stamp text in units of its font size (the stamp lettering: ! ? . , ~ are narrow, a space is a third). */

@@ -223,8 +223,8 @@ export const NOSE: Record<Species, {y: number; w: number; h: number}> = {
 export const omegaRest = (sp: Species) => sp !== "fox";
 /** Brows: [inner x, outer x, width] (the fox's are thin and set wider). */
 export const browGeom = (sp: Species): [number, number, number] => (sp === "fox" ? [32, 94, 9] : [38, 88, 12]);
-/** A touch of warmth on the cheeks (not on the foxes, nor on the dark bear). */
-export const blush = (sp: Species) => sp !== "fox" && sp !== "bear";
+/** A touch of warmth on the cheeks: the young characters only (age.young), and not on the foxes nor the dark bear. */
+export const blush = (sp: Species, young: boolean) => young && sp !== "fox" && sp !== "bear";
 
 /** The bear's pale crescent (반달) under the chin, on the neck above the collar. */
 export const Crescent: React.FC<{S: CharacterSpec}> = ({S}) => S.species === "bear" ? (
