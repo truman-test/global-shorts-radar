@@ -3,6 +3,7 @@
 // from the audio (SceneProps.lines), so visuals stay in sync with the voices without any state between frames.
 import React, {createContext, useContext} from "react";
 import {useCurrentFrame, useVideoConfig} from "remotion";
+import COMP from "./composition.json";
 import {spr, useScene} from "./motion";
 import {SPEAKER_CHIPS} from "./themes";
 import {CastMember, SceneProps, SpokenLine} from "./types";
@@ -51,8 +52,10 @@ export const Waveform: React.FC<{level: number; color: string; height?: number; 
   );
 };
 
-/** Top of the speaker chip: just above the caption page (captions start at y 1255). */
-export const SPEAKER_CHIP_TOP = 1190;
+/** Top of the speaker chip: just above the caption page (captions start at y 1255); its text size (composition.json
+ * packaging.speakerChip, 2026-10-17: 44 px, so the name still reads at a 390 px phone width). */
+export const SPEAKER_CHIP_TOP = COMP.packaging.speakerChip.top;
+export const SPEAKER_CHIP_FONT = COMP.packaging.speakerChip.font;
 
 /**
  * The speaker's name over the caption page ("사기범", "엄마", "도치"): a solid pill in the role's colour with a light ring
@@ -70,12 +73,12 @@ export const SpeakerChip: React.FC<{member: CastMember; fromMs: number; instant?
   return (
     <div style={{position: "absolute", top: SPEAKER_CHIP_TOP, left: 70, right: 150, display: "flex",
       justifyContent: "center", pointerEvents: "none"}}>
-      <div style={{position: "relative", padding: "7px 26px 8px", borderRadius: 999, background: chip.bg,
-        color: chip.text, border: `4px solid ${chip.ring}`, fontSize: 36, fontWeight: 800, lineHeight: 1.1,
+      <div style={{position: "relative", padding: "6px 28px 7px", borderRadius: 999, background: chip.bg,
+        color: chip.text, border: `4px solid ${chip.ring}`, fontSize: SPEAKER_CHIP_FONT, fontWeight: 800, lineHeight: 1.1,
         whiteSpace: "nowrap", boxShadow: "0 6px 16px rgba(0,0,0,0.32)", opacity: Math.min(1, s * 1.4),
         transform: `translateY(${(1 - s) * 14}px) scale(${0.8 + 0.2 * s})`}}>
         {member.label}
-        {thought ? [[-26, 30, 11], [-48, 44, 7]].map(([x, y, r], k) => (
+        {thought ? [[-28, 36, 12], [-52, 52, 8]].map(([x, y, r], k) => (
           <div key={k} style={{position: "absolute", left: x - r, top: y - r, width: 2 * r, height: 2 * r,
             borderRadius: r, background: chip.bg, border: `3px solid ${chip.ring}`}} />
         )) : null}

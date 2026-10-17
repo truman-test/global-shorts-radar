@@ -1,7 +1,8 @@
 // The fox's disguises (script cast "costume", composition.json "costumes"): the same rust fox comes back every episode,
 // dressed for the scam of the day, and the disguise never quite hides him (the running gag): ears through the hat,
-// a crooked fake moustache with the whiskers poking out, ears squashed out under a cap, an ear through a slick wig,
-// the tail tip over the shoulder, his own ears and cheek fur round a cardboard mask of the son's face.
+// both ears through a cheap bowl wig over a crooked fake moustache with the whiskers poking out, ears squashed out
+// under a cap, an ear through a slick blond wig, the tail tip over the shoulder, his own ears standing whole above a
+// small cardboard mask of the son's face.
 // Generic and invented: no logo, no uniform, no badge, no agency mark; muted grown-up colours, no red (danger).
 // The readable part of every disguise sits at face / forehead / collar height: the aside and the twist close-up crop
 // the head just under the title box and the body at the desk, so a hat's crown or a parcel alone would not change the
@@ -241,16 +242,27 @@ export const DisguiseHead: React.FC<{cos?: CostumeId; L: Look; F: Fur; e: Expres
     }
   }
   switch (cos) {
-    case "bank_suit":
+    case "bank_suit": {
+      // a cheap black bowl wig (plastic sheen, comb lines), a little askew, pulled down to the brows: it hides the
+      // slicked forehead fur, and both ears poke out through torn holes in its sides (the leak, 2026-10-17: the
+      // suit alone hid nothing, so the gag did not read)
+      const crown = "M -162 -276 C -170 -384 -84 -416 0 -416 C 84 -416 170 -384 162 -276 C 110 -296 54 -304 0 -302 C -54 -304 -110 -296 -162 -276 Z";
       return (
         <g>
-          {/* a neat side-part hairpiece, a little askew */}
-          <g transform={`translate(${hx} 0) rotate(-5 0 -330)`}>
-            <path d="M -132 -290 C -138 -356 -64 -380 4 -380 C 74 -380 138 -356 132 -292 C 100 -318 44 -330 -14 -322
-              L -34 -298 L -48 -322 C -84 -318 -112 -306 -132 -290 Z" fill="#2A2420" {...st} />
-            <path d="M 20 -360 C 60 -360 96 -348 112 -330" stroke="#6A5A4E" strokeWidth={6 * ks} fill="none"
-              strokeLinecap="round" />
+          <g transform={`translate(${hx} 0) rotate(-6 0 -340)`}>
+            <path d={crown} fill="#1F1A17" {...st} />
+            <path d="M -96 -372 C -50 -402 40 -404 100 -376" stroke="#FFFFFF" strokeWidth={9 * ks} fill="none"
+              strokeLinecap="round" opacity={0.3} />
+            <g stroke="#3E3530" strokeWidth={4 * ks} fill="none" strokeLinecap="round">
+              <path d="M -120 -300 C -80 -348 -40 -366 -10 -372" />
+              <path d="M -70 -300 C -40 -340 -10 -356 20 -364" />
+              <path d="M 60 -304 C 80 -336 100 -352 118 -360" />
+            </g>
+            {/* the fringe's cut edge */}
+            <path d="M -150 -278 L -126 -292 L -102 -278 L -78 -294 L -54 -280 L -30 -296 L -6 -282 L 18 -296 L 42 -282 L 66 -294 L 90 -280 L 114 -292 L 138 -280"
+              stroke={INK} strokeWidth={3.5 * ks} fill="none" strokeLinejoin="round" opacity={0.7} />
           </g>
+          {through(-350, [-1, 1], crown)}
           {/* thin office glasses */}
           <g transform={`translate(${dx} 0)`}>
             {[-1, 1].map((s) => <rect key={s} x={s * 62 - 46} y={-228} width={92} height={76} rx={16}
@@ -269,6 +281,7 @@ export const DisguiseHead: React.FC<{cos?: CostumeId; L: Look; F: Fur; e: Expres
           </g>
         </g>
       );
+    }
     case "investigator":
       return (
         <g>
@@ -335,8 +348,9 @@ export const DisguiseHead: React.FC<{cos?: CostumeId; L: Look; F: Fur; e: Expres
         </g>
       );
     case "family_mask": {
-      // a cardboard mask of the son's face on a stick; the fox's own ears and cheek fur stick out round it (the leak).
-      // Caught, it slips aside.
+      // a cardboard mask of the son's face on a stick: a small round card with no ears of its own (2026-10-17: the
+      // old cut-out ears covered the fox's), so the fox's pointed ears stand whole above it and his cheek fur sticks
+      // out round it, even in the small call window (the leak). Caught, it slips aside.
       const off = unmasked(e);
       const bob = talking ? -mouth * 1.6 : 0;
       const tf = off ? "translate(-150 150) rotate(-34 0 -60)" : `translate(${dx * 1.1} ${bob})`;
@@ -344,27 +358,24 @@ export const DisguiseHead: React.FC<{cos?: CostumeId; L: Look; F: Fur; e: Expres
         <g transform={tf}>
           <path d="M 4 -70 L 54 52" stroke={INK} strokeWidth={14 + lw * 2} strokeLinecap="round" />
           <path d="M 4 -70 L 54 52" stroke="#B08A5A" strokeWidth={14} strokeLinecap="round" />
-          {/* the cut-out ears and the face card */}
-          {[-1, 1].map((s) => <path key={s} d={`M ${s * 56} -296 L ${s * 108} -372 L ${s * 126} -276 Z`} fill="#E7D8BE"
-            {...st} />)}
-          <ellipse cx={0} cy={-196} rx={136} ry={132} fill="#E7D8BE" {...st} />
-          <path d="M -34 -322 Q -22 -360 -2 -342 Q 8 -368 30 -326" fill="#E7D8BE" {...st} />
+          {/* the face card */}
+          <ellipse cx={0} cy={-186} rx={118} ry={116} fill="#E7D8BE" {...st} />
+          <path d="M -30 -298 Q -18 -332 0 -316 Q 8 -338 28 -302" fill="#E7D8BE" {...st} />
           {/* cardboard: a few crayon strokes and a torn corner */}
-          <path d="M -110 -120 l 30 -8 M -96 -100 l 26 -6 M 84 -262 l 26 8" stroke="#B89A6C" strokeWidth={4 * ks}
+          <path d="M -96 -120 l 26 -8 M -84 -102 l 22 -6 M 72 -250 l 22 8" stroke="#B89A6C" strokeWidth={4 * ks}
             strokeLinecap="round" />
-          <path d="M 120 -150 l 18 4 l -6 18 Z" fill="#C9B48C" stroke={INK} strokeWidth={3 * ks} />
+          <path d="M 104 -144 l 16 4 l -6 16 Z" fill="#C9B48C" stroke={INK} strokeWidth={3 * ks} />
           {/* the son's drawn face: round eyes, a dog's nose, a big smile */}
           {[-1, 1].map((s) => (
             <g key={s}>
-              <circle cx={s * 54} cy={-196} r={18} fill={INK} />
-              <circle cx={s * 54 - 6} cy={-202} r={6} fill="#FFFFFF" />
-              <path d={`M ${s * 34} -238 q ${s * 20} -10 ${s * 40} 0`} stroke={INK} strokeWidth={7 * ks} fill="none"
+              <circle cx={s * 48} cy={-194} r={17} fill={INK} />
+              <circle cx={s * 48 - 6} cy={-200} r={6} fill="#FFFFFF" />
+              <path d={`M ${s * 30} -234 q ${s * 18} -10 ${s * 36} 0`} stroke={INK} strokeWidth={7 * ks} fill="none"
                 strokeLinecap="round" />
-              <ellipse cx={s * 92} cy={-140} rx={20} ry={11} fill="#E39A86" opacity={0.45} />
             </g>
           ))}
-          <ellipse cx={0} cy={-150} rx={26} ry={18} fill="#2E2622" />
-          <path d="M -58 -118 Q 0 -66 58 -118" stroke={INK} strokeWidth={7 * ks} fill="none" strokeLinecap="round" />
+          <ellipse cx={0} cy={-152} rx={24} ry={17} fill="#2E2622" />
+          <path d="M -52 -122 Q 0 -76 52 -122" stroke={INK} strokeWidth={7 * ks} fill="none" strokeLinecap="round" />
         </g>
       );
     }

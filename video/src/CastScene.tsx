@@ -13,21 +13,17 @@ import {CharPose, Fx, INK} from "./Character";
 import {lineLevel, useCast, useSpeechMs, Waveform} from "./dialogue";
 import {clamp, useShell} from "./kit";
 import {fadeOut, SceneContext, spr, useRealFrame, useScene} from "./motion";
-import {actingAt, adOf, ASIDE, blinkAt, bubbleOf, callerOf, CharSpot, costumeOf, isCaller, isInner, MOTION, neckY, openPunch, PACK,
-  RIG, otherOf, planShots, punchZoom, shockShake, shotAt, shotSpec, SPEC, speakerAt, strSeed, talkWeight, twistCutMs,
-  victimOf, Who} from "./rig";
+import {actingAt, adOf, ASIDE, blinkAt, bubbleOf, callerOf, CharSpot, costumeOf, defeatFaceOf, isCaller, isInner, MOTION,
+  neckY, openPunch, PACK, posterHold, RIG, otherOf, planShots, punchZoom, shockShake, shotAt, shotSpec, SPEC, speakerAt,
+  strSeed, talkWeight, thoughtTagged, twistCutMs, victimOf, Who} from "./rig";
 import {FocusLines, ForegroundProp, HomeSet, HomeVariant, PropKind, SetMode, VILLAIN, villainOf, VillainSetView} from "./Sets";
 import {POSTER_PROPS, PosterPropView} from "./Props";
 import {FONT} from "./fonts";
-import {DRAMA, isLight, NOTE, TONES, useTheme} from "./themes";
+import {DRAMA, isLight, NOTE, TONES, useSeed, useTheme} from "./themes";
 import {CastMember, Expression, Gesture, SceneProps, Staging, VillainSet} from "./types";
 import {memberSpec} from "./registry";
 
 const RIM = "#EEE8DE";
-/** The opening scene keeps its first shot (the victim's face, the poster) this long; watch_ad cuts to the TV sooner
- * (the ad speaks first and its close-up is the scene's hook). */
-export const POSTER_HOLD_MS = 1500;
-const posterHold = (staging: Staging) => (staging === "watch_ad" ? 700 : POSTER_HOLD_MS);
 
 type Ctx = {
   scene: SceneProps; cast: Record<string, CastMember>; staging: Staging; mode: SetMode;
@@ -41,6 +37,7 @@ type Ctx = {
   home: HomeVariant; // the family's room of this scene (scene.set): living, or the side-dish shop for every family shot
   cold: boolean; // the cold open's frozen copy (the twist keeps its colour)
   villain: VillainSet; // the caller's room of this scene (scene.villainSet): the call centre by default
+  seed: number; // the episode's seed (the fox's default defeat face rotates on it)
 };
 
 /** A family shot's room: the scene's set when it is the shop (every family shot is in the shop), else `fallback`. */
@@ -51,14 +48,21 @@ const propKind = (c: Ctx, kind: string): PropKind => (kind === "table" && c.home
   // the caller's desk is the villain set's own prop (an office desk, an anchor desk, a dashboard, a lectern)
   : kind === "ccDesk" ? VILLAIN[c.villain].prop : kind as PropKind);
 
-const exprFx = (e: Expression, since: number, who: Who): Fx[] => {
+/**
+ * The emotion symbols of a face. One symbol set at a time (sweat OR shock lines OR gloom, never stacked: three comic
+ * symbols at once read as a children's cartoon, 2026-10-17 review); the blush only on the young (`young`), never a
+ * sparkle (the excited look is the eyes and the open mouth).
+ */
+export const exprFx = (e: Expression, since: number, who: Who, young = false): Fx[] => {
   switch (e) {
     case "worried": return ["sweat"];
-    case "shocked": return ["shockLines", "sweat", "sweat2", "gloom"];
-    case "panicked": return ["tears", "sweat"];
-    case "relieved": return since < 45 ? ["blush", "puff"] : ["blush"];
+    case "shocked": return ["shockLines"];
+    case "panicked": return ["sweat"];
+    case "deflated": return ["gloom"];
+    case "caught": return ["sweat"];
+    case "relieved": return young ? (since < 45 ? ["blush", "puff"] : ["blush"]) : since < 45 ? ["puff"] : [];
     case "suspicious": return who === "victim" || who === "other" ? ["question"] : [];
-    case "excited": return ["sparkle", "blush"];
+    case "excited": return young ? ["blush"] : [];
     default: return [];
   }
 };
@@ -94,6 +98,7 @@ const poseOf = (c: Ctx, spot: CharSpot, id: string | undefined, who: Who, o: Pos
   const nod = act.talking ? 1.6 * Math.sin(c.frameA * 0.55)
     : ended ? 3.5 * Math.sin((Math.PI * (c.msA - ended.endMs)) / 320) : 0;
   const idle = o.noIdle ? 0 : 1.5 * Math.sin(2 * Math.PI * 0.2 * t + seed);
+  const young = Boolean((id ? memberSpec(c.cast[id]) : undefined)?.age?.young);
   return {
     id: character, spec: id ? memberSpec(c.cast[id]) : undefined, x: spot.x + (o.dx ?? 0),
     y: neckY(spot.eyeY, spot.k) + (o.dy ?? 0), k: spot.k, px: o.px,
@@ -101,7 +106,7 @@ const poseOf = (c: Ctx, spot: CharSpot, id: string | undefined, who: Who, o: Pos
     breathe: o.noIdle ? 0 : Math.sin(2 * Math.PI * 0.25 * t + seed), expr, mouth: act.mouth, talking: act.talking,
     look: o.look ?? [0, 0], blink: blinkAt(c.frameA, seed, c.fps),
     gesture: o.gesture && act.gesture === base ? o.gesture : act.gesture, free: o.free, mirror: o.mirror,
-    typing: c.frameA, fx: o.fx ?? exprFx(expr, since, who), squash, shake,
+    typing: c.frameA, fx: o.fx ?? exprFx(expr, since, who, young), squash, shake,
     rim: o.rim === null ? undefined : o.rim ?? (c.mode === "dark" ? RIM : undefined), rimWidth: 7,
     glow: o.glow, screen: o.screen, shadowHalf: o.shadowHalf, monitor: o.monitor,
     costume: costumeOf(c.cast, id), light: VILLAIN[c.villain].light,
@@ -235,12 +240,15 @@ const TwistShot: React.FC<{c: Ctx; variant: HomeVariant}> = ({c, variant}) => {
   // the close-up goes to whoever the twist is about: the victim by default, the fox when the scam fails
   const id = c.scene.twist?.on && c.cast[c.scene.twist.on] ? c.scene.twist.on : c.victim;
   const isCallerId = isCaller(c.cast[id ?? ""]);
-  const face = (c.scene.twist?.face ?? "shocked") as Expression;
+  // the face: the script's, else shocked for the family and, for the fox, the episode's defeat look (rotated by the
+  // seed, so two episodes in a row do not end on the same fox face)
+  const face = (c.scene.twist?.face ?? (isCallerId ? defeatFaceOf(c.seed) : "shocked")) as Expression;
   const shocked = face === "shocked" || face === "panicked";
   const pose = poseOf(c, spot, id, isCallerId ? "caller" : "victim", {force: face,
     gesture: shocked ? "handsOnCheeks" : face === "relieved" ? "clutchChest" : "rest", look: [0, 0],
     ...(isCallerId ? {rim: VILLAIN[c.villain].rim} : {}),
-    fx: shocked ? (hit >= 0 ? ["shockLines", "sweat", "sweat2", "gloom"] : ["sweat", "shockLines"]) : [],
+    // one panic symbol set per face (sweat / shock lines / gloom), never stacked
+    fx: hit >= 0 || shocked ? exprFx(face, 99, isCallerId ? "caller" : "victim") : [],
     noIdle: hit >= 0});
   const focus = c.mode === "dark" ? "#EEE8DE" : "#2B2620";
   return (
@@ -302,6 +310,9 @@ const AsideShot: React.FC<{c: Ctx; zoom: number; startMs: number}> = ({c, zoom, 
   const prop = caller ? ASIDE.prop : ASIDE.familyProp;
   // an opening aside is the poster: its tag is already on at frame 0
   const from = startMs <= -1e8 ? -100 : (startMs / 1000) * c.fps + shiftOf(c);
+  // the 속마음 tag only when the speaker chip over the captions does not already say 속마음 (never more than two
+  // chips on screen: the disclosure chip and the speaker chip, 2026-10-17 review)
+  const tagged = id ? thoughtTagged(c.cast[id]) : false;
   return (
     <>
       <Camera zoom={zoom} shake={c.shake} fx={spot.x} fy={spot.eyeY}>
@@ -315,7 +326,7 @@ const AsideShot: React.FC<{c: Ctx; zoom: number; startMs: number}> = ({c, zoom, 
           <ForegroundProp kind={propKind(c, prop.kind)} top={prop.top} mode={c.mode} />
         </div>
       </Camera>
-      <ThoughtTag frame={c.frame} from={from} />
+      {tagged ? <ThoughtTag frame={c.frame} from={from} /> : null}
     </>
   );
 };
@@ -666,6 +677,7 @@ export const CastScene: React.FC<{scene: SceneProps; staging: Staging; body: Rea
   const {fps} = useVideoConfig();
   const cast = useCast();
   const theme = useTheme();
+  const seed = useSeed();
   const ms = useSpeechMs();
   const s = useScene();
   const shell = useShell("fade");
@@ -682,7 +694,7 @@ export const CastScene: React.FC<{scene: SceneProps; staging: Staging; body: Rea
   const victim = victimOf(cast);
   const c: Ctx = {scene, cast, staging, mode: isLight(theme) ? "light" : "dark", ms, msA, frame, frameA, fps,
     index: s.index, shake: shockShake(scene, cast, msA, fps), victim, caller: callerOf(scene, cast), other: otherOf(scene, cast, victim), ad: adOf(scene, cast),
-    home: scene.set === "shop" ? "shop" : "living", cold: Boolean(s.cold), villain: villainOf(scene.villainSet)};
+    home: scene.set === "shop" ? "shop" : "living", cold: Boolean(s.cold), villain: villainOf(scene.villainSet), seed};
   if (staging === "dochi_explains") return <DochiExplains c={c} body={body} />;
   const shot = shotAt(shots, msA);
   // the slow push-in of the shot times the keyword punch-in (1 -> 1.12 in 4 frames); the video's opening shot also

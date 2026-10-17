@@ -173,13 +173,16 @@ def _script_command(cmd, args, db) -> int:
         return 2
     errors, warnings = validate(script, db, args.allow_unverified)
     if cmd == "script-check":
-        from radar.production.themes import layout_repeat_warning, villain_repeat_warning
+        from radar.production.themes import layout_repeat_warning, variety_warning, villain_repeat_warning
         repeat = layout_repeat_warning(script)
         if repeat:
             warnings.append(repeat)
         same_fox = villain_repeat_warning(script)
         if same_fox:
             warnings.append(same_fox)
+        same_look = variety_warning(script)
+        if same_look:
+            warnings.append(same_look)
     print(f"{script.id}: {len(script.scenes)} scenes, ~{estimate_seconds(script):.1f}s estimated")
     for w in warnings:
         print(f"  warning: {w}")

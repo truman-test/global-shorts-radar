@@ -4,7 +4,9 @@ area, the copy tells a stranger the topic (digital scams, surviving them) and st
 agency claim), there is no score anywhere (2026-10-14), and nothing names a real brand or number. v3 (2026-10-14):
 characters are cast per story, so the banner shows everyday neighbours of different species and ages from the
 registry (not one family) and the fox in a disguise; the profile picture is 도치 from the front, no text. v4
-(2026-10-14): every key element lies wholly inside the 1546x423 band with a 16 px margin (whole, smaller figures)."""
+(2026-10-14): every key element lies wholly inside the 1546x423 band with a 16 px margin (whole, smaller figures).
+v5 (2026-10-17): the fox wears the in-video bank_suit leak (wig, moustache), the "사기 실패" stamp is the video's red
+stamp at twice v4's size (readable at 390 px), the card a touch narrower; the profile picture is unchanged."""
 import json
 import math
 import re
@@ -80,7 +82,8 @@ def test_banner_card_is_the_biggest_and_readable_on_a_phone():
     area = {n: (r - l) * (b - t) for n, (l, t, r, b) in boxes.items()}
     assert max(area, key=area.get) == "card"
     card_block = ART[ART.index("{/* the note card"):ART.index("{/* 도치, the silent alarm")]
-    title = int(re.search(r"fontSize: (\d+), fontWeight: 900", card_block).group(1))
+    assert "fontSize: CARD_TITLE_FONT, fontWeight: 900" in card_block
+    title = int(re.search(r"export const CARD_TITLE_FONT = (\d+);", ART).group(1))
     assert title * 390 / 1546 >= 20                                   # the name stays >= 20 px on a 390 px phone
     assert "wordBreak: \"keep-all\"" in card_block
     # the phone is left of the card, the fox's things right of it, nothing overlaps the card
@@ -145,6 +148,28 @@ def test_fox_wears_a_disguise_that_leaks():
     assert 'costume = "bank_suit"' in ART
     fox = re.search(r'<Actor id="scammer" costume=\{costume\}[^>]*/>', ART, re.S)
     assert fox and re.search(r"\btail\b", fox.group(0))                  # his tail stays out
+    # v5: the same fox as in the videos: bank_suit draws the cheap wig both ears poke through and the crooked moustache
+    disguise = (SRC / "Disguise.tsx").read_text(encoding="utf-8")
+    head = disguise[disguise.index("export const DisguiseHead"):]
+    bank = head[head.index('case "bank_suit"'):]
+    bank = bank[:bank.index('case "investigator"')]
+    assert "through(" in bank and "moustache" in bank and "wig" in bank
+
+
+def test_v5_stamp_is_the_videos_red_stamp_at_twice_the_size():
+    """The "사기 실패" stamp: the video's Stamp component with a box look whose lettering is >= 2x v4's 40 px (so it
+    reads at 390 px: >= 20 px there), still wholly in the band (test above) and right of the card."""
+    stamp = _obj("stamp")
+    assert stamp["font"] >= 80 and stamp["font"] * 390 / 1546 >= 20
+    assert int(re.search(r"export const STAMP_MIN_FONT = (\d+);", ART).group(1)) <= stamp["font"]
+    assert stamp["w"] - 44 >= 4.1 * stamp["font"] * 0.98 and stamp["h"] - 44 >= stamp["font"]   # the text fits the frame
+    assert 'look={{shape: "box", font: stamp.font, w: stamp.w, h: stamp.h}}' in ART
+    boxes = _key_boxes()
+    assert boxes["stamp"][0] >= boxes["card"][2]
+    # the stamp lies across the fox's legs, under his tag and clear of his face (the chin is above the tag)
+    fox, tag = _obj("fox"), _obj("tag")
+    chin = fox["eyeY"] + (190 - 33) * fox["k"]
+    assert boxes["tag"][1] >= chin - 8 and boxes["stamp"][1] >= boxes["tag"][1]
 
 
 def test_profile_is_dochi_from_the_front_without_text():

@@ -17,8 +17,8 @@ import {BADGE, CardScene} from "./CardScene";
 import {CastContext, useCast} from "./dialogue";
 import {CastScene} from "./CastScene";
 import {CastStyleContext} from "./Actor";
-import {isDrama, PACK, spikeAtMs, stagingOf, stampLook} from "./rig";
-import {DISCLOSURE, DisclosureChip, EndCard, HookTitle, packagingOf, RewindChip, SeriesTab, SPIKE_FRAMES, SpikeAlert,
+import {isDrama, PACK, spikeShownAt, stagingOf, stampLook} from "./rig";
+import {DISCLOSURE, DisclosureChip, DochiEnding, HookTitle, packagingOf, RewindChip, SeriesTab, SPIKE_FRAMES, SpikeAlert,
   titleLines} from "./Packaging";
 import {COLD, coldFrames, ColdOpenFrames} from "./ColdOpen";
 import {Stamp} from "./Handwriting";
@@ -265,6 +265,7 @@ type SfxProps = {scene: SceneProps; first: boolean; last: boolean; lead: number;
 /** Synthesized SFX, timed from the same schedules the scene components animate with; plus the twist stamp. */
 const SceneSfx: React.FC<SfxProps> = (props) => {
   const {scene, fps} = props;
+  const cast = useCast();
   // the reveal: a stamp thud with a pop as the stamp lands on the frozen frame
   const at = scene.twist ? Math.round((scene.twist.atMs / 1000) * fps) : 0;
   return (
@@ -274,9 +275,10 @@ const SceneSfx: React.FC<SfxProps> = (props) => {
       {scene.twist ? <Sfx name="stamp" at={at} volume={0.7} /> : null}
       {scene.twist ? <Sfx name="pop" at={at + 1} volume={0.32} /> : null}
       {/* 도치's 가시 감지기: a short synthesized "삐빅" as its spikes go up (no voice) */}
-      {/* the beep waits for the gap after the flagged line, so it never masks a word (the spikes pop on the word) */}
+      {/* the beep waits for the gap after the flagged line, so it never masks a word (the spikes pop on the word);
+          none where the picture is the fox's room (rig.spikeShownAt: 도치 stays on the family side) */}
       {(scene.lines ?? []).map((l, i) => {
-        const ms = spikeAtMs(scene, i);
+        const ms = spikeShownAt(scene, cast, i, props.first);
         return ms === undefined ? null
           : <Sfx key={`sp${i}`} name="spike" at={Math.round((Math.max(ms, l.endMs) / 1000) * fps) + 1} volume={0.3} />;
       })}
@@ -443,15 +445,18 @@ export const Short: React.FC<ShortProps> = (input) => {
       </Sequence>
     );
   })()) : null;
-  // the drama end card: the last packaging.endCard.frames of the story, after a twist stamp in the last scene
-  const E = PACK.endCard;
-  const endCardFrom = (() => {
-    if (!n || !props.endCard) return undefined;
+  // the 도치 stamp ending (every drama): the last packaging.ending.frames of the story, after a twist stamp in the
+  // last scene; its stamp goes to the top-right corner when that scene's own twist stamp holds the chest zone.
+  // (props.endCard, the retired white end card, is accepted and ignored)
+  const E = PACK.ending;
+  const endingFrom = (() => {
+    if (!n || !dramaPack) return undefined;
     const lastS = props.scenes[n - 1];
     let from = Math.max(spans[n - 1].from, end - E.frames);
     if (lastS.twist) from = Math.max(from, spans[n - 1].from + Math.round((lastS.twist.atMs / 1000) * fps) + E.afterStamp);
     return Math.max(0, Math.min(from, end - E.minFrames));
   })();
+  const endingAlt = n > 0 && Boolean(props.scenes[n - 1].twist);
   return (
     <ThemeContext.Provider value={theme}>
     <SeedContext.Provider value={seed}>
@@ -509,9 +514,10 @@ export const Short: React.FC<ShortProps> = (input) => {
           </Sequence>
         ) : null)}
       </div>
-      {/* 도치 the 가시 감지기: pops in on the lines flagged `spike` (scene speech time = the scene's audio clock) */}
+      {/* 도치 the 가시 감지기: pops in on the lines flagged `spike` (scene speech time = the scene's audio clock), only
+          while the picture is the family's side (never inside the villain set, rig.spikeShownAt) */}
       {props.scenes.flatMap((scene, i) => (scene.lines ?? []).map((_, k) => {
-        const ms = spikeAtMs(scene, k);
+        const ms = spikeShownAt(scene, castMap, k, i === 0);
         if (ms === undefined) return null;
         return (
           <Sequence key={`sp${i}_${k}`} from={spans[i].from + Math.round((ms / 1000) * fps)} durationInFrames={SPIKE_FRAMES}>
@@ -521,6 +527,13 @@ export const Short: React.FC<ShortProps> = (input) => {
       }))}
       {/* 도치 the mascot: one continuous track over the whole video (in the margin, never on text or captions) */}
       <MascotTrack props={props} spans={spans} poster={POSTER} />
+      {/* the 도치 stamp ending in the story's last ~1.2 s: it ends where the poster tail begins (tail = frame 0); drawn
+          under the captions and the speaker chip */}
+      {dramaPack && endingFrom !== undefined && end > endingFrom ? (
+        <Sequence from={endingFrom} durationInFrames={end - endingFrom}>
+          <DochiEnding frames={end - endingFrom} alt={endingAlt} />
+        </Sequence>
+      ) : null}
       {cold ? (
         // the cold open's exclamation from 0.0 s, its caption page only; the rewind's whoosh waits for the line's end
         // (the hold always outlasts it) and fades out within the 8 frames, before the story's first line
@@ -613,14 +626,8 @@ export const Short: React.FC<ShortProps> = (input) => {
       ) : null}
       {/* the fixed situation title: frame 0 (the poster) to the last frame */}
       {dramaPack ? <HookTitle lines={titleLines(props.hookTitle)} /> : null}
-      {/* the series chip on the title box (static) */}
-      {dramaPack ? <SeriesTab chip={props.seriesChip} /> : null}
-      {/* the end card under the title in the story's last ~1.5 s: it ends where the poster tail begins (tail = frame 0) */}
-      {dramaPack && props.endCard && endCardFrom !== undefined && end > endCardFrom ? (
-        <Sequence from={endCardFrom} durationInFrames={end - endCardFrom}>
-          <EndCard card={props.endCard} lines={titleLines(props.hookTitle).length} frames={end - endCardFrom} />
-        </Sequence>
-      ) : null}
+      {/* the series chip on the title box: the opening beat and the poster tail */}
+      {dramaPack ? <SeriesTab chip={props.seriesChip} end={tail > 0 ? end : undefined} /> : null}
     </AbsoluteFill>
     </CategoryContext.Provider>
     </CastStyleContext.Provider>

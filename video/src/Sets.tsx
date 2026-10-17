@@ -5,7 +5,7 @@
 // the two places contrast in colour temperature.
 import React from "react";
 import COMP from "./composition.json";
-import {INK} from "./Character";
+import {INK, shade} from "./Character";
 import {FONT} from "./fonts";
 import {SignText} from "./Handwriting";
 import {VillainSet} from "./types";
@@ -514,15 +514,82 @@ const CALLER_PROPS: Partial<Record<PropKind, {top: string; front: string; rim: s
   lectern: {top: "#8A6544", front: "#5E432E", rim: "#E9C79C", line: "#1A1512"},
 };
 
+/** The small prop on a surface (composition.json smallPropMaxTop): by the kind of surface. */
+export type SmallProp = "cup" | "phoneStand" | "mail" | "none";
+export const smallPropOf = (kind: PropKind): SmallProp =>
+  kind === "ccDesk" || kind === "officeDesk" ? "phoneStand" : kind === "desk" ? "mail" : kind === "dashboard" ? "none" : "cup";
+/** A surface whose edge sits lower than this (inside the caption band) carries no small prop. */
+export const SMALL_PROP_MAX_TOP = COMP.smallPropMaxTop;
+/** Where the small prop stands: at the left edge, clear of the captions' centred text and the right UI column. */
+const SMALL_PROP_X = 66;
+
+/**
+ * One small generic prop standing on the surface at the left edge (its bottom on the edge `top`): a cup with a
+ * handle (the home's table, the shop counter, the anchor desk, the lectern), a phone on a stand (the call centre and
+ * office desks), two envelopes (the workplace desk). No brand, no text. Drawn in the surface's own tones with the ink
+ * edge, ~90 px tall, so it dresses the lower frame without competing with the captions.
+ */
+const SmallPropView: React.FC<{kind: SmallProp; top: number; dark: boolean; line: string}> = ({kind, top, dark, line}) => {
+  const st = {stroke: line, strokeWidth: 5, strokeLinejoin: "round" as const, strokeLinecap: "round" as const};
+  const x = SMALL_PROP_X;
+  switch (kind) {
+    case "cup": {
+      const body = dark ? "#C9BFB0" : "#F6F1E7";
+      const tea = dark ? "#6E4A2E" : "#B8814C";
+      return (
+        <g>
+          <path d={`M ${x + 40} ${top - 62} q 26 2 26 22 q 0 22 -26 24`} fill="none" {...st} />
+          <path d={`M ${x - 38} ${top - 80} h 78 l -8 80 h -62 Z`} fill={body} {...st} />
+          <ellipse cx={x + 1} cy={top - 80} rx={39} ry={10} fill={tea} {...st} />
+          <ellipse cx={x + 1} cy={top} rx={54} ry={8} fill="#000" opacity={0.12} />
+        </g>
+      );
+    }
+    case "phoneStand": {
+      const shell = dark ? "#3A3F4B" : "#4A5160";
+      return (
+        <g>
+          <ellipse cx={x} cy={top - 4} rx={40} ry={10} fill={dark ? "#2A2F3A" : "#5A6170"} {...st} />
+          <g transform={`translate(${x} ${top - 8}) rotate(-14)`}>
+            <rect x={-26} y={-96} width={52} height={92} rx={9} fill={shell} {...st} />
+            <rect x={-19} y={-88} width={38} height={76} rx={5} fill={dark ? "#5FD3C8" : "#9FD8E8"} opacity={0.55} />
+            <rect x={-19} y={-88} width={38} height={14} rx={5} fill="#FFFFFF" opacity={0.25} />
+          </g>
+        </g>
+      );
+    }
+    case "mail": {
+      const paper = dark ? "#D8D1C2" : "#F6F1E7";
+      return (
+        <g>
+          <g transform={`translate(${x} ${top - 10}) rotate(-6)`}>
+            <rect x={-46} y={-30} width={92} height={60} rx={4} fill={paper} {...st} />
+            <path d="M -46 -30 L 0 2 L 46 -30" fill="none" {...st} strokeWidth={3.5} />
+          </g>
+          <g transform={`translate(${x + 6} ${top - 44}) rotate(4)`}>
+            <rect x={-46} y={-30} width={92} height={60} rx={4} fill={paper} {...st} />
+            <path d="M -46 -30 L 0 2 L 46 -30" fill="none" {...st} strokeWidth={3.5} />
+            <rect x={22} y={-22} width={16} height={18} rx={2} fill="none" stroke={line} strokeWidth={3} opacity={0.6} />
+          </g>
+        </g>
+      );
+    }
+    default:
+      return null;
+  }
+};
+
 /**
  * A foreground prop in front of the characters (composition.json "props"): its top edge at `top` (screen px), opaque
  * down to the frame's bottom, so a bust shot's body ends at a table / desk edge instead of running down the frame.
  * table = the home's table, desk = the office desk, ccDesk = the call centre's desk (always dark, a teal-lit edge).
- * Plain surfaces only (no cups or keyboards): the edge sits in or near the caption band, nothing there may compete
- * with the captions. Light stages: warm flat tones with an ink edge; dark stages: dim tones with a light rim.
+ * The front face falls away under a floor gradient (darker toward the bottom: the room has a floor, not a flat
+ * card, 2026-10-17 review) and, when the edge sits above SMALL_PROP_MAX_TOP, one small prop stands on it at the
+ * left edge (SmallPropView). Nothing is drawn inside the caption band itself (the band is empty surface), so the
+ * captions keep their contrast. Light stages: warm flat tones with an ink edge; dark stages: dim tones with a light rim.
  */
-export const ForegroundProp: React.FC<{kind: PropKind; top: number; mode: SetMode; w?: number; h?: number}> = ({kind,
-  top, mode, w = 1080, h = 1920}) => {
+export const ForegroundProp: React.FC<{kind: PropKind; top: number; mode: SetMode; w?: number; h?: number;
+  small?: boolean}> = ({kind, top, mode, w = 1080, h = 1920, small = true}) => {
   const caller = CALLER_PROPS[kind];
   const dark = mode === "dark" || Boolean(caller);
   const pal = caller ? caller
@@ -535,9 +602,20 @@ export const ForegroundProp: React.FC<{kind: PropKind; top: number; mode: SetMod
         : {top: "#E9D6B4", front: "#D3B88E", rim: "#FFF6E6", line: INK};
   const depth = 46;
   const edge = {stroke: pal.line, strokeWidth: 6, strokeLinejoin: "round" as const};
+  const grad = `fg-${kind}-${Math.round(top)}-${mode}`;
+  const prop = small && top <= SMALL_PROP_MAX_TOP ? smallPropOf(kind) : "none";
   return (
     <svg width={w} height={h} style={{position: "absolute", left: 0, top: 0, pointerEvents: "none"}}>
-      <rect x={-20} y={top + depth} width={w + 40} height={h - top} fill={pal.front} />
+      <defs>
+        {/* the floor gradient: the front face darkens toward the floor (the bottom 20% sits under YouTube's UI) */}
+        <linearGradient id={grad} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={pal.front} />
+          <stop offset="55%" stopColor={shade(pal.front, 0.16)} />
+          <stop offset="100%" stopColor={shade(pal.front, dark ? 0.5 : 0.34)} />
+        </linearGradient>
+      </defs>
+      <rect x={-20} y={top + depth} width={w + 40} height={h - top} fill={`url(#${grad})`} />
+      {prop !== "none" ? <SmallPropView kind={prop} top={top} dark={dark} line={pal.line} /> : null}
       <path d={`M -20 ${top} H ${w + 20} V ${top + depth} H -20 Z`} fill={pal.top} {...edge} />
       <path d={`M -20 ${top + depth} H ${w + 20}`} {...edge} />
       <path d={`M -20 ${top + 9} H ${w + 20}`} stroke={pal.rim} strokeWidth={4} opacity={caller ? 0.7 : 0.55} />
@@ -568,4 +646,3 @@ export const ForegroundProp: React.FC<{kind: PropKind; top: number; mode: SetMod
     </svg>
   );
 };
-
