@@ -1,15 +1,21 @@
 {
  "id": "2026-10-12-mom-wins",
+ "series": "역관광",
+ "ep": 1,
  "source_video_id": "Jf1239_V0mw",
  "title": "아들 목소리 보이스피싱, 엄마가 암호를 물었더니",
- "hook_title": "67살 엄마 vs\n아들 목소리",
- "description": "\"엄마, 나야. 사고 났어.\" 아들 목소리로 급한 돈 전화가 걸려 오자, 엄마는 우리 집 암호를 묻고 끊은 뒤 저장된 번호로 아들에게 직접 걸었습니다.\n이 영상은 실제 수법을 바탕으로 각색한 재연입니다.\n미국 연방거래위원회(FTC)는 사기범이 온라인에 올라온 짧은 음성으로 가족 목소리를 흉내 낼 수 있다고 경고했습니다(2023-03-20). 금융위원회·금융감독원 보이스피싱 피해예방 10계명(2026-02-10)은 자녀 목소리도 AI로 조작해 들려줄 수 있으니, 급박한 상황이라도 일단 끊고 직접 확인하라고 당부합니다. FTC는 연락해 온 가족에게 '내가 알고 있는 그 사람 번호'로 직접 걸어 확인하라고 안내하고, 미국 FBI는 가족끼리 비밀 단어(암호)를 정해 두라고 권고했습니다(2024-12-03).",
+ "hook_title": "아들 목소리로\n급한 돈 전화",
+ "description": "\"엄마, 나야. 사고 났어.\" 아들 목소리로 급한 돈 전화가 걸려 오자, 엄마는 우리 집 암호를 묻고 끊은 뒤 저장된 번호로 아들에게 직접 걸었습니다.\n진돗개네 역관광 EP1 · 실제 수법을 바탕으로 각색한 재연 · AI 합성 음성\n미국 연방거래위원회(FTC)는 사기범이 온라인에 올라온 짧은 음성으로 가족 목소리를 흉내 낼 수 있다고 경고했습니다(2023-03-20). 금융위원회·금융감독원 보이스피싱 피해예방 10계명(2026-02-10)은 자녀 목소리도 AI로 조작해 들려줄 수 있으니, 급박한 상황이라도 일단 끊고 직접 확인하라고 당부합니다. FTC는 연락해 온 가족에게 '내가 알고 있는 그 사람 번호'로 직접 걸어 확인하라고 안내하고, 미국 FBI는 가족끼리 비밀 단어(암호)를 정해 두라고 권고했습니다(2024-12-03).",
  "tags": [
   "보이스피싱",
   "AI 음성 복제",
   "딥보이스",
   "가족 암호",
-  "역관광"
+  "역관광",
+  "아들 사칭 전화",
+  "보이스피싱 예방",
+  "사기 예방",
+  "디지털 생존노트"
  ],
  "disclaimer": "※ 실제 수법을 바탕으로 각색한 재연입니다",
  "category": "voice",
@@ -142,5 +148,6 @@
    "url": "https://consumer.ftc.gov/consumer-alerts/2023/03/scammers-use-ai-enhance-their-family-emergency-schemes"
   }
  ],
- "author": "llm:claude-opus-5-5 (story-writer, 새 포맷 B '부모의 역관광' 시범). Facts reused from the fact-checked 2026-10-11-recreate-grandma-wins (content/week2/recreate-grandma-wins.review.md) and content/week1/Jf1239_V0mw.md: FSC 86250 ❸ (가족 목소리도 AI 조작 의심, 일단 끊고 직접 확인), FBI PSA241203 (가족 비밀 단어), FTC 2023-03-20 (짧은 음성 클립, 아는 번호로 직접 확인). Method re-enactment (수법 재연): no amount, no reported case outcome; the '다른 계좌' beat of the earlier sample is not used. The fake and the real son share voice M3 (the cloned voice); 도치 has no lines (silent spike cue on the money request)."
+ "author": "llm:claude-opus-5-5 (story-writer, 새 포맷 B '부모의 역관광' 시범). Facts reused from the fact-checked 2026-10-11-recreate-grandma-wins (content/week2/recreate-grandma-wins.review.md) and content/week1/Jf1239_V0mw.md: FSC 86250 ❸ (가족 목소리도 AI 조작 의심, 일단 끊고 직접 확인), FBI PSA241203 (가족 비밀 단어), FTC 2023-03-20 (짧은 음성 클립, 아는 번호로 직접 확인). Method re-enactment (수법 재연): no amount, no reported case outcome; the '다른 계좌' beat of the earlier sample is not used. The fake and the real son share voice M3 (the cloned voice); 도치 has no lines (silent spike cue on the money request).",
+ "pinned_comment": "진돗개네 역관광 EP1: 아들 목소리편.\n\"우리 집 암호부터 대 봐.\" 급한 돈 전화는 일단 끊고, 저장된 번호로 직접 거세요.\n자녀 목소리도 AI로 흉내 낼 수 있습니다(금융위·금감원 10계명). 가족끼리 암호 하나 정해 두세요(미국 FBI 권고).\n우리 집 암호, 정해 두셨나요? 암호 자체는 댓글에 쓰지 마세요."
 }
